@@ -1,4 +1,5 @@
 import type { MealParticipation, MealPlan, User } from "@prisma/client";
+import { MealType, PreparationType } from "@prisma/client";
 import { prisma } from "../lib/prisma";
 import type { MealPlanData } from "../types";
 import { formatDateJP } from "../utils/date";
@@ -239,29 +240,41 @@ export const sendMealPlanChangeNotification = async (
     const date = formatDateJP(mealPlan.date);
     const mealType = mealPlan.mealType === "LUNCH" ? "昼食" : "夕食";
 
+    // 基本の食事予定データを準備
+    const baseMealPlan = {
+      id: "",
+      date: new Date(),
+      mealType: mealPlan.mealType === "LUNCH" ? MealType.LUNCH : MealType.DINNER,
+      preparationType: PreparationType.INDIVIDUAL,
+      cookerId: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      participations: [],
+      cooker: null,
+    };
+
+    // 変更された食事予定データを準備
+    const updatedMealPlan = {
+      ...mealPlan,
+      participations: [],
+      cooker: changer,
+    };
+
+    // 昼食と夕食のデータを準備
+    const lunchData = prepareMealPlanData(
+      mealPlan.mealType === "LUNCH" ? updatedMealPlan : baseMealPlan,
+      users,
+    );
+
+    const dinnerData = prepareMealPlanData(
+      mealPlan.mealType === "DINNER" ? updatedMealPlan : baseMealPlan,
+      users,
+    );
+
     // 他のユーザーに通知
     let successCount = 0;
     for (const user of otherUsers) {
       try {
-        // 食事予定データを準備
-        const lunchData =
-          mealPlan.mealType === "LUNCH"
-            ? {
-                participants: [],
-                preparationType: mealPlan.preparationType,
-                cooker: changer.name,
-              }
-            : { participants: [], preparationType: "INDIVIDUAL" };
-
-        const dinnerData =
-          mealPlan.mealType === "DINNER"
-            ? {
-                participants: [],
-                preparationType: mealPlan.preparationType,
-                cooker: changer.name,
-              }
-            : { participants: [], preparationType: "INDIVIDUAL" };
-
         await sendFlexMessage(
           user.lineId,
           createMealPlanFlexMessage(
