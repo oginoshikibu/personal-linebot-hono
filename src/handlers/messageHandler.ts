@@ -1,5 +1,6 @@
 import type { TextEventMessage } from "@line/bot-sdk";
 import type { User } from "@prisma/client";
+import { COMMAND_PREFIX, MESSAGES } from "../constants";
 import {
   createChangeMenuTemplate,
   createCheckMenuTemplate,
@@ -10,12 +11,11 @@ import {
   sendTextMessage,
 } from "../services/line";
 import {
-  handleRegisterCommand,
-  handleCheckCommand,
   handleCalendarCommand,
+  handleCheckCommand,
   handleHelpCommand,
+  handleRegisterCommand,
 } from "./commands";
-import { COMMAND_PREFIX, MESSAGES } from "../constants";
 
 /**
  * テキストメッセージを処理

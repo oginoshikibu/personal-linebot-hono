@@ -1,19 +1,22 @@
 import type { User } from "@prisma/client";
 import { PreparationType } from "@prisma/client";
+import { MESSAGES } from "../../constants";
 import { sendTextMessage } from "../../services/line";
-import { createOrUpdateMealPlan, setMealParticipation } from "../../services/meal";
+import {
+  createOrUpdateMealPlan,
+  setMealParticipation,
+} from "../../services/meal";
 import { sendMealPlanChangeNotification } from "../../services/notification";
 import { formatDateJP } from "../../utils/date";
 import { logger } from "../../utils/logger";
-import { 
-  parseDate, 
-  parseMealType, 
-  parsePreparationType, 
-  parseAttendance,
+import {
+  getMealTypeText,
   getPreparationTypeText,
-  getMealTypeText
+  parseAttendance,
+  parseDate,
+  parseMealType,
+  parsePreparationType,
 } from "../../utils/meal";
-import { MESSAGES } from "../../constants";
 
 /**
  * 登録コマンドを処理
@@ -54,7 +57,10 @@ export const handleRegisterCommand = async (
     if (parsed) {
       preparationType = parsed;
     } else {
-      await sendTextMessage(user.lineId, MESSAGES.ERRORS.INVALID_PREPARATION_TYPE);
+      await sendTextMessage(
+        user.lineId,
+        MESSAGES.ERRORS.INVALID_PREPARATION_TYPE,
+      );
       return;
     }
   }

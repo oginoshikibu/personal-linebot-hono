@@ -1,7 +1,7 @@
 import type { User } from "@prisma/client";
+import { MESSAGES } from "../../constants";
 import { sendTextMessage } from "../../services/line";
 import { logger } from "../../utils/logger";
-import { MESSAGES } from "../../constants";
 
 /**
  * 予定変更のポストバックを処理
@@ -14,7 +14,7 @@ export const handleChangePostback = async (
 ): Promise<void> => {
   try {
     logger.debug(`変更ポストバックデータ処理: ${data}, ユーザー: ${user.name}`);
-    
+
     // TODO: 変更処理の実装
     await sendTextMessage(user.lineId, "変更機能は現在開発中です。");
   } catch (error) {

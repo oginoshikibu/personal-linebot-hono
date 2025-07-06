@@ -1,13 +1,15 @@
 import { MealType, PreparationType } from "@prisma/client";
-import { PREPARATION_TYPE_TEXT, MEAL_TYPE_TEXT } from "../constants";
+import { MEAL_TYPE_TEXT, PREPARATION_TYPE_TEXT } from "../constants";
 
 /**
  * 準備方法の日本語表示を取得
  * @param preparationType 準備方法
  * @returns 準備方法の日本語表示
  */
-export const getPreparationTypeText = (preparationType: PreparationType): string => {
-  return PREPARATION_TYPE_TEXT[preparationType as keyof typeof PREPARATION_TYPE_TEXT] || "未定";
+export const getPreparationTypeText = (
+  preparationType: PreparationType,
+): string => {
+  return PREPARATION_TYPE_TEXT[preparationType] || "未定";
 };
 
 /**
@@ -16,7 +18,7 @@ export const getPreparationTypeText = (preparationType: PreparationType): string
  * @returns 食事タイプの日本語表示
  */
 export const getMealTypeText = (mealType: MealType): string => {
-  return MEAL_TYPE_TEXT[mealType as keyof typeof MEAL_TYPE_TEXT] || "未定";
+  return MEAL_TYPE_TEXT[mealType] || "未定";
 };
 
 /**
@@ -36,7 +38,9 @@ export const parseMealType = (mealTypeStr: string): MealType | null => {
  * @param prepTypeStr 準備方法文字列
  * @returns 準備方法またはnull
  */
-export const parsePreparationType = (prepTypeStr: string): PreparationType | null => {
+export const parsePreparationType = (
+  prepTypeStr: string,
+): PreparationType | null => {
   const normalized = prepTypeStr.toUpperCase();
   switch (normalized) {
     case "COOK_BY_SELF":
@@ -76,7 +80,7 @@ export const parseDate = (dateStr: string): Date | null => {
     tomorrow.setDate(tomorrow.getDate() + 1);
     return tomorrow;
   }
-  
+
   try {
     const date = new Date(dateStr);
     if (Number.isNaN(date.getTime())) {

@@ -1,8 +1,6 @@
-import { MealType, PreparationType, type User } from "@prisma/client";
-import {
-  sendRegistrationOptions,
-  sendTextMessage,
-} from "../../services/line";
+import { PreparationType, type User } from "@prisma/client";
+import { MESSAGES } from "../../constants";
+import { sendRegistrationOptions, sendTextMessage } from "../../services/line";
 import {
   createOrUpdateMealPlan,
   setMealParticipation,
@@ -10,15 +8,14 @@ import {
 import { sendMealPlanChangeNotification } from "../../services/notification";
 import { formatDateJP } from "../../utils/date";
 import { logger } from "../../utils/logger";
-import { 
-  parseDate, 
-  parseMealType, 
-  parsePreparationType, 
-  parseAttendance,
+import {
+  getMealTypeText,
   getPreparationTypeText,
-  getMealTypeText
+  parseAttendance,
+  parseDate,
+  parseMealType,
+  parsePreparationType,
 } from "../../utils/meal";
-import { MESSAGES } from "../../constants";
 
 /**
  * 予定登録のポストバックを処理
@@ -37,10 +34,10 @@ export const handleRegisterPostback = async (
     if (parts.length === 3) {
       const [, dateType, mealTypeStr] = parts;
       let date: Date | null = null;
-      
+
       // 日付を解析
       date = parseDate(dateType);
-      
+
       if (!date) {
         await sendTextMessage(user.lineId, MESSAGES.ERRORS.INVALID_DATE);
         return;
@@ -134,13 +131,17 @@ const handleConfirmRegistration = async (
   // 準備方法を解析
   const preparationType = parsePreparationType(prepTypeStr);
   if (!preparationType) {
-    await sendTextMessage(user.lineId, MESSAGES.ERRORS.INVALID_PREPARATION_TYPE);
+    await sendTextMessage(
+      user.lineId,
+      MESSAGES.ERRORS.INVALID_PREPARATION_TYPE,
+    );
     return;
   }
 
   try {
     // 食事予定を作成または更新
-    const cookerId = preparationType === PreparationType.COOK_BY_SELF ? user.id : undefined;
+    const cookerId =
+      preparationType === PreparationType.COOK_BY_SELF ? user.id : undefined;
     const mealPlan = await createOrUpdateMealPlan(
       date,
       mealType,
@@ -208,13 +209,17 @@ const handleRegisterMeal = async (
   // 準備方法を解析
   const preparationType = parsePreparationType(prepTypeStr);
   if (!preparationType) {
-    await sendTextMessage(user.lineId, MESSAGES.ERRORS.INVALID_PREPARATION_TYPE);
+    await sendTextMessage(
+      user.lineId,
+      MESSAGES.ERRORS.INVALID_PREPARATION_TYPE,
+    );
     return;
   }
 
   try {
     // 食事予定を作成または更新
-    const cookerId = preparationType === PreparationType.COOK_BY_SELF ? user.id : undefined;
+    const cookerId =
+      preparationType === PreparationType.COOK_BY_SELF ? user.id : undefined;
     const mealPlan = await createOrUpdateMealPlan(
       date,
       mealType,

@@ -1,11 +1,12 @@
-import type { User, MealParticipation } from "@prisma/client";
+import type { MealParticipation, User } from "@prisma/client";
 import { MealType } from "@prisma/client";
+import { MESSAGES } from "../../constants";
 import { sendTextMessage } from "../../services/line";
-import { getMealPlan, getAllUsers } from "../../services/meal";
+import { getAllUsers, getMealPlan } from "../../services/meal";
+import type { MealPlanWithRelations } from "../../types/prisma";
 import { formatDateJP } from "../../utils/date";
 import { logger } from "../../utils/logger";
-import { parseDate, getPreparationTypeText } from "../../utils/meal";
-import { MESSAGES } from "../../constants";
+import { getPreparationTypeText, parseDate } from "../../utils/meal";
 
 /**
  * 確認コマンドを処理
@@ -19,7 +20,7 @@ export const handleCheckCommand = async (
   // 日付を解析
   const dateStr = args.length > 0 ? args[0] : "today";
   const date = parseDate(dateStr);
-  
+
   if (!date) {
     await sendTextMessage(user.lineId, MESSAGES.ERRORS.INVALID_DATE);
     return;
@@ -69,26 +70,32 @@ export const handleCheckCommand = async (
  * @param users ユーザー一覧
  * @returns フォーマット済みの文字列
  */
-const formatMealPlanDetails = (mealPlan: any, users: User[]): string => {
+const formatMealPlanDetails = (mealPlan: unknown, users: User[]): string => {
   let details = "";
-  
+
+  // Type guard to ensure mealPlan has expected properties
+  if (!mealPlan || typeof mealPlan !== "object") {
+    return "食事予定の情報が正しく取得できませんでした。";
+  }
+
+  const typedMealPlan = mealPlan as MealPlanWithRelations;
+
   for (const u of users) {
-    // participationsプロパティは型定義上は存在するが、実行時には存在する
-    // @ts-expect-error - getMealPlan includes participations in the query but TypeScript doesn't know this
-    const participation = mealPlan.participations?.find(
+    // participationsプロパティは実行時には存在する
+    const participation = typedMealPlan.participations.find(
       (p: MealParticipation) => p.userId === u.id,
     );
     details += `${u.name}: ${participation?.isAttending ? "参加" : "不参加"}\n`;
   }
-  
-  details += `準備: ${getPreparationTypeText(mealPlan.preparationType)}\n`;
-  
-  if (mealPlan.cookerId) {
-    const cooker = users.find((u) => u.id === mealPlan.cookerId);
+
+  details += `準備: ${getPreparationTypeText(typedMealPlan.preparationType)}\n`;
+
+  if (typedMealPlan.cookerId) {
+    const cooker = users.find((u) => u.id === typedMealPlan.cookerId);
     if (cooker) {
       details += `調理担当: ${cooker.name}\n`;
     }
   }
-  
+
   return details;
 };

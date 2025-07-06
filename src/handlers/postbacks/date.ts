@@ -1,15 +1,15 @@
 import type { TemplateContent } from "@line/bot-sdk";
 import { MealType, type User } from "@prisma/client";
-import { 
-  sendTextMessage, 
-  sendTemplateMessage, 
-  createMainMenuTemplate 
+import { MESSAGES } from "../../constants";
+import {
+  createMainMenuTemplate,
+  sendTemplateMessage,
+  sendTextMessage,
 } from "../../services/line";
 import { getMealPlan } from "../../services/meal";
 import { formatDateJP } from "../../utils/date";
 import { logger } from "../../utils/logger";
 import { parseDate } from "../../utils/meal";
-import { MESSAGES } from "../../constants";
 
 /**
  * 日付選択のポストバックを処理
@@ -80,6 +80,10 @@ export const handleDateSelection = async (
   } catch (error) {
     logger.error("日付選択処理エラー:", error);
     await sendTextMessage(user.lineId, MESSAGES.ERRORS.PROCESSING_ERROR);
-    await sendTemplateMessage(user.lineId, createMainMenuTemplate(), "メインメニュー");
+    await sendTemplateMessage(
+      user.lineId,
+      createMainMenuTemplate(),
+      "メインメニュー",
+    );
   }
 };

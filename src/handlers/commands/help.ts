@@ -1,6 +1,6 @@
 import type { User } from "@prisma/client";
-import { sendTextMessage } from "../../services/line";
 import { MESSAGES } from "../../constants";
+import { sendTextMessage } from "../../services/line";
 
 /**
  * ヘルプコマンドを処理
@@ -8,7 +8,7 @@ import { MESSAGES } from "../../constants";
  * @param user ユーザー
  */
 export const handleHelpCommand = async (
-  args: string[],
+  _args: string[],
   user: User,
 ): Promise<void> => {
   await sendTextMessage(user.lineId, MESSAGES.HELP.COMMAND_LIST);

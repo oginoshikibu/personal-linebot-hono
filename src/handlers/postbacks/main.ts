@@ -1,11 +1,15 @@
 import type { User } from "@prisma/client";
-import { sendTextMessage, sendTemplateMessage, createMainMenuTemplate } from "../../services/line";
-import { logger } from "../../utils/logger";
 import { MESSAGES } from "../../constants";
-import { handleDateSelection } from "./date";
-import { handleRegisterPostback } from "./register";
+import {
+  createMainMenuTemplate,
+  sendTemplateMessage,
+  sendTextMessage,
+} from "../../services/line";
+import { logger } from "../../utils/logger";
 import { handleChangePostback } from "./change";
 import { handleCheckPostback } from "./check";
+import { handleDateSelection } from "./date";
+import { handleRegisterPostback } from "./register";
 
 /**
  * ポストバックデータを処理
@@ -64,10 +68,18 @@ export const handlePostbackData = async (
     // 未知のポストバック
     logger.warn(`未知のポストバックデータ: ${data}`, { userId: user.lineId });
     await sendTextMessage(user.lineId, MESSAGES.ERRORS.UNKNOWN_POSTBACK);
-    await sendTemplateMessage(user.lineId, createMainMenuTemplate(), "メインメニュー");
+    await sendTemplateMessage(
+      user.lineId,
+      createMainMenuTemplate(),
+      "メインメニュー",
+    );
   } catch (error) {
     logger.error(`ポストバックデータ処理エラー: ${data}`, error);
     await sendTextMessage(user.lineId, MESSAGES.ERRORS.PROCESSING_ERROR);
-    await sendTemplateMessage(user.lineId, createMainMenuTemplate(), "メインメニュー");
+    await sendTemplateMessage(
+      user.lineId,
+      createMainMenuTemplate(),
+      "メインメニュー",
+    );
   }
 };

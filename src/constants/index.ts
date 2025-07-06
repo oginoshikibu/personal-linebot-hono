@@ -17,11 +17,16 @@ export const MEAL_TYPE_TEXT = {
 // メッセージテンプレート
 export const MESSAGES = {
   ERRORS: {
-    INVALID_DATE: "無効な日付形式です。YYYY-MM-DD形式、または today/tomorrow を使用してください。",
-    INVALID_MEAL_TYPE: "無効な食事タイプです。lunch または dinner を使用してください。",
-    INVALID_PREPARATION_TYPE: "無効な準備方法です。cook, individual, または buy を使用してください。",
-    MISSING_PARAMETERS: "必要なパラメータが不足しています。もう一度お試しください。",
-    REGISTRATION_FAILED: "予定の登録中にエラーが発生しました。もう一度お試しください。",
+    INVALID_DATE:
+      "無効な日付形式です。YYYY-MM-DD形式、または today/tomorrow を使用してください。",
+    INVALID_MEAL_TYPE:
+      "無効な食事タイプです。lunch または dinner を使用してください。",
+    INVALID_PREPARATION_TYPE:
+      "無効な準備方法です。cook, individual, または buy を使用してください。",
+    MISSING_PARAMETERS:
+      "必要なパラメータが不足しています。もう一度お試しください。",
+    REGISTRATION_FAILED:
+      "予定の登録中にエラーが発生しました。もう一度お試しください。",
     UNKNOWN_COMMAND: "未知のコマンドです。/help でコマンド一覧を表示します。",
     UNKNOWN_POSTBACK: "不明な操作です。もう一度お試しください。",
     PROCESSING_ERROR: "処理中にエラーが発生しました。もう一度お試しください。",
@@ -48,7 +53,8 @@ export const MESSAGES = {
 予定確認 - 食事予定を確認
 ヘルプ - このヘルプを表示`,
     CALENDAR_EXPLANATION: "カレンダーから日付を選択して、予定を確認できます。",
-    REGISTER_USAGE: "使用方法: /register <日付(today/tomorrow/YYYY-MM-DD)> <食事タイプ(lunch/dinner)> <参加(yes/no)> [準備方法(cook/individual/buy)]",
+    REGISTER_USAGE:
+      "使用方法: /register <日付(today/tomorrow/YYYY-MM-DD)> <食事タイプ(lunch/dinner)> <参加(yes/no)> [準備方法(cook/individual/buy)]",
   },
   SUCCESS: {
     REGISTRATION_COMPLETE: "予定を登録しました。",
