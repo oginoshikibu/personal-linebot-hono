@@ -39,7 +39,7 @@ export const errorHandler = async (
         status: "error",
         message: error.message,
       };
-      return c.json(response, error.statusCode);
+      return c.json(response, error.statusCode as 400 | 401 | 403 | 404 | 500);
     }
 
     // 予期しないエラー
