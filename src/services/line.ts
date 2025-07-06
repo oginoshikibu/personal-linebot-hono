@@ -3,15 +3,10 @@ import {
   type FlexMessage,
   type FlexContainer,
   type FlexBubble,
-  type FlexComponent,
-  type FlexBox,
   type MessageAPIResponseBase,
   type TemplateMessage,
   type TemplateContent,
   type TextMessage,
-  type Action,
-  type PostbackAction,
-  type MessageAction,
 } from "@line/bot-sdk";
 import { config } from "../config";
 import { MealPlanData } from "../types";

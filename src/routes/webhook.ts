@@ -5,7 +5,6 @@ import { sendTextMessage } from "../services/line";
 import { getUserByLineId } from "../services/meal";
 import { lineSignatureMiddleware } from "../utils/auth";
 import { logger } from "../utils/logger";
-import { AppError } from "../utils/error";
 import { asyncHandler } from "../utils/error";
 
 /**

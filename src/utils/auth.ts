@@ -3,7 +3,6 @@ import type { Context } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { config } from "../config";
 import { logger } from "./logger";
-import { AppError } from "./error";
 
 /**
  * LINE署名を検証する

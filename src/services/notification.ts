@@ -75,27 +75,6 @@ const prepareMealPlanData = (
 };
 
 /**
- * 食事予定の参加状況を確認
- * @param mealPlan 食事予定
- * @param user ユーザー
- * @returns 参加しているかどうか
- */
-const isUserAttending = (
-  mealPlan: MealPlan & { participations?: any[] },
-  user: User,
-): boolean => {
-  try {
-    const participation = mealPlan.participations?.find(
-      (p) => p.userId === user.id,
-    );
-    return !!participation?.isAttending;
-  } catch (error) {
-    logger.error(`参加状況確認エラー: ${user.id}`, error);
-    return false;
-  }
-};
-
-/**
  * 朝の通知を送信
  */
 export const sendMorningNotification = async (): Promise<void> => {
@@ -109,8 +88,16 @@ export const sendMorningNotification = async (): Promise<void> => {
     const users = await getAllUsers();
 
     // 食事予定データを準備
-    const lunchData = prepareMealPlanData(lunch as any, users);
-    const dinnerData = prepareMealPlanData(dinner as any, users);
+    const lunchData = prepareMealPlanData({
+      ...lunch,
+      participations: [],
+      cooker: null,
+    }, users);
+    const dinnerData = prepareMealPlanData({
+      ...dinner,
+      participations: [],
+      cooker: null,
+    }, users);
 
     // 日付を日本語形式で取得
     const today = formatDateJP();
@@ -163,8 +150,16 @@ export const sendEveningNotification = async (): Promise<void> => {
     const users = await getAllUsers();
 
     // 食事予定データを準備
-    const lunchData = prepareMealPlanData(lunch as any, users);
-    const dinnerData = prepareMealPlanData(dinner as any, users);
+    const lunchData = prepareMealPlanData({
+      ...lunch,
+      participations: [],
+      cooker: null,
+    }, users);
+    const dinnerData = prepareMealPlanData({
+      ...dinner,
+      participations: [],
+      cooker: null,
+    }, users);
 
     // 明日の日付を日本語形式で取得
     const tomorrow = formatDateJP(new Date(Date.now() + 24 * 60 * 60 * 1000));
@@ -231,9 +226,6 @@ export const sendMealPlanChangeNotification = async (
     // 日付と食事タイプを取得
     const date = formatDateJP(mealPlan.date);
     const mealType = mealPlan.mealType === "LUNCH" ? "昼食" : "夕食";
-
-    // 通知メッセージを作成
-    const message = `【食事予定変更通知】\n${changer.name}さんが${date}の${mealType}の予定を変更しました。\n最新の予定を確認してください。`;
 
     // 他のユーザーに通知
     let successCount = 0;

@@ -1,5 +1,4 @@
 import type { Hono } from "hono";
-import { webhookRoute } from "./webhook";
 import { apiRoutes } from "./api";
 import { logger } from "../utils/logger";
 import { errorHandler } from "../middleware/errorHandler";
