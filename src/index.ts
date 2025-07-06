@@ -5,13 +5,13 @@ import { logger as honoLogger } from "hono/logger";
 import { schedule } from "node-cron";
 import { config } from "./config";
 import { setupRoutes } from "./routes/setup";
-import { logger } from "./utils/logger";
-import { AppError } from "./utils/error";
+import { initializeLineNotification } from "./services/line";
 import {
   sendEveningNotification,
   sendMorningNotification,
 } from "./services/notification";
-import { initializeLineNotification } from "./services/line";
+import { AppError } from "./utils/error";
+import { logger } from "./utils/logger";
 
 // Honoアプリケーションを作成
 const app = new Hono();

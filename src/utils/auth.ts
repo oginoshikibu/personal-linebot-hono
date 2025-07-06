@@ -62,7 +62,7 @@ export const isAllowedLineId = (lineId: string): boolean => {
  */
 export const lineSignatureMiddleware = async (
   c: Context,
-  next: () => Promise<Response | void>,
+  next: () => Promise<Response | undefined>,
 ): Promise<Response> => {
   try {
     const signature = c.req.header("x-line-signature");

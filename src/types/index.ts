@@ -1,4 +1,4 @@
-import { MealType, PreparationType, User } from "@prisma/client";
+import type { MealType, PreparationType, User } from "@prisma/client";
 
 // LINE関連の型
 export interface LineMessage {

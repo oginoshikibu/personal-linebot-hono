@@ -1,17 +1,17 @@
 import {
   Client,
-  type FlexMessage,
-  type FlexContainer,
   type FlexBubble,
+  type FlexContainer,
+  type FlexMessage,
   type MessageAPIResponseBase,
-  type TemplateMessage,
   type TemplateContent,
+  type TemplateMessage,
   type TextMessage,
 } from "@line/bot-sdk";
 import { config } from "../config";
-import { MealPlanData } from "../types";
-import { AppError } from "../utils/error";
+import type { MealPlanData } from "../types";
 import { isAllowedLineId } from "../utils/auth";
+import { AppError } from "../utils/error";
 import { logger } from "../utils/logger";
 
 // LINE Client初期化
@@ -161,10 +161,7 @@ export const broadcastTextMessage = async (
     }
 
     if (errors.length > 0) {
-      logger.error(
-        "一部のメッセージ送信に失敗: " + errors.length + "件",
-        errors[0],
-      );
+      logger.error(`一部のメッセージ送信に失敗: ${errors.length}件`, errors[0]);
     }
 
     return results;

@@ -1,11 +1,11 @@
 import type { Context } from "hono";
 import { HTTPException } from "hono/http-exception";
+import type { ApiResponse } from "../types";
 import { AppError } from "../utils/error";
 import { logger } from "../utils/logger";
-import { ApiResponse } from "../types";
 
 // 明示的にNext型を定義
-type Next = () => Promise<Response | void>;
+type Next = () => Promise<Response | undefined>;
 
 /**
  * グローバルエラーハンドリングミドルウェア

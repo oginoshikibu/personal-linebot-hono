@@ -1,4 +1,4 @@
-import type { MealPlan, MealParticipation, User } from "@prisma/client";
+import type { MealParticipation, MealPlan, User } from "@prisma/client";
 
 // MealPlanの拡張型
 export type MealPlanWithRelations = MealPlan & {
