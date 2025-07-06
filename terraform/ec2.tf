@@ -94,10 +94,4 @@ resource "aws_lb_target_group_attachment" "linebot" {
   target_group_arn = aws_lb_target_group.linebot_tg.arn
   target_id        = aws_instance.linebot_server_vpc.id
   port             = var.app_port
-}
-
-# 出力の追加
-output "instance_vpc_public_ip" {
-  description = "Public IP address of the EC2 instance in VPC"
-  value       = aws_eip.linebot_eip_vpc.public_ip
 } 
