@@ -9,7 +9,7 @@ import { MEAL_TYPE_TEXT, PREPARATION_TYPE_TEXT } from "../constants";
 export const getPreparationTypeText = (
   preparationType: PreparationType,
 ): string => {
-  return PREPARATION_TYPE_TEXT[preparationType] || "未定";
+  return PREPARATION_TYPE_TEXT[preparationType];
 };
 
 /**
@@ -18,7 +18,7 @@ export const getPreparationTypeText = (
  * @returns 食事タイプの日本語表示
  */
 export const getMealTypeText = (mealType: MealType): string => {
-  return MEAL_TYPE_TEXT[mealType] || "未定";
+  return MEAL_TYPE_TEXT[mealType];
 };
 
 /**

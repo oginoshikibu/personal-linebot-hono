@@ -65,6 +65,44 @@ export const handleCheckCommand = async (
 };
 
 /**
+ * オブジェクトがMealPlanWithRelations型かどうかを判定する型ガード
+ * @param obj 判定対象のオブジェクト
+ * @returns MealPlanWithRelations型かどうか
+ */
+const isMealPlanWithRelations = (
+  obj: unknown,
+): obj is MealPlanWithRelations => {
+  if (!obj || typeof obj !== "object") {
+    return false;
+  }
+
+  try {
+    // 型アサーションを避けるために、プロパティアクセスを安全に行う
+    const hasId = Object.hasOwn(obj, "id");
+    const hasPreparationType = Object.hasOwn(obj, "preparationType");
+    const hasParticipations = Object.hasOwn(obj, "participations");
+
+    if (!hasId || !hasPreparationType || !hasParticipations) {
+      return false;
+    }
+
+    // 型アサーションを避けて、プロパティの型を安全にチェック
+    // @ts-expect-error - obj is confirmed to be an object with required properties above
+    const idType = typeof obj.id;
+    // @ts-expect-error - obj is confirmed to be an object with required properties above
+    const prepType = typeof obj.preparationType;
+    // @ts-expect-error - obj is confirmed to be an object with required properties above
+    const participationsIsArray = Array.isArray(obj.participations);
+
+    return (
+      idType === "string" && prepType === "string" && participationsIsArray
+    );
+  } catch {
+    return false;
+  }
+};
+
+/**
  * 食事予定の詳細をフォーマット
  * @param mealPlan 食事予定
  * @param users ユーザー一覧
@@ -74,24 +112,22 @@ const formatMealPlanDetails = (mealPlan: unknown, users: User[]): string => {
   let details = "";
 
   // Type guard to ensure mealPlan has expected properties
-  if (!mealPlan || typeof mealPlan !== "object") {
+  if (!isMealPlanWithRelations(mealPlan)) {
     return "食事予定の情報が正しく取得できませんでした。";
   }
 
-  const typedMealPlan = mealPlan as MealPlanWithRelations;
-
   for (const u of users) {
-    // participationsプロパティは実行時には存在する
-    const participation = typedMealPlan.participations.find(
+    // participationsプロパティは型ガードで確認済み
+    const participation = mealPlan.participations.find(
       (p: MealParticipation) => p.userId === u.id,
     );
     details += `${u.name}: ${participation?.isAttending ? "参加" : "不参加"}\n`;
   }
 
-  details += `準備: ${getPreparationTypeText(typedMealPlan.preparationType)}\n`;
+  details += `準備: ${getPreparationTypeText(mealPlan.preparationType)}\n`;
 
-  if (typedMealPlan.cookerId) {
-    const cooker = users.find((u) => u.id === typedMealPlan.cookerId);
+  if (mealPlan.cookerId) {
+    const cooker = users.find((u) => u.id === mealPlan.cookerId);
     if (cooker) {
       details += `調理担当: ${cooker.name}\n`;
     }
