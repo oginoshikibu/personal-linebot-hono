@@ -9,4 +9,4 @@ export type MealPlanWithRelations = MealPlan & {
 // MealParticipationの拡張型
 export type MealParticipationWithUser = MealParticipation & {
   user: User;
-}; 
+};

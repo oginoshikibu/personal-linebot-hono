@@ -1,4 +1,4 @@
-import { MealType, PreparationType, User } from '@prisma/client';
+import { MealType, PreparationType, User } from "@prisma/client";
 
 // LINE関連の型
 export interface LineMessage {
@@ -30,10 +30,10 @@ export interface CommandArgs {
 
 // API レスポンス型
 export interface ApiResponse {
-  status: 'success' | 'error';
+  status: "success" | "error";
   message: string;
   data?: unknown;
 }
 
 // エクスポートする型
-export type { User }; 
+export type { User };

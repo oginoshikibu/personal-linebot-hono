@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from "@prisma/client";
 
 // グローバルオブジェクトの型定義
 declare global {
@@ -10,8 +10,8 @@ declare global {
 export const prisma = global.prismaClient || new PrismaClient();
 
 // 開発環境の場合のみグローバル変数にPrismaClientを保存
-if (process.env.NODE_ENV !== 'production') {
+if (process.env.NODE_ENV !== "production") {
   global.prismaClient = prisma;
 }
 
-export default prisma; 
+export default prisma;

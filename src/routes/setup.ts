@@ -31,4 +31,4 @@ export const setupRoutes = (app: Hono): void => {
     logger.error("ルートの設定に失敗しました", error);
     throw error;
   }
-}; 
+};

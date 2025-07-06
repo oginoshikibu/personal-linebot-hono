@@ -135,7 +135,10 @@ export const sendTemplateMessage = async (
     return await lineClient.pushMessage(to, message);
   } catch (error) {
     logger.error(`テンプレートメッセージ送信エラー: ${to}`, error);
-    throw new AppError(`テンプレートメッセージの送信に失敗しました: ${to}`, 500);
+    throw new AppError(
+      `テンプレートメッセージの送信に失敗しました: ${to}`,
+      500,
+    );
   }
 };
 
@@ -163,7 +166,10 @@ export const broadcastTextMessage = async (
     }
 
     if (errors.length > 0) {
-      logger.error("一部のメッセージ送信に失敗: " + errors.length + "件", errors[0]);
+      logger.error(
+        "一部のメッセージ送信に失敗: " + errors.length + "件",
+        errors[0],
+      );
     }
 
     return results;
@@ -200,7 +206,9 @@ export const createMealPlanFlexMessage = (
   };
 
   // 参加者リストを作成
-  const createParticipantComponents = (participants: { name: string; attending: boolean }[]) => {
+  const createParticipantComponents = (
+    participants: { name: string; attending: boolean }[],
+  ) => {
     return participants.map((p) => ({
       type: "text" as const,
       text: `${p.name}: ${p.attending ? "参加" : "不参加"}`,

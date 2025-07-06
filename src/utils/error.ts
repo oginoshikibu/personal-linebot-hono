@@ -28,7 +28,7 @@ export const logError = (error: Error): void => {
  * @returns トライキャッチで包まれた関数
  */
 export const asyncHandler = <T, A extends unknown[]>(
-  fn: (...args: A) => Promise<T>
+  fn: (...args: A) => Promise<T>,
 ): ((...args: A) => Promise<T>) => {
   return async (...args: A): Promise<T> => {
     try {
@@ -52,4 +52,4 @@ export const isOperationalError = (error: Error): boolean => {
     return error.isOperational;
   }
   return false;
-}; 
+};

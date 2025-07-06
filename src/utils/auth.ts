@@ -42,12 +42,12 @@ export const isAllowedLineId = (lineId: string): boolean => {
     if (!lineId) {
       return false;
     }
-    
+
     const allowed = config.line.allowedLineIds.includes(lineId);
     if (!allowed) {
       logger.warn(`未承認のLINE ID: ${lineId}`);
     }
-    
+
     return allowed;
   } catch (error) {
     logger.error("LINE IDの検証中にエラーが発生しました", error);
@@ -92,7 +92,7 @@ export const lineSignatureMiddleware = async (
     if (error instanceof HTTPException) {
       throw error;
     }
-    
+
     logger.error("LINE署名検証ミドルウェアでエラーが発生しました", error);
     throw new HTTPException(500, { message: "内部サーバーエラー" });
   }

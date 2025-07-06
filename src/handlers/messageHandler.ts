@@ -1,12 +1,17 @@
 import type { TextEventMessage } from "@line/bot-sdk";
-import { MealType, PreparationType, type User, type MealParticipation } from "@prisma/client";
-import { 
-  sendTemplateMessage, 
-  sendTextMessage, 
-  createRegisterMenuTemplate, 
-  createChangeMenuTemplate, 
-  createCheckMenuTemplate, 
-  createMainMenuTemplate 
+import {
+  MealType,
+  PreparationType,
+  type User,
+  type MealParticipation,
+} from "@prisma/client";
+import {
+  sendTemplateMessage,
+  sendTextMessage,
+  createRegisterMenuTemplate,
+  createChangeMenuTemplate,
+  createCheckMenuTemplate,
+  createMainMenuTemplate,
 } from "../services/line";
 import {
   createOrUpdateMealPlan,
@@ -166,7 +171,9 @@ const handleRegisterCommand = async (
       date,
       mealType,
       preparationType,
-      preparationType === "COOK_BY_SELF" as PreparationType ? user.id : undefined,
+      preparationType === ("COOK_BY_SELF" as PreparationType)
+        ? user.id
+        : undefined,
     );
 
     // 参加状態を設定
@@ -223,10 +230,16 @@ const handleCheckCommand = async (
 
   try {
     // 昼食の予定を取得
-    const lunch = await getMealPlan(date, MealType.LUNCH) as unknown as MealPlanWithRelations;
+    const lunch = (await getMealPlan(
+      date,
+      MealType.LUNCH,
+    )) as unknown as MealPlanWithRelations;
 
     // 夕食の予定を取得
-    const dinner = await getMealPlan(date, MealType.DINNER) as unknown as MealPlanWithRelations;
+    const dinner = (await getMealPlan(
+      date,
+      MealType.DINNER,
+    )) as unknown as MealPlanWithRelations;
 
     // 全ユーザーを取得
     const users = await getAllUsers();
@@ -253,7 +266,7 @@ const handleCheckCommand = async (
       }
       message += `準備: ${getPreparationTypeText(lunch.preparationType)}\n`;
       if (
-        lunch.preparationType === "COOK_BY_SELF" as PreparationType &&
+        lunch.preparationType === ("COOK_BY_SELF" as PreparationType) &&
         lunch.cookerId
       ) {
         const cooker = users.find((u) => u.id === lunch.cookerId);
@@ -274,7 +287,7 @@ const handleCheckCommand = async (
       }
       message += `準備: ${getPreparationTypeText(dinner.preparationType)}\n`;
       if (
-        dinner.preparationType === "COOK_BY_SELF" as PreparationType &&
+        dinner.preparationType === ("COOK_BY_SELF" as PreparationType) &&
         dinner.cookerId
       ) {
         const cooker = users.find((u) => u.id === dinner.cookerId);

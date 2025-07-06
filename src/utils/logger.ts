@@ -8,7 +8,7 @@ export const logger = {
    * @param data 追加データ
    */
   info: (message: string, data?: unknown): void => {
-    console.log(`[INFO] ${message}`, data !== undefined ? data : '');
+    console.log(`[INFO] ${message}`, data !== undefined ? data : "");
   },
 
   /**
@@ -17,7 +17,7 @@ export const logger = {
    * @param data 追加データ
    */
   warn: (message: string, data?: unknown): void => {
-    console.warn(`[WARN] ${message}`, data !== undefined ? data : '');
+    console.warn(`[WARN] ${message}`, data !== undefined ? data : "");
   },
 
   /**
@@ -40,8 +40,8 @@ export const logger = {
    * @param data 追加データ
    */
   debug: (message: string, data?: unknown): void => {
-    if (process.env.NODE_ENV !== 'production') {
-      console.debug(`[DEBUG] ${message}`, data !== undefined ? data : '');
+    if (process.env.NODE_ENV !== "production") {
+      console.debug(`[DEBUG] ${message}`, data !== undefined ? data : "");
     }
   },
-}; 
+};

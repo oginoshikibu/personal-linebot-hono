@@ -94,7 +94,10 @@ export const getMealPlan = async (
     });
   } catch (error) {
     logger.error(`食事予定取得エラー: ${date}, ${mealType}`, error);
-    throw new AppError(`食事予定の取得に失敗しました: ${date}, ${mealType}`, 500);
+    throw new AppError(
+      `食事予定の取得に失敗しました: ${date}, ${mealType}`,
+      500,
+    );
   }
 };
 
@@ -149,7 +152,10 @@ export const createOrUpdateMealPlan = async (
     });
   } catch (error) {
     logger.error(`食事予定作成/更新エラー: ${date}, ${mealType}`, error);
-    throw new AppError(`食事予定の作成/更新に失敗しました: ${date}, ${mealType}`, 500);
+    throw new AppError(
+      `食事予定の作成/更新に失敗しました: ${date}, ${mealType}`,
+      500,
+    );
   }
 };
 
@@ -190,7 +196,10 @@ export const setMealParticipation = async (
     });
   } catch (error) {
     logger.error(`食事参加設定エラー: ${mealPlanId}, ${userId}`, error);
-    throw new AppError(`食事参加の設定に失敗しました: ${mealPlanId}, ${userId}`, 500);
+    throw new AppError(
+      `食事参加の設定に失敗しました: ${mealPlanId}, ${userId}`,
+      500,
+    );
   }
 };
 

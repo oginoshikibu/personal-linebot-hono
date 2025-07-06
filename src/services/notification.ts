@@ -41,11 +41,11 @@ const logNotification = async (
  * @returns Flexメッセージ用のデータ
  */
 const prepareMealPlanData = (
-  mealPlan: MealPlan & { 
+  mealPlan: MealPlan & {
     participations: (MealParticipation & { user: User })[];
     cooker?: User | null;
-  }, 
-  users: User[]
+  },
+  users: User[],
 ): MealPlanData => {
   // 参加者データを準備
   const participants = users.map((user) => {
@@ -80,7 +80,10 @@ const prepareMealPlanData = (
  * @param user ユーザー
  * @returns 参加しているかどうか
  */
-const isUserAttending = (mealPlan: MealPlan & { participations?: any[] }, user: User): boolean => {
+const isUserAttending = (
+  mealPlan: MealPlan & { participations?: any[] },
+  user: User,
+): boolean => {
   try {
     const participation = mealPlan.participations?.find(
       (p) => p.userId === user.id,
@@ -98,7 +101,7 @@ const isUserAttending = (mealPlan: MealPlan & { participations?: any[] }, user: 
 export const sendMorningNotification = async (): Promise<void> => {
   try {
     logger.info("朝の通知を送信します...");
-    
+
     // 当日の食事予定を取得または作成
     const { lunch, dinner } = await getOrCreateTodayMealPlans();
 
@@ -137,7 +140,9 @@ export const sendMorningNotification = async (): Promise<void> => {
     // 通知ログを記録
     await logNotification("morning", `本日の食事予定通知（${today}）`);
 
-    logger.info(`朝の通知を送信しました: ${today}, 成功: ${successCount}/${users.length}`);
+    logger.info(
+      `朝の通知を送信しました: ${today}, 成功: ${successCount}/${users.length}`,
+    );
   } catch (error) {
     logger.error("朝の通知の送信に失敗しました", error);
     throw new AppError("朝の通知の送信に失敗しました", 500);
@@ -150,7 +155,7 @@ export const sendMorningNotification = async (): Promise<void> => {
 export const sendEveningNotification = async (): Promise<void> => {
   try {
     logger.info("夜の通知を送信します...");
-    
+
     // 翌日の食事予定を取得または作成
     const { lunch, dinner } = await getOrCreateNextDayMealPlans();
 
@@ -189,7 +194,9 @@ export const sendEveningNotification = async (): Promise<void> => {
     // 通知ログを記録
     await logNotification("evening", `明日の食事予定通知（${tomorrow}）`);
 
-    logger.info(`夜の通知を送信しました: ${tomorrow}, 成功: ${successCount}/${users.length}`);
+    logger.info(
+      `夜の通知を送信しました: ${tomorrow}, 成功: ${successCount}/${users.length}`,
+    );
   } catch (error) {
     logger.error("夜の通知の送信に失敗しました", error);
     throw new AppError("夜の通知の送信に失敗しました", 500);
@@ -233,13 +240,23 @@ export const sendMealPlanChangeNotification = async (
     for (const user of otherUsers) {
       try {
         // 食事予定データを準備
-        const lunchData = mealPlan.mealType === "LUNCH" 
-          ? { participants: [], preparationType: mealPlan.preparationType, cooker: changer.name } 
-          : { participants: [], preparationType: "INDIVIDUAL" };
-        
-        const dinnerData = mealPlan.mealType === "DINNER" 
-          ? { participants: [], preparationType: mealPlan.preparationType, cooker: changer.name } 
-          : { participants: [], preparationType: "INDIVIDUAL" };
+        const lunchData =
+          mealPlan.mealType === "LUNCH"
+            ? {
+                participants: [],
+                preparationType: mealPlan.preparationType,
+                cooker: changer.name,
+              }
+            : { participants: [], preparationType: "INDIVIDUAL" };
+
+        const dinnerData =
+          mealPlan.mealType === "DINNER"
+            ? {
+                participants: [],
+                preparationType: mealPlan.preparationType,
+                cooker: changer.name,
+              }
+            : { participants: [], preparationType: "INDIVIDUAL" };
 
         await sendFlexMessage(
           user.lineId,
@@ -259,7 +276,9 @@ export const sendMealPlanChangeNotification = async (
     // 通知ログを記録
     await logNotification("change", `食事予定変更通知（${date}の${mealType}）`);
 
-    logger.info(`食事予定変更通知を送信しました: ${date}の${mealType}, 成功: ${successCount}/${otherUsers.length}`);
+    logger.info(
+      `食事予定変更通知を送信しました: ${date}の${mealType}, 成功: ${successCount}/${otherUsers.length}`,
+    );
   } catch (error) {
     logger.error("食事予定変更通知の送信に失敗しました", error);
     throw new AppError("食事予定変更通知の送信に失敗しました", 500);

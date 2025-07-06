@@ -13,37 +13,39 @@ import { asyncHandler } from "../utils/error";
  * @param c Honoコンテキスト
  * @returns レスポンス
  */
-export const webhookHandler = asyncHandler(async (c: Context): Promise<Response> => {
-  const body = await c.req.json();
-  logger.debug("Webhookリクエストを受信", body);
+export const webhookHandler = asyncHandler(
+  async (c: Context): Promise<Response> => {
+    const body = await c.req.json();
+    logger.debug("Webhookリクエストを受信", body);
 
-  if (body.events && body.events.length > 0) {
-    const events = body.events;
+    if (body.events && body.events.length > 0) {
+      const events = body.events;
 
-    for (const event of events) {
-      try {
-        switch (event.type) {
-          case "message":
-            await handleMessageEvent(event);
-            break;
-          case "follow":
-            await handleFollowEvent(event);
-            break;
-          case "postback":
-            await handlePostbackEvent(event);
-            break;
-          default:
-            logger.debug(`未対応のイベントタイプ: ${event.type}`);
+      for (const event of events) {
+        try {
+          switch (event.type) {
+            case "message":
+              await handleMessageEvent(event);
+              break;
+            case "follow":
+              await handleFollowEvent(event);
+              break;
+            case "postback":
+              await handlePostbackEvent(event);
+              break;
+            default:
+              logger.debug(`未対応のイベントタイプ: ${event.type}`);
+          }
+        } catch (error) {
+          logger.error(`イベント処理エラー: ${event.type}`, error);
         }
-      } catch (error) {
-        logger.error(`イベント処理エラー: ${event.type}`, error);
       }
     }
-  }
 
-  // LINEプラットフォームへのレスポンス
-  return new Response("OK", { status: 200 });
-});
+    // LINEプラットフォームへのレスポンス
+    return new Response("OK", { status: 200 });
+  },
+);
 
 /**
  * メッセージイベントを処理
@@ -89,7 +91,10 @@ const handleMessageEvent = async (event: MessageEvent): Promise<void> => {
         "メッセージの処理中にエラーが発生しました。もう一度お試しください。",
       );
     } catch (sendError) {
-      logger.error(`エラーメッセージの送信に失敗しました: ${userId}`, sendError);
+      logger.error(
+        `エラーメッセージの送信に失敗しました: ${userId}`,
+        sendError,
+      );
     }
   }
 };
@@ -168,7 +173,10 @@ const handlePostbackEvent = async (event: PostbackEvent): Promise<void> => {
         "ポストバックの処理中にエラーが発生しました。もう一度お試しください。",
       );
     } catch (sendError) {
-      logger.error(`エラーメッセージの送信に失敗しました: ${userId}`, sendError);
+      logger.error(
+        `エラーメッセージの送信に失敗しました: ${userId}`,
+        sendError,
+      );
     }
   }
 };

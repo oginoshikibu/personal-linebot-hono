@@ -21,7 +21,9 @@ export const errorHandler = async (
     // 次のミドルウェアまたはハンドラを実行
     const response = await next();
     // レスポンスを返す
-    return response instanceof Response ? response : new Response("OK", { status: 200 });
+    return response instanceof Response
+      ? response
+      : new Response("OK", { status: 200 });
   } catch (error) {
     // エラーをログに記録
     logger.error("リクエスト処理中にエラーが発生しました", error);
@@ -35,7 +37,7 @@ export const errorHandler = async (
       };
       return c.json(response, error.status);
     }
-    
+
     if (error instanceof AppError) {
       // アプリケーション固有のエラー
       const response: ApiResponse = {
@@ -44,7 +46,7 @@ export const errorHandler = async (
       };
       return c.json(response, error.statusCode);
     }
-    
+
     // 予期しないエラー
     const response: ApiResponse = {
       status: "error",
@@ -52,4 +54,4 @@ export const errorHandler = async (
     };
     return c.json(response, 500);
   }
-}; 
+};
