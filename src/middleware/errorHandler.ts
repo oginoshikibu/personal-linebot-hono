@@ -13,7 +13,7 @@ import { logger } from "../utils/logger";
 export const errorHandler = async (
   c: Context,
   next: Next,
-): Promise<Response | void> => {
+): Promise<Response | undefined> => {
   try {
     // 次のミドルウェアまたはハンドラを実行
     await next();
