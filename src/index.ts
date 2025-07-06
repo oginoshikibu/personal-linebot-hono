@@ -4,7 +4,7 @@ import { cors } from "hono/cors";
 import { logger as honoLogger } from "hono/logger";
 import { schedule } from "node-cron";
 import { config } from "./config";
-import { setupRoutes } from "./routes/setup";
+import { setupRichMenuHandler, setupRoutes } from "./routes/setup";
 import { initializeLineNotification } from "./services/line";
 import {
   sendEveningNotification,
@@ -22,6 +22,9 @@ app.use("/api/*", cors());
 
 // ルートを設定
 setupRoutes(app);
+
+// セットアップルートを設定
+app.get("/setup/richmenu", setupRichMenuHandler);
 
 /**
  * 定期実行タスクを設定
