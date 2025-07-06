@@ -6,6 +6,7 @@ import {
   setMealParticipation,
 } from "../services/meal";
 import { sendMealPlanChangeNotification } from "../services/notification";
+import type { MealPlanWithRelations } from "../types/prisma";
 import { formatDateJP } from "../utils/date";
 import { logger } from "../utils/logger";
 
@@ -207,7 +208,10 @@ const handleCheckMeal = async (
 
   try {
     // 食事予定を取得
-    const mealPlan = await getMealPlan(date, mealType);
+    const mealPlan = (await getMealPlan(
+      date,
+      mealType,
+    )) as MealPlanWithRelations | null;
 
     if (!mealPlan) {
       await sendTextMessage(
