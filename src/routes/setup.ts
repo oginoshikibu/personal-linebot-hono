@@ -17,7 +17,7 @@ export const setupRoutes = (app: Hono): void => {
     app.get("/", (c) => c.text("LINE Bot Server is running!"));
 
     // Webhookルート
-    app.post("/webhook", ...webhookRoute.post);
+    app.post("/api/webhook", ...webhookRoute.post);
 
     // APIルート
     app.get("/api/health", apiRoutes.health.get);
