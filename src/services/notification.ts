@@ -88,16 +88,22 @@ export const sendMorningNotification = async (): Promise<void> => {
     const users = await getAllUsers();
 
     // 食事予定データを準備
-    const lunchData = prepareMealPlanData({
-      ...lunch,
-      participations: [],
-      cooker: null,
-    }, users);
-    const dinnerData = prepareMealPlanData({
-      ...dinner,
-      participations: [],
-      cooker: null,
-    }, users);
+    const lunchData = prepareMealPlanData(
+      {
+        ...lunch,
+        participations: [],
+        cooker: null,
+      },
+      users,
+    );
+    const dinnerData = prepareMealPlanData(
+      {
+        ...dinner,
+        participations: [],
+        cooker: null,
+      },
+      users,
+    );
 
     // 日付を日本語形式で取得
     const today = formatDateJP();
@@ -150,16 +156,22 @@ export const sendEveningNotification = async (): Promise<void> => {
     const users = await getAllUsers();
 
     // 食事予定データを準備
-    const lunchData = prepareMealPlanData({
-      ...lunch,
-      participations: [],
-      cooker: null,
-    }, users);
-    const dinnerData = prepareMealPlanData({
-      ...dinner,
-      participations: [],
-      cooker: null,
-    }, users);
+    const lunchData = prepareMealPlanData(
+      {
+        ...lunch,
+        participations: [],
+        cooker: null,
+      },
+      users,
+    );
+    const dinnerData = prepareMealPlanData(
+      {
+        ...dinner,
+        participations: [],
+        cooker: null,
+      },
+      users,
+    );
 
     // 明日の日付を日本語形式で取得
     const tomorrow = formatDateJP(new Date(Date.now() + 24 * 60 * 60 * 1000));

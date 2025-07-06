@@ -170,9 +170,7 @@ const handleRegisterCommand = async (
       date,
       mealType,
       preparationType,
-      preparationType === PreparationType.COOK_BY_SELF
-        ? user.id
-        : undefined,
+      preparationType === PreparationType.COOK_BY_SELF ? user.id : undefined,
     );
 
     // 参加状態を設定
@@ -229,16 +227,10 @@ const handleCheckCommand = async (
 
   try {
     // 昼食の予定を取得
-    const lunch = await getMealPlan(
-      date,
-      MealType.LUNCH,
-    );
+    const lunch = await getMealPlan(date, MealType.LUNCH);
 
     // 夕食の予定を取得
-    const dinner = await getMealPlan(
-      date,
-      MealType.DINNER,
-    );
+    const dinner = await getMealPlan(date, MealType.DINNER);
 
     // 全ユーザーを取得
     const users = await getAllUsers();
