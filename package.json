@@ -19,7 +19,11 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "test:ui": "vitest --ui"
+    "test:ui": "vitest --ui",
+    "add-user": "tsx scripts/add_user.ts",
+    "delete-user": "tsx scripts/delete_user.ts",
+    "list-users": "tsx scripts/list_users.ts",
+    "find-user": "tsx scripts/find_user.ts"
   },
   "keywords": [
     "line",
