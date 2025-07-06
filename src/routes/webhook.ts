@@ -1,6 +1,7 @@
 import type { MessageEvent, PostbackEvent, WebhookEvent } from "@line/bot-sdk";
 import type { Context } from "hono";
 import { handleTextMessage } from "../handlers/messageHandler";
+import { handlePostbackData } from "../handlers/postbackHandler";
 import { sendTextMessage } from "../services/line";
 import { getUserByLineId } from "../services/meal";
 import { lineSignatureMiddleware } from "../utils/auth";
@@ -162,8 +163,8 @@ const handlePostbackEvent = async (event: PostbackEvent): Promise<void> => {
     const { data } = event.postback;
     logger.debug(`ポストバックデータを受信: ${data}`);
 
-    // TODO: ポストバックデータに応じた処理を実装
-    await sendTextMessage(userId, `ポストバックを受け取りました: ${data}`);
+    // ポストバックデータに応じた処理を実装
+    await handlePostbackData(data, user);
   } catch (error) {
     logger.error(`ポストバックイベント処理エラー: ${userId}`, error);
     try {
