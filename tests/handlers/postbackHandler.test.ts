@@ -4,6 +4,7 @@ import * as lineService from "../../src/services/line";
 import * as mealService from "../../src/services/meal";
 import * as notificationService from "../../src/services/notification";
 import { MealType, PreparationType, User } from "@prisma/client";
+import type { MessageAPIResponseBase } from "@line/bot-sdk";
 
 // モックの設定
 vi.mock("../../src/services/line");
@@ -14,16 +15,21 @@ vi.mock("../../src/utils/logger");
 describe("postbackHandler", () => {
   // テスト用ユーザー
   const testUser: User = {
-    id: 1,
+    id: "1",
     name: "テストユーザー",
     lineId: "test-line-id",
-    isActive: true,
     createdAt: new Date(),
     updatedAt: new Date(),
   };
 
   beforeEach(() => {
     vi.clearAllMocks();
+    
+    // モック関数の戻り値を設定
+    vi.mocked(lineService.sendTextMessage).mockResolvedValue({} as MessageAPIResponseBase);
+    vi.mocked(lineService.sendTemplateMessage).mockResolvedValue({} as MessageAPIResponseBase);
+    vi.mocked(lineService.sendRegistrationOptions).mockResolvedValue({} as MessageAPIResponseBase);
+    vi.mocked(lineService.sendFlexMessage).mockResolvedValue({} as MessageAPIResponseBase);
   });
 
   afterEach(() => {
@@ -71,18 +77,18 @@ describe("postbackHandler", () => {
       // モック設定
       const sendTextMessageMock = vi.spyOn(lineService, "sendTextMessage");
       const createOrUpdateMealPlanMock = vi.spyOn(mealService, "createOrUpdateMealPlan").mockResolvedValue({
-        id: 1,
+        id: "1",
         date: new Date(),
         mealType: MealType.LUNCH,
         preparationType: PreparationType.COOK_BY_SELF,
-        cookerId: 1,
+        cookerId: "1",
         createdAt: new Date(),
         updatedAt: new Date(),
       });
       const setMealParticipationMock = vi.spyOn(mealService, "setMealParticipation").mockResolvedValue({
-        id: 1,
-        mealPlanId: 1,
-        userId: 1,
+        id: "1",
+        mealPlanId: "1",
+        userId: "1",
         isAttending: true,
         createdAt: new Date(),
         updatedAt: new Date(),

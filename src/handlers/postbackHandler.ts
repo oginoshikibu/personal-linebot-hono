@@ -1,7 +1,6 @@
 import type { TemplateContent } from "@line/bot-sdk";
 import { MealType, PreparationType, type User } from "@prisma/client";
 import {
-  createChangeMenuTemplate,
   createMainMenuTemplate,
   sendRegistrationOptions,
   sendTemplateMessage,
