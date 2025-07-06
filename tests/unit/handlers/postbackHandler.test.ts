@@ -1,10 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
-import type { PostbackEvent } from "@line/bot-sdk";
+import type { PostbackEvent, TemplateContent } from "@line/bot-sdk";
 import { MealType, PreparationType, type MealPlan } from "@prisma/client";
 import { handlePostbackData } from "../../../src/handlers/postbackHandler";
 import * as mealService from "../../../src/services/meal";
 import * as lineService from "../../../src/services/line";
 import * as notificationService from "../../../src/services/notification";
+import type { MessageAPIResponseBase } from "@line/bot-sdk";
 
 // モック
 vi.mock("../../../src/services/meal", () => ({
@@ -17,6 +18,9 @@ vi.mock("../../../src/services/meal", () => ({
 
 vi.mock("../../../src/services/line", () => ({
   sendTextMessage: vi.fn(),
+  sendRegistrationOptions: vi.fn(),
+  sendTemplateMessage: vi.fn(),
+  createMainMenuTemplate: vi.fn(),
 }));
 
 vi.mock("../../../src/services/notification", () => ({
@@ -34,6 +38,9 @@ describe("ポストバックハンドラー", () => {
 
   beforeEach(() => {
     vi.resetAllMocks();
+    vi.mocked(lineService.createMainMenuTemplate).mockReturnValue({} as TemplateContent);
+    vi.mocked(lineService.sendTemplateMessage).mockResolvedValue({} as MessageAPIResponseBase);
+    vi.mocked(lineService.sendRegistrationOptions).mockResolvedValue({} as MessageAPIResponseBase);
   });
 
   describe("handlePostbackData関数", () => {
@@ -138,8 +145,78 @@ describe("ポストバックハンドラー", () => {
     it("register_today_lunch形式のデータを処理できること", async () => {
       // テスト準備
       const data = "register_today_lunch";
-      const mockMealPlan = { id: "meal1" } as MealPlan;
       
+      // 関数実行
+      await handlePostbackData(data, mockUser);
+      
+      // 検証
+      expect(lineService.sendRegistrationOptions).toHaveBeenCalledWith(
+        mockUser.lineId,
+        expect.any(String),
+        "昼食",
+        expect.any(String),
+        MealType.LUNCH
+      );
+    });
+
+    it("register_today_dinner形式のデータを処理できること", async () => {
+      // テスト準備
+      const data = "register_today_dinner";
+      
+      // 関数実行
+      await handlePostbackData(data, mockUser);
+      
+      // 検証
+      expect(lineService.sendRegistrationOptions).toHaveBeenCalledWith(
+        mockUser.lineId,
+        expect.any(String),
+        "夕食",
+        expect.any(String),
+        MealType.DINNER
+      );
+    });
+
+    it("register_tomorrow_lunch形式のデータを処理できること", async () => {
+      // テスト準備
+      const data = "register_tomorrow_lunch";
+      
+      // 関数実行
+      await handlePostbackData(data, mockUser);
+      
+      // 検証
+      expect(lineService.sendRegistrationOptions).toHaveBeenCalledWith(
+        mockUser.lineId,
+        expect.any(String),
+        "昼食",
+        expect.any(String),
+        MealType.LUNCH
+      );
+    });
+
+    it("register_tomorrow_dinner形式のデータを処理できること", async () => {
+      // テスト準備
+      const data = "register_tomorrow_dinner";
+      
+      // 関数実行
+      await handlePostbackData(data, mockUser);
+      
+      // 検証
+      expect(lineService.sendRegistrationOptions).toHaveBeenCalledWith(
+        mockUser.lineId,
+        expect.any(String),
+        "夕食",
+        expect.any(String),
+        MealType.DINNER
+      );
+    });
+
+    it("confirm_registration形式のデータを処理できること", async () => {
+      // テスト準備
+      const today = new Date();
+      const dateStr = today.toISOString().split("T")[0];
+      const data = `confirm_registration?date=${dateStr}&mealType=LUNCH&attend=true&prepType=INDIVIDUAL`;
+      
+      const mockMealPlan = { id: "meal1" } as MealPlan;
       vi.mocked(mealService.createOrUpdateMealPlan).mockResolvedValue(mockMealPlan);
       vi.mocked(notificationService.sendMealPlanChangeNotification).mockResolvedValue();
       
@@ -150,8 +227,8 @@ describe("ポストバックハンドラー", () => {
       expect(mealService.createOrUpdateMealPlan).toHaveBeenCalledWith(
         expect.any(Date),
         MealType.LUNCH,
-        expect.any(String),
-        mockUser.id
+        PreparationType.INDIVIDUAL,
+        undefined
       );
       
       expect(mealService.setMealParticipation).toHaveBeenCalledWith(
@@ -163,72 +240,6 @@ describe("ポストバックハンドラー", () => {
       expect(lineService.sendTextMessage).toHaveBeenCalledWith(
         mockUser.lineId,
         expect.stringContaining("予定を登録しました")
-      );
-    });
-
-    it("register_today_dinner形式のデータを処理できること", async () => {
-      // テスト準備
-      const data = "register_today_dinner";
-      const mockMealPlan = { id: "meal1" } as MealPlan;
-      
-      vi.mocked(mealService.createOrUpdateMealPlan).mockResolvedValue(mockMealPlan);
-      vi.mocked(notificationService.sendMealPlanChangeNotification).mockResolvedValue();
-      
-      // 関数実行
-      await handlePostbackData(data, mockUser);
-      
-      // 検証
-      expect(mealService.createOrUpdateMealPlan).toHaveBeenCalledWith(
-        expect.any(Date),
-        MealType.DINNER,
-        expect.any(String),
-        mockUser.id
-      );
-      
-      expect(mealService.setMealParticipation).toHaveBeenCalledWith(
-        mockMealPlan.id,
-        mockUser.id,
-        true
-      );
-    });
-
-    it("register_tomorrow_lunch形式のデータを処理できること", async () => {
-      // テスト準備
-      const data = "register_tomorrow_lunch";
-      const mockMealPlan = { id: "meal1" } as MealPlan;
-      
-      vi.mocked(mealService.createOrUpdateMealPlan).mockResolvedValue(mockMealPlan);
-      vi.mocked(notificationService.sendMealPlanChangeNotification).mockResolvedValue();
-      
-      // 関数実行
-      await handlePostbackData(data, mockUser);
-      
-      // 検証
-      expect(mealService.createOrUpdateMealPlan).toHaveBeenCalledWith(
-        expect.any(Date), // 翌日の日付
-        MealType.LUNCH,
-        expect.any(String),
-        mockUser.id
-      );
-    });
-
-    it("register_tomorrow_dinner形式のデータを処理できること", async () => {
-      // テスト準備
-      const data = "register_tomorrow_dinner";
-      const mockMealPlan = { id: "meal1" } as MealPlan;
-      
-      vi.mocked(mealService.createOrUpdateMealPlan).mockResolvedValue(mockMealPlan);
-      vi.mocked(notificationService.sendMealPlanChangeNotification).mockResolvedValue();
-      
-      // 関数実行
-      await handlePostbackData(data, mockUser);
-      
-      // 検証
-      expect(mealService.createOrUpdateMealPlan).toHaveBeenCalledWith(
-        expect.any(Date), // 翌日の日付
-        MealType.DINNER,
-        expect.any(String),
-        mockUser.id
       );
     });
   });

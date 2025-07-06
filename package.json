@@ -33,6 +33,7 @@
     "@hono/node-server": "^1.2.0",
     "@line/bot-sdk": "^7.5.2",
     "@prisma/client": "^5.4.2",
+    "date-fns": "^4.1.0",
     "dotenv": "^16.3.1",
     "hono": "^3.9.0",
     "node-cron": "^3.0.2",

@@ -8,11 +8,13 @@ import {
   type TemplateMessage,
   type TextMessage,
 } from "@line/bot-sdk";
+import type { MealType } from "@prisma/client";
 import { config } from "../config";
 import type { MealPlanData } from "../types";
 import { isAllowedLineId } from "../utils/auth";
 import { AppError } from "../utils/error";
 import { logger } from "../utils/logger";
+import { createCalendarFlexMessage } from "./calendar";
 
 // LINE Client初期化
 const lineClient = new Client({
@@ -445,6 +447,94 @@ export const createMainMenuTemplate = (): TemplateContent => {
       },
     ],
   };
+};
+
+/**
+ * カレンダー選択メッセージを送信
+ * @param to 送信先ユーザーID
+ * @param selectedDate 選択された日付（ハイライト表示）
+ * @returns 送信結果
+ */
+export const sendCalendarMessage = async (
+  to: string,
+  selectedDate?: Date,
+): Promise<MessageAPIResponseBase> => {
+  try {
+    if (!isAllowedLineId(to)) {
+      throw new AppError(`未承認のLINE ID: ${to}`, 403);
+    }
+
+    const calendarContent = createCalendarFlexMessage(selectedDate);
+    return await sendFlexMessage(to, calendarContent, "カレンダー");
+  } catch (error) {
+    logger.error(`カレンダーメッセージ送信エラー: ${to}`, error);
+    throw new AppError(`カレンダーメッセージの送信に失敗しました: ${to}`, 500);
+  }
+};
+
+/**
+ * 参加状態と準備方法を選択するためのテンプレートメッセージを送信
+ * @param to 送信先ユーザーID
+ * @param dateText 日付の表示テキスト
+ * @param mealTypeText 食事タイプの表示テキスト
+ * @param dateStr ISO形式の日付文字列
+ * @param mealType 食事タイプ
+ * @returns 送信結果
+ */
+export const sendRegistrationOptions = async (
+  to: string,
+  dateText: string,
+  mealTypeText: string,
+  dateStr: string,
+  mealType: MealType,
+): Promise<MessageAPIResponseBase> => {
+  try {
+    if (!isAllowedLineId(to)) {
+      throw new AppError(`未承認のLINE ID: ${to}`, 403);
+    }
+
+    // 参加状態を選択するテンプレート
+    const attendanceTemplate: TemplateContent = {
+      type: "buttons",
+      title: `${dateText}の${mealTypeText}予定`,
+      text: "参加しますか？",
+      actions: [
+        {
+          type: "postback",
+          label: "参加する",
+          data: `confirm_registration?date=${dateStr}&mealType=${mealType}&attend=true&prepType=COOK_BY_SELF`,
+          displayText: "参加する（自炊）",
+        },
+        {
+          type: "postback",
+          label: "参加する（各自）",
+          data: `confirm_registration?date=${dateStr}&mealType=${mealType}&attend=true&prepType=INDIVIDUAL`,
+          displayText: "参加する（各自自由に）",
+        },
+        {
+          type: "postback",
+          label: "参加する（買う）",
+          data: `confirm_registration?date=${dateStr}&mealType=${mealType}&attend=true&prepType=BUY_TOGETHER`,
+          displayText: "参加する（買って一緒に食べる）",
+        },
+        {
+          type: "postback",
+          label: "参加しない",
+          data: `confirm_registration?date=${dateStr}&mealType=${mealType}&attend=false&prepType=INDIVIDUAL`,
+          displayText: "参加しない",
+        },
+      ],
+    };
+
+    return await sendTemplateMessage(
+      to,
+      attendanceTemplate,
+      `${dateText}の${mealTypeText}予定登録`,
+    );
+  } catch (error) {
+    logger.error(`登録オプション送信エラー: ${to}`, error);
+    throw new AppError(`登録オプションの送信に失敗しました: ${to}`, 500);
+  }
 };
 
 // LINEクライアントをエクスポート

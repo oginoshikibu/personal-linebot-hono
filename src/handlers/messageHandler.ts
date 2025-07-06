@@ -10,6 +10,7 @@ import {
   createCheckMenuTemplate,
   createMainMenuTemplate,
   createRegisterMenuTemplate,
+  sendCalendarMessage,
   sendTemplateMessage,
   sendTextMessage,
 } from "../services/line";
@@ -81,6 +82,9 @@ const handleCommand = async (command: string, user: User): Promise<void> => {
       break;
     case "check":
       await handleCheckCommand(parts.slice(1), user);
+      break;
+    case "cal":
+      await handleCalendarCommand(parts.slice(1), user);
       break;
     default:
       await sendTextMessage(
@@ -303,6 +307,41 @@ const handleCheckCommand = async (
 };
 
 /**
+ * カレンダーコマンドを処理
+ * @param args コマンド引数
+ * @param user ユーザー
+ */
+const handleCalendarCommand = async (
+  args: string[],
+  user: User,
+): Promise<void> => {
+  try {
+    // 選択日付の指定がある場合
+    let selectedDate: Date | undefined;
+    if (args.length > 0) {
+      try {
+        selectedDate = new Date(args[0]);
+        if (Number.isNaN(selectedDate.getTime())) {
+          selectedDate = undefined;
+        }
+      } catch (_error) {
+        // 無効な日付形式の場合は無視
+        selectedDate = undefined;
+      }
+    }
+
+    // カレンダーを送信
+    await sendCalendarMessage(user.lineId, selectedDate);
+  } catch (error) {
+    console.error("カレンダー表示エラー:", error);
+    await sendTextMessage(
+      user.lineId,
+      "カレンダーの表示中にエラーが発生しました。もう一度お試しください。",
+    );
+  }
+};
+
+/**
  * 予定登録メニューを処理
  * @param user ユーザー
  */
@@ -331,38 +370,31 @@ const handleCheckMenu = async (user: User): Promise<void> => {
 
 /**
  * ヘルプメッセージを送信
- * @param lineId LINE ID
+ * @param lineId LINEユーザーID
  */
 const sendHelpMessage = async (lineId: string): Promise<void> => {
-  const message =
-    "【ヘルプ】\n\n" +
-    "■ メニュー\n" +
-    "・予定登録: 食事予定を登録します\n" +
-    "・予定変更: 食事予定を変更します\n" +
-    "・予定確認: 食事予定を確認します\n" +
-    "・ヘルプ: このヘルプを表示します\n\n" +
-    "■ コマンド\n" +
-    "・/help: このヘルプを表示\n" +
-    "・/register <日付> <食事タイプ> <参加> [準備方法]: 予定を登録\n" +
-    "  例: /register today lunch yes cook\n" +
-    "・/check [日付]: 予定を確認\n" +
-    "  例: /check tomorrow\n\n" +
-    "■ 日付\n" +
-    "・today: 今日\n" +
-    "・tomorrow: 明日\n" +
-    "・YYYY-MM-DD: 指定日\n\n" +
-    "■ 食事タイプ\n" +
-    "・lunch: 昼食\n" +
-    "・dinner: 夕食\n\n" +
-    "■ 参加\n" +
-    "・yes: 参加\n" +
-    "・no: 不参加\n\n" +
-    "■ 準備方法\n" +
-    "・cook: 自炊\n" +
-    "・individual: 各自自由\n" +
-    "・buy: 買って一緒に食べる";
+  const helpMessage = `【コマンド一覧】
+/help - このヘルプを表示
+/register <日付> <食事タイプ> <参加> [準備方法] - 食事予定を登録
+  例: /register today lunch yes cook
+  日付: today, tomorrow, YYYY-MM-DD
+  食事タイプ: lunch, dinner
+  参加: yes, no
+  準備方法: cook, individual, buy
+/check [日付] - 食事予定を確認
+  例: /check tomorrow
+  日付: today, tomorrow, YYYY-MM-DD (省略時は today)
+/cal [日付] - カレンダーを表示
+  例: /cal 2023-07-15
+  日付: YYYY-MM-DD (省略時は選択なし)
 
-  await sendTextMessage(lineId, message);
+【メニュー】
+予定登録 - 食事予定を登録
+予定変更 - 食事予定を変更
+予定確認 - 食事予定を確認
+ヘルプ - このヘルプを表示`;
+
+  await sendTextMessage(lineId, helpMessage);
 };
 
 /**
