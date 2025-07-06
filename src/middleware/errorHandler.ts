@@ -39,7 +39,10 @@ export const errorHandler = async (
         status: "error",
         message: error.message,
       };
-      return c.json(response, error.statusCode);
+      return new Response(JSON.stringify(response), {
+        status: error.statusCode,
+        headers: { "Content-Type": "application/json" },
+      });
     }
 
     // 予期しないエラー
@@ -47,6 +50,9 @@ export const errorHandler = async (
       status: "error",
       message: "内部サーバーエラーが発生しました",
     };
-    return c.json(response, 500);
+    return new Response(JSON.stringify(response), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 };
