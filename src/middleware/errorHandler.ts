@@ -13,12 +13,10 @@ import { logger } from "../utils/logger";
 export const errorHandler = async (
   c: Context,
   next: Next,
-): Promise<Response> => {
+): Promise<Response | void> => {
   try {
     // 次のミドルウェアまたはハンドラを実行
     await next();
-    // デフォルトのレスポンスを返す
-    return new Response("OK", { status: 200 });
   } catch (error) {
     // エラーをログに記録
     logger.error("リクエスト処理中にエラーが発生しました", error);
