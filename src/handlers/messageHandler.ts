@@ -54,6 +54,9 @@ export const handleTextMessage = async (
     case "予定確認":
       await handleCheckMenu(user);
       break;
+    case "今後の予定":
+      await handleFutureMenu(user);
+      break;
     case "ヘルプ":
       await sendHelpMessage(user.lineId);
       break;
@@ -366,6 +369,21 @@ const handleChangeMenu = async (user: User): Promise<void> => {
 const handleCheckMenu = async (user: User): Promise<void> => {
   const buttonTemplate = createCheckMenuTemplate();
   await sendTemplateMessage(user.lineId, buttonTemplate, "食事予定確認");
+};
+
+/**
+ * 今後の予定メニューを処理
+ * @param user ユーザー
+ */
+const handleFutureMenu = async (user: User): Promise<void> => {
+  // カレンダーを表示
+  await sendCalendarMessage(user.lineId);
+
+  // 説明メッセージを送信
+  await sendTextMessage(
+    user.lineId,
+    "カレンダーから日付を選択して、予定を確認できます。",
+  );
 };
 
 /**

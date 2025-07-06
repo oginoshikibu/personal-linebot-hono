@@ -99,5 +99,58 @@ describe("postbackHandler", () => {
       expect(sendTextMessageMock).toHaveBeenCalledTimes(1);
       expect(sendMealPlanChangeNotificationMock).toHaveBeenCalledTimes(1);
     });
+
+    it("should handle date selection postback correctly", async () => {
+      // モック設定
+      const sendTextMessageMock = vi.spyOn(lineService, "sendTextMessage");
+      const sendTemplateMessageMock = vi.spyOn(lineService, "sendTemplateMessage");
+      const getMealPlanMock = vi.spyOn(mealService, "getMealPlan").mockResolvedValue(null);
+      
+      // テスト実行
+      const today = new Date().toISOString().split("T")[0];
+      await handlePostbackData(`date_${today}`, testUser);
+      
+      // 検証
+      expect(getMealPlanMock).toHaveBeenCalledTimes(2);
+      expect(sendTextMessageMock).toHaveBeenCalledTimes(1);
+      expect(sendTemplateMessageMock).toHaveBeenCalledTimes(1);
+    });
+
+    it("should handle register_date_lunch postback correctly", async () => {
+      // モック設定
+      const sendRegistrationOptionsMock = vi.spyOn(lineService, "sendRegistrationOptions");
+      
+      // テスト実行
+      const today = new Date().toISOString().split("T")[0];
+      await handlePostbackData(`register_date_lunch?date=${today}`, testUser);
+      
+      // 検証
+      expect(sendRegistrationOptionsMock).toHaveBeenCalledTimes(1);
+      expect(sendRegistrationOptionsMock).toHaveBeenCalledWith(
+        testUser.lineId,
+        expect.any(String), // 日付文字列
+        "昼食",
+        expect.any(String), // ISO日付文字列
+        MealType.LUNCH
+      );
+    });
+
+    it("should handle check_date postback correctly", async () => {
+      // モック設定
+      const sendTextMessageMock = vi.spyOn(lineService, "sendTextMessage");
+      const getMealPlanMock = vi.spyOn(mealService, "getMealPlan").mockResolvedValue(null);
+      
+      // テスト実行
+      const today = new Date().toISOString().split("T")[0];
+      await handlePostbackData(`check_date?date=${today}`, testUser);
+      
+      // 検証
+      expect(getMealPlanMock).toHaveBeenCalledTimes(2);
+      expect(sendTextMessageMock).toHaveBeenCalledTimes(1);
+      expect(sendTextMessageMock).toHaveBeenCalledWith(
+        testUser.lineId,
+        expect.stringContaining("食事予定はまだ登録されていません")
+      );
+    });
   });
 }); 

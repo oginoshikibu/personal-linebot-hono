@@ -442,8 +442,8 @@ export const createMainMenuTemplate = (): TemplateContent => {
       },
       {
         type: "message" as const,
-        label: "ヘルプ",
-        text: "ヘルプ",
+        label: "今後の予定",
+        text: "今後の予定",
       },
     ],
   };

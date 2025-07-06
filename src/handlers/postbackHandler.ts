@@ -1,3 +1,4 @@
+import type { TemplateContent } from "@line/bot-sdk";
 import { MealType, PreparationType, type User } from "@prisma/client";
 import {
   createChangeMenuTemplate,
@@ -30,6 +31,18 @@ export const handlePostbackData = async (
   // 日付選択のポストバック
   if (data.startsWith("date_")) {
     await handleDateSelection(data.substring(5), user);
+    return;
+  }
+
+  // 特定日付の予定登録のポストバック
+  if (data.startsWith("register_date_")) {
+    await handleRegisterDatePostback(data.substring(14), user);
+    return;
+  }
+
+  // 特定日付の予定確認のポストバック
+  if (data.startsWith("check_date")) {
+    await handleCheckDatePostback(data.substring(10), user);
     return;
   }
 
@@ -89,7 +102,7 @@ const handleDateSelection = async (
     const lunch = await getMealPlan(selectedDate, MealType.LUNCH);
     const dinner = await getMealPlan(selectedDate, MealType.DINNER);
 
-    // 日付選択後のメニューを表示
+    // 日付選択後のメッセージを表示
     await sendTextMessage(
       user.lineId,
       `${formatDateJP(selectedDate)}が選択されました。\n` +
@@ -97,11 +110,42 @@ const handleDateSelection = async (
         `夕食: ${dinner ? "予定あり" : "予定なし"}`,
     );
 
-    // 予定変更メニューを表示
+    // 日付選択後のオプションを表示
+    const template: TemplateContent = {
+      type: "buttons",
+      title: `${formatDateJP(selectedDate)}の予定`,
+      text: "操作を選択してください",
+      actions: [
+        {
+          type: "postback",
+          label: "昼食を登録",
+          data: `register_date_lunch?date=${dateString}`,
+          displayText: `${formatDateJP(selectedDate)}の昼食を登録`,
+        },
+        {
+          type: "postback",
+          label: "夕食を登録",
+          data: `register_date_dinner?date=${dateString}`,
+          displayText: `${formatDateJP(selectedDate)}の夕食を登録`,
+        },
+        {
+          type: "postback",
+          label: "予定を確認",
+          data: `check_date?date=${dateString}`,
+          displayText: `${formatDateJP(selectedDate)}の予定を確認`,
+        },
+        {
+          type: "message",
+          label: "メインメニューへ",
+          text: "メインメニュー",
+        },
+      ],
+    };
+
     await sendTemplateMessage(
       user.lineId,
-      createChangeMenuTemplate(),
-      "予定変更",
+      template,
+      `${formatDateJP(selectedDate)}の予定`,
     );
   } catch (error) {
     logger.error("日付選択処理エラー:", error);
@@ -732,4 +776,149 @@ const formatMealPlanMessage = async (
 
   message += "\n\n";
   return message;
+};
+
+/**
+ * 特定日付の予定登録のポストバックを処理
+ * @param data ポストバックデータ
+ * @param user ユーザー
+ */
+const handleRegisterDatePostback = async (
+  data: string,
+  user: User,
+): Promise<void> => {
+  try {
+    logger.debug(
+      `特定日付の予定登録ポストバック処理: ${data}, ユーザー: ${user.name}`,
+    );
+
+    // クエリパラメータをパース
+    const parts = data.split("?");
+    const mealType = parts[0]; // lunch または dinner
+    const params = new URLSearchParams(parts[1]);
+    const dateStr = params.get("date");
+
+    if (!dateStr) {
+      await sendTextMessage(
+        user.lineId,
+        "日付が指定されていません。もう一度お試しください。",
+      );
+      return;
+    }
+
+    // 日付を解析
+    const date = new Date(dateStr);
+    if (Number.isNaN(date.getTime())) {
+      await sendTextMessage(
+        user.lineId,
+        "無効な日付形式です。もう一度お試しください。",
+      );
+      return;
+    }
+
+    // 食事タイプを解析
+    let mealTypeEnum: MealType;
+    if (mealType === "lunch") {
+      mealTypeEnum = MealType.LUNCH;
+    } else if (mealType === "dinner") {
+      mealTypeEnum = MealType.DINNER;
+    } else {
+      await sendTextMessage(
+        user.lineId,
+        "無効な食事タイプです。もう一度お試しください。",
+      );
+      return;
+    }
+
+    // 参加状態と準備方法を選択するためのオプションを表示
+    await sendRegistrationOptions(
+      user.lineId,
+      formatDateJP(date),
+      mealTypeEnum === MealType.LUNCH ? "昼食" : "夕食",
+      date.toISOString().split("T")[0],
+      mealTypeEnum,
+    );
+  } catch (error) {
+    logger.error(`特定日付の予定登録ポストバック処理エラー: ${data}`, error);
+    await sendTextMessage(
+      user.lineId,
+      "予定登録の処理中にエラーが発生しました。もう一度お試しください。",
+    );
+  }
+};
+
+/**
+ * 特定日付の予定確認のポストバックを処理
+ * @param data ポストバックデータ
+ * @param user ユーザー
+ */
+const handleCheckDatePostback = async (
+  data: string,
+  user: User,
+): Promise<void> => {
+  try {
+    logger.debug(
+      `特定日付の予定確認ポストバック処理: ${data}, ユーザー: ${user.name}`,
+    );
+
+    // クエリパラメータをパース
+    const params = new URLSearchParams(data);
+    const dateStr = params.get("date");
+
+    if (!dateStr) {
+      await sendTextMessage(
+        user.lineId,
+        "日付が指定されていません。もう一度お試しください。",
+      );
+      return;
+    }
+
+    // 日付を解析
+    const date = new Date(dateStr);
+    if (Number.isNaN(date.getTime())) {
+      await sendTextMessage(
+        user.lineId,
+        "無効な日付形式です。もう一度お試しください。",
+      );
+      return;
+    }
+
+    // 昼食の予定を取得
+    const lunch = await getMealPlan(date, MealType.LUNCH);
+
+    // 夕食の予定を取得
+    const dinner = await getMealPlan(date, MealType.DINNER);
+
+    // 予定がない場合のメッセージ
+    if (!lunch && !dinner) {
+      await sendTextMessage(
+        user.lineId,
+        `${formatDateJP(date)}の食事予定はまだ登録されていません。`,
+      );
+      return;
+    }
+
+    // 予定を表示
+    let message = `【${formatDateJP(date)}の食事予定】\n\n`;
+
+    if (lunch) {
+      message += await formatMealPlanMessage(lunch, "昼食");
+    } else {
+      message += "◆ 昼食: 予定なし\n\n";
+    }
+
+    if (dinner) {
+      message += await formatMealPlanMessage(dinner, "夕食");
+    } else {
+      message += "◆ 夕食: 予定なし\n";
+    }
+
+    await sendTextMessage(user.lineId, message);
+  } catch (error) {
+    logger.error(`特定日付の予定確認ポストバック処理エラー: ${data}`, error);
+    await sendTextMessage(
+      user.lineId,
+      "予定確認の処理中にエラーが発生しました。もう一度お試しください。",
+    );
+  }
 };
