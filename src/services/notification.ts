@@ -244,7 +244,8 @@ export const sendMealPlanChangeNotification = async (
     const baseMealPlan = {
       id: "",
       date: new Date(),
-      mealType: mealPlan.mealType === "LUNCH" ? MealType.LUNCH : MealType.DINNER,
+      mealType:
+        mealPlan.mealType === "LUNCH" ? MealType.LUNCH : MealType.DINNER,
       preparationType: PreparationType.INDIVIDUAL,
       cookerId: null,
       createdAt: new Date(),

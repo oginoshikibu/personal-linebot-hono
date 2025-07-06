@@ -1,9 +1,8 @@
 import type { Hono } from "hono";
 import { errorHandler } from "../middleware/errorHandler";
-import { lineSignatureMiddleware } from "../utils/auth";
 import { logger } from "../utils/logger";
 import { apiRoutes } from "./api";
-import { webhookHandler } from "./webhook";
+import { webhookRoute } from "./webhook";
 
 /**
  * アプリケーションのルートを設定
@@ -18,7 +17,7 @@ export const setupRoutes = (app: Hono): void => {
     app.get("/", (c) => c.text("LINE Bot Server is running!"));
 
     // Webhookルート
-    app.post("/webhook", lineSignatureMiddleware, webhookHandler);
+    app.post("/webhook", ...webhookRoute.post);
 
     // APIルート
     app.get("/api/health", apiRoutes.health.get);

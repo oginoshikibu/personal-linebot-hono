@@ -1,11 +1,8 @@
-import type { Context } from "hono";
+import type { Context, Next } from "hono";
 import { HTTPException } from "hono/http-exception";
 import type { ApiResponse } from "../types";
 import { AppError } from "../utils/error";
 import { logger } from "../utils/logger";
-
-// 明示的にNext型を定義
-type Next = () => Promise<Response | undefined>;
 
 /**
  * グローバルエラーハンドリングミドルウェア
@@ -19,11 +16,9 @@ export const errorHandler = async (
 ): Promise<Response> => {
   try {
     // 次のミドルウェアまたはハンドラを実行
-    const response = await next();
-    // レスポンスを返す
-    return response instanceof Response
-      ? response
-      : new Response("OK", { status: 200 });
+    await next();
+    // デフォルトのレスポンスを返す
+    return new Response("OK", { status: 200 });
   } catch (error) {
     // エラーをログに記録
     logger.error("リクエスト処理中にエラーが発生しました", error);

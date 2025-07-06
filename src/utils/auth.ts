@@ -1,5 +1,5 @@
 import crypto from "node:crypto";
-import type { Context } from "hono";
+import type { Context, Next } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { config } from "../config";
 import { logger } from "./logger";
@@ -32,24 +32,21 @@ export const verifyLineSignature = (
 };
 
 /**
- * LINE IDが許可されているかどうかを確認
+ * 許可されたLINE IDかどうかを確認する
  * @param lineId LINE ID
- * @returns 許可されている場合はtrue、そうでない場合はfalse
+ * @returns 許可されたIDの場合はtrue、そうでない場合はfalse
  */
 export const isAllowedLineId = (lineId: string): boolean => {
   try {
-    if (!lineId) {
+    const allowedLineIds = config.line.allowedLineIds;
+    if (allowedLineIds.length === 0) {
+      logger.warn("許可されたLINE IDが設定されていません");
       return false;
     }
 
-    const allowed = config.line.allowedLineIds.includes(lineId);
-    if (!allowed) {
-      logger.warn(`未承認のLINE ID: ${lineId}`);
-    }
-
-    return allowed;
+    return allowedLineIds.includes(lineId);
   } catch (error) {
-    logger.error("LINE IDの検証中にエラーが発生しました", error);
+    logger.error("LINE ID検証エラー", error);
     return false;
   }
 };
@@ -62,7 +59,7 @@ export const isAllowedLineId = (lineId: string): boolean => {
  */
 export const lineSignatureMiddleware = async (
   c: Context,
-  next: () => Promise<Response | undefined>,
+  next: Next,
 ): Promise<Response> => {
   try {
     const signature = c.req.header("x-line-signature");
@@ -85,8 +82,8 @@ export const lineSignatureMiddleware = async (
       throw new HTTPException(400, { message: "不正なJSONフォーマット" });
     }
 
-    const response = await next();
-    return response || new Response("OK", { status: 200 });
+    await next();
+    return new Response("OK", { status: 200 });
   } catch (error) {
     if (error instanceof HTTPException) {
       throw error;
