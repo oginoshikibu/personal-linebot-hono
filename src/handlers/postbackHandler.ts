@@ -161,6 +161,32 @@ const handleRegisterMeal = async (
 };
 
 /**
+ * MealPlanオブジェクトがMealPlanWithRelations型かどうかを判定する型ガード
+ * @param mealPlan 判定対象のオブジェクト
+ * @returns MealPlanWithRelations型かどうか
+ */
+function isMealPlanWithRelations(
+  mealPlan: unknown,
+): mealPlan is MealPlanWithRelations {
+  if (!mealPlan || typeof mealPlan !== "object") {
+    return false;
+  }
+
+  // participationsプロパティの存在とその型を確認
+  // 型安全なチェック方法を使用
+  const hasParticipations = Object.hasOwn(mealPlan, "participations");
+  if (!hasParticipations) {
+    return false;
+  }
+
+  // participationsが配列かどうかチェック
+  // 安全にアクセスするため、インデックスシグネチャを使わず、型ガードを利用
+  return Array.isArray(
+    Object.getOwnPropertyDescriptor(mealPlan, "participations")?.value,
+  );
+}
+
+/**
  * 食事予定確認アクションを処理
  * @param params URLSearchParamsオブジェクト
  * @param user ユーザー
@@ -208,15 +234,21 @@ const handleCheckMeal = async (
 
   try {
     // 食事予定を取得
-    const mealPlan = (await getMealPlan(
-      date,
-      mealType,
-    )) as MealPlanWithRelations | null;
+    const mealPlan = await getMealPlan(date, mealType);
 
     if (!mealPlan) {
       await sendTextMessage(
         user.lineId,
         `${formatDateJP(date)}の${mealType === MealType.LUNCH ? "昼食" : "夕食"}予定はまだ登録されていません。`,
+      );
+      return;
+    }
+
+    // 型ガードを使用して拡張型かどうかを確認
+    if (!isMealPlanWithRelations(mealPlan)) {
+      await sendTextMessage(
+        user.lineId,
+        "食事予定の取得中に問題が発生しました。もう一度お試しください。",
       );
       return;
     }
@@ -228,7 +260,16 @@ const handleCheckMeal = async (
 
     // 準備方法を取得
     const prepType = getPreparationTypeText(mealPlan.preparationType);
-    const cookerInfo = mealPlan.cooker ? `(${mealPlan.cooker.name}が担当)` : "";
+
+    // 調理担当者情報を取得
+    let cookerInfo = "";
+    if (
+      mealPlan.cooker &&
+      typeof mealPlan.cooker === "object" &&
+      "name" in mealPlan.cooker
+    ) {
+      cookerInfo = `(${mealPlan.cooker.name}が担当)`;
+    }
 
     // メッセージを送信
     await sendTextMessage(
