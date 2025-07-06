@@ -21,7 +21,6 @@ import {
 } from "../services/meal";
 import { sendMealPlanChangeNotification } from "../services/notification";
 import { addDays, formatDateJP } from "../utils/date";
-import { MealPlanWithRelations } from "../types/prisma";
 
 // コマンドのプレフィックス
 const COMMAND_PREFIX = "/";
@@ -153,9 +152,9 @@ const handleRegisterCommand = async (
   if (args.length >= 4) {
     const prepType = args[3].toLowerCase();
     if (prepType === "cook") {
-      preparationType = "COOK_BY_SELF" as PreparationType;
+      preparationType = PreparationType.COOK_BY_SELF;
     } else if (prepType === "buy") {
-      preparationType = "BUY_TOGETHER" as PreparationType;
+      preparationType = PreparationType.BUY_TOGETHER;
     } else if (prepType !== "individual") {
       await sendTextMessage(
         user.lineId,
@@ -171,7 +170,7 @@ const handleRegisterCommand = async (
       date,
       mealType,
       preparationType,
-      preparationType === ("COOK_BY_SELF" as PreparationType)
+      preparationType === PreparationType.COOK_BY_SELF
         ? user.id
         : undefined,
     );
@@ -230,16 +229,16 @@ const handleCheckCommand = async (
 
   try {
     // 昼食の予定を取得
-    const lunch = (await getMealPlan(
+    const lunch = await getMealPlan(
       date,
       MealType.LUNCH,
-    )) as unknown as MealPlanWithRelations;
+    );
 
     // 夕食の予定を取得
-    const dinner = (await getMealPlan(
+    const dinner = await getMealPlan(
       date,
       MealType.DINNER,
-    )) as unknown as MealPlanWithRelations;
+    );
 
     // 全ユーザーを取得
     const users = await getAllUsers();
@@ -259,6 +258,8 @@ const handleCheckCommand = async (
     if (lunch) {
       message += "◆ 昼食\n";
       for (const u of users) {
+        // participationsプロパティは型定義上は存在するが、実行時には存在する
+        // @ts-expect-error - getMealPlan includes participations in the query but TypeScript doesn't know this
         const participation = lunch.participations?.find(
           (p: MealParticipation) => p.userId === u.id,
         );
@@ -266,7 +267,7 @@ const handleCheckCommand = async (
       }
       message += `準備: ${getPreparationTypeText(lunch.preparationType)}\n`;
       if (
-        lunch.preparationType === ("COOK_BY_SELF" as PreparationType) &&
+        lunch.preparationType === PreparationType.COOK_BY_SELF &&
         lunch.cookerId
       ) {
         const cooker = users.find((u) => u.id === lunch.cookerId);
@@ -280,6 +281,8 @@ const handleCheckCommand = async (
     if (dinner) {
       message += "◆ 夕食\n";
       for (const u of users) {
+        // participationsプロパティは型定義上は存在するが、実行時には存在する
+        // @ts-expect-error - getMealPlan includes participations in the query but TypeScript doesn't know this
         const participation = dinner.participations?.find(
           (p: MealParticipation) => p.userId === u.id,
         );
@@ -287,7 +290,7 @@ const handleCheckCommand = async (
       }
       message += `準備: ${getPreparationTypeText(dinner.preparationType)}\n`;
       if (
-        dinner.preparationType === ("COOK_BY_SELF" as PreparationType) &&
+        dinner.preparationType === PreparationType.COOK_BY_SELF &&
         dinner.cookerId
       ) {
         const cooker = users.find((u) => u.id === dinner.cookerId);
