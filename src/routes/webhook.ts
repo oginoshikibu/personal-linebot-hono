@@ -15,7 +15,7 @@ import { logger } from "../utils/logger";
  */
 export const webhookHandler = asyncHandler(
   async (c: Context): Promise<Response> => {
-    const body = await c.req.json();
+    const body = c.get("lineRequestBody");
     logger.info("Webhookリクエストを受信", {
       events: body.events?.length || 0,
       destination: body.destination,
