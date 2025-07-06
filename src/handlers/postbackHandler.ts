@@ -35,7 +35,13 @@ export const handlePostbackData = async (
 
   // 予定登録のポストバック
   if (data.startsWith("register_")) {
-    await handleRegisterPostback(data.substring(9), user);
+    await handleRegisterPostback(data, user);
+    return;
+  }
+
+  // 予定登録確認のポストバック
+  if (data.startsWith("confirm_registration")) {
+    await handleRegisterPostback(data, user);
     return;
   }
 
@@ -124,49 +130,47 @@ const handleRegisterPostback = async (
     logger.debug(`ポストバックデータ処理: ${data}, ユーザー: ${user.name}`);
 
     // 単純な文字列形式のデータを処理（register_today_lunch など）
-    if (data.startsWith("register_")) {
-      const parts = data.split("_");
-      if (parts.length === 3) {
-        const [, dateType, mealTypeStr] = parts;
-        let date: Date;
-        let mealType: MealType;
+    const parts = data.split("_");
+    if (parts.length === 3) {
+      const [, dateType, mealTypeStr] = parts;
+      let date: Date;
+      let mealType: MealType;
 
-        // 日付を解析
-        if (dateType === "today") {
-          date = new Date();
-        } else if (dateType === "tomorrow") {
-          date = addDays(1);
-        } else {
-          await sendTextMessage(
-            user.lineId,
-            "無効な日付タイプです。もう一度お試しください。",
-          );
-          return;
-        }
-
-        // 食事タイプを解析
-        if (mealTypeStr === "lunch") {
-          mealType = MealType.LUNCH;
-        } else if (mealTypeStr === "dinner") {
-          mealType = MealType.DINNER;
-        } else {
-          await sendTextMessage(
-            user.lineId,
-            "無効な食事タイプです。もう一度お試しください。",
-          );
-          return;
-        }
-
-        // 参加状態と準備方法を選択するためのオプションを表示
-        await sendRegistrationOptions(
+      // 日付を解析
+      if (dateType === "today") {
+        date = new Date();
+      } else if (dateType === "tomorrow") {
+        date = addDays(1);
+      } else {
+        await sendTextMessage(
           user.lineId,
-          formatDateJP(date),
-          mealType === MealType.LUNCH ? "昼食" : "夕食",
-          date.toISOString().split("T")[0],
-          mealType,
+          "無効な日付タイプです。もう一度お試しください。",
         );
         return;
       }
+
+      // 食事タイプを解析
+      if (mealTypeStr === "lunch") {
+        mealType = MealType.LUNCH;
+      } else if (mealTypeStr === "dinner") {
+        mealType = MealType.DINNER;
+      } else {
+        await sendTextMessage(
+          user.lineId,
+          "無効な食事タイプです。もう一度お試しください。",
+        );
+        return;
+      }
+
+      // 参加状態と準備方法を選択するためのオプションを表示
+      await sendRegistrationOptions(
+        user.lineId,
+        formatDateJP(date),
+        mealType === MealType.LUNCH ? "昼食" : "夕食",
+        date.toISOString().split("T")[0],
+        mealType,
+      );
+      return;
     }
 
     // 参加状態と準備方法を含むポストバックデータを処理
