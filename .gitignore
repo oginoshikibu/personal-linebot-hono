@@ -137,3 +137,78 @@ dist
 # Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# 依存関係
+node_modules/
+.pnp
+.pnp.js
+
+# ビルド
+dist/
+build/
+out/
+
+# 環境変数
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# ログ
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+logs/
+*.log
+
+# データベース
+*.db
+*.sqlite
+*.sqlite3
+
+# エディタ設定
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS関連
+.DS_Store
+Thumbs.db
+
+# テスト
+coverage/
+
+# Prisma
+prisma/migrations/
+prisma/*.db
+prisma/*.db-journal
+
+# その他
+.vercel
+.next
+.cache/
+tmp/
+temp/
+
+# Terraform
+.terraform/
+terraform.tfstate
+terraform.tfstate.backup
+*.tfvars
+*.tfvars.json
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+
+# アーカイブファイル
+*.tar.gz
+
+# 秘密鍵ファイル
+*.pem

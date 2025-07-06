@@ -1,0 +1,84 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// 食事タイプの列挙型
+enum MealType {
+  LUNCH
+  DINNER
+}
+
+// 準備タイプの列挙型
+enum PreparationType {
+  COOK_BY_SELF
+  INDIVIDUAL
+  BUY_TOGETHER
+}
+
+// ユーザーモデル
+model User {
+  id        String   @id @default(uuid())
+  lineId    String   @unique @map("line_id")
+  name      String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // リレーション
+  mealParticipations MealParticipation[]
+  preparedMeals      MealPlan[]
+
+  @@map("users")
+}
+
+// 食事予定モデル
+model MealPlan {
+  id              String          @id @default(uuid())
+  date            DateTime        // 日付
+  mealType        MealType        @map("meal_type")
+  preparationType PreparationType @map("preparation_type")
+  cookerId        String?         @map("cooker_id") // 自炊の場合の調理担当者
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @updatedAt @map("updated_at")
+
+  // リレーション
+  cooker         User?               @relation(fields: [cookerId], references: [id])
+  participations MealParticipation[]
+
+  @@unique([date, mealType]) // 同じ日の同じ食事タイプは一つだけ
+  @@map("meal_plans")
+}
+
+// 食事参加モデル
+model MealParticipation {
+  id          String   @id @default(uuid())
+  mealPlanId  String   @map("meal_plan_id")
+  userId      String   @map("user_id")
+  isAttending Boolean  @map("is_attending") // 参加するかどうか
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // リレーション
+  mealPlan MealPlan @relation(fields: [mealPlanId], references: [id])
+  user     User     @relation(fields: [userId], references: [id])
+
+  @@unique([mealPlanId, userId]) // 一つの食事に対して、一人のユーザーは一つの参加状態のみ
+  @@map("meal_participations")
+}
+
+// 通知ログモデル（オプション：履歴追跡用）
+model NotificationLog {
+  id      String   @id @default(uuid())
+  type    String // 通知タイプ（朝の通知、夜の通知など）
+  content String // 送信した内容
+  sentAt  DateTime @default(now()) @map("sent_at")
+
+  @@map("notification_logs")
+}

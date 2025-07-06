@@ -1,0 +1,69 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Build application
+      run: npm run build
+
+    - name: Generate Prisma client
+      run: npx prisma generate
+
+    - name: Setup SSH
+      uses: webfactory/ssh-agent@v0.7.0
+      with:
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+    - name: Add SSH known hosts
+      run: |
+        mkdir -p ~/.ssh
+        ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+
+    - name: Deploy to EC2
+      env:
+        EC2_HOST: ${{ secrets.EC2_HOST }}
+        EC2_USER: ${{ secrets.EC2_USER }}
+        APP_DIR: ${{ secrets.APP_DIR }}
+        DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+      run: |
+        # Create deployment directory if it doesn't exist
+        ssh $EC2_USER@$EC2_HOST "mkdir -p $APP_DIR"
+        
+        # Copy files to EC2
+        rsync -avz --exclude 'node_modules' --exclude '.git' --exclude '.github' --exclude '.env' ./ $EC2_USER@$EC2_HOST:$APP_DIR/
+        
+        # Install dependencies and setup on EC2
+        ssh $EC2_USER@$EC2_HOST "cd $APP_DIR && npm ci && npx prisma generate"
+        
+        # Update or create environment file with the database password
+        ssh $EC2_USER@$EC2_HOST "cd $APP_DIR && \
+          if [ -f .env ]; then \
+            sed -i 's|DATABASE_URL=.*|DATABASE_URL=\"mysql://linebot_user:$DB_PASSWORD@localhost:3306/linebot_db\"|' .env; \
+          else \
+            cp .env.example .env && \
+            sed -i 's|DATABASE_URL=.*|DATABASE_URL=\"mysql://linebot_user:$DB_PASSWORD@localhost:3306/linebot_db\"|' .env; \
+          fi"
+        
+        # Setup and restart service
+        ssh $EC2_USER@$EC2_HOST "cd $APP_DIR && pm2 delete linebot 2>/dev/null || true && pm2 start dist/index.js --name linebot && pm2 save"
+        
+        echo "Deployment completed successfully!" 
