@@ -7,7 +7,7 @@ import {
 } from "../services/meal";
 import { sendMealPlanChangeNotification } from "../services/notification";
 import type { MealPlanWithRelations } from "../types/prisma";
-import { formatDateJP } from "../utils/date";
+import { addDays, formatDateJP } from "../utils/date";
 import { logger } from "../utils/logger";
 
 /**
@@ -21,6 +21,69 @@ export const handlePostbackData = async (
 ): Promise<void> => {
   try {
     logger.debug(`ポストバックデータ処理: ${data}, ユーザー: ${user.name}`);
+
+    // 単純な文字列形式のデータを処理（register_today_lunch など）
+    if (data.startsWith("register_")) {
+      const parts = data.split("_");
+      if (parts.length === 3) {
+        const [, dateType, mealTypeStr] = parts;
+        let date: Date;
+        let mealType: MealType;
+
+        // 日付を解析
+        if (dateType === "today") {
+          date = new Date();
+        } else if (dateType === "tomorrow") {
+          date = addDays(1);
+        } else {
+          await sendTextMessage(
+            user.lineId,
+            "無効な日付タイプです。もう一度お試しください。",
+          );
+          return;
+        }
+
+        // 食事タイプを解析
+        if (mealTypeStr === "lunch") {
+          mealType = MealType.LUNCH;
+        } else if (mealTypeStr === "dinner") {
+          mealType = MealType.DINNER;
+        } else {
+          await sendTextMessage(
+            user.lineId,
+            "無効な食事タイプです。もう一度お試しください。",
+          );
+          return;
+        }
+
+        // デフォルト値で食事予定を登録
+        const isAttending = true;
+        const preparationType = PreparationType.COOK_BY_SELF;
+
+        // 食事予定を作成または更新
+        const mealPlan = await createOrUpdateMealPlan(
+          date,
+          mealType,
+          preparationType,
+          user.id, // 自炊の場合は調理担当者として登録
+        );
+
+        // 参加状態を設定
+        await setMealParticipation(mealPlan.id, user.id, isAttending);
+
+        // 確認メッセージを送信
+        await sendTextMessage(
+          user.lineId,
+          `${formatDateJP(date)}の${mealType === MealType.LUNCH ? "昼食" : "夕食"}予定を登録しました。\n` +
+            "参加: はい\n" +
+            `準備: ${getPreparationTypeText(preparationType)}`,
+        );
+
+        // 他のユーザーに通知
+        await sendMealPlanChangeNotification(user.id, mealPlan);
+        return;
+      }
+    }
 
     // クエリパラメータ形式のデータをパース
     const params = new URLSearchParams(data);
