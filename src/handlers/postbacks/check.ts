@@ -80,7 +80,7 @@ export const handleCheckPostback = async (
 const parsePostbackData = (data: string): { date: Date; mealType?: MealType } | null => {
   // action=check_meal&date=2024-01-01&mealType=DINNER 形式
   if (data.startsWith("action=check_meal")) {
-    const params = new URLSearchParams(data.substring(data.indexOf("?")));
+    const params = new URLSearchParams(data);
     const dateStr = params.get("date");
     const mealTypeStr = params.get("mealType");
     
