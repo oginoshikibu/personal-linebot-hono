@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import crypto from "node:crypto";
-import { verifyLineSignature, isAllowedLineId, lineSignatureMiddleware } from "../../../src/utils/auth";
 import { HTTPException } from "hono/http-exception";
 import type { Context } from "hono";
 
@@ -24,6 +23,9 @@ vi.mock("../../../src/utils/logger", () => ({
   },
 }));
 
+// auth関数をインポート - モック設定の後にインポートする
+import { verifyLineSignature, isAllowedLineId, lineSignatureMiddleware } from "../../../src/utils/auth";
+
 describe("認証ユーティリティ", () => {
   describe("verifyLineSignature関数", () => {
     it("有効な署名の場合にtrueを返すこと", () => {
@@ -45,10 +47,12 @@ describe("認証ユーティリティ", () => {
       expect(result).toBe(false);
     });
 
-    it("チャネルシークレットが設定されていない場合にfalseを返すこと", () => {
+    it("チャネルシークレットが設定されていない場合にfalseを返すこと", async () => {
       // 一時的にconfigをモック
-      const originalConfig = vi.importActual("../../../src/config");
-      vi.doMock("../../../src/config", () => ({
+      vi.resetModules(); // モジュールキャッシュをクリア
+      
+      // 空のチャネルシークレットでconfigをモック
+      vi.mock("../../../src/config", () => ({
         config: {
           line: {
             channelSecret: "",
@@ -56,16 +60,30 @@ describe("認証ユーティリティ", () => {
           },
         },
       }));
-
+      
+      // モック後に関数を再インポート
+      const { verifyLineSignature: verifyWithEmptySecret } = await import("../../../src/utils/auth");
+      
       const body = JSON.stringify({ events: [{ type: "message" }] });
       const signature = "some_signature";
       
-      const result = verifyLineSignature(signature, body);
+      const result = verifyWithEmptySecret(signature, body);
       
       expect(result).toBe(false);
       
-      // モックを元に戻す
-      vi.doMock("../../../src/config", () => originalConfig);
+      // モジュールキャッシュをリセットして元の状態に戻す
+      vi.resetModules();
+      vi.mock("../../../src/config", () => ({
+        config: {
+          line: {
+            channelSecret: "testSecret",
+            allowedLineIds: ["user1", "user2", "user3"],
+          },
+        },
+      }));
+      
+      // 他のテストに影響を与えないようにauth関数を再インポート
+      await import("../../../src/utils/auth");
     });
   });
 
