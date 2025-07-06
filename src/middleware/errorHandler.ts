@@ -39,8 +39,7 @@ export const errorHandler = async (
         status: "error",
         message: error.message,
       };
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      return c.json(response, error.statusCode as 400 | 401 | 403 | 404 | 500);
+      return c.json(response, error.statusCode);
     }
 
     // 予期しないエラー
