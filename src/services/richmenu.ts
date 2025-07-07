@@ -9,7 +9,10 @@ let lineClient: Client | null = null;
 const getLineClient = (): Client => {
   if (!lineClient) {
     if (!config.line.channelSecret || !config.line.channelAccessToken) {
-      throw new AppError("LINE APIの設定が不足しています。環境変数を確認してください。", 500);
+      throw new AppError(
+        "LINE APIの設定が不足しています。環境変数を確認してください。",
+        500,
+      );
     }
     lineClient = new Client({
       channelSecret: config.line.channelSecret,
@@ -106,7 +109,10 @@ export const deleteRichMenu = async (richMenuId: string): Promise<void> => {
     logger.info(`リッチメニューを削除しました: ${richMenuId}`);
   } catch (error) {
     logger.error(`リッチメニュー削除エラー: ${richMenuId}`, error);
-    throw new AppError(`リッチメニューの削除に失敗しました: ${richMenuId}`, 500);
+    throw new AppError(
+      `リッチメニューの削除に失敗しました: ${richMenuId}`,
+      500,
+    );
   }
 };
 
@@ -116,11 +122,11 @@ export const deleteRichMenu = async (richMenuId: string): Promise<void> => {
 export const deleteAllRichMenus = async (): Promise<void> => {
   try {
     const richMenuIds = await getRichMenuList();
-    
+
     for (const richMenuId of richMenuIds) {
       await deleteRichMenu(richMenuId);
     }
-    
+
     logger.info(`${richMenuIds.length}個のリッチメニューを削除しました`);
   } catch (error) {
     logger.error("リッチメニュー全削除エラー", error);
@@ -132,7 +138,7 @@ export const deleteAllRichMenus = async (): Promise<void> => {
  * リッチメニューを作成
  */
 export const createRichMenu = async (
-  properties?: Partial<RichMenuProperties>
+  properties?: Partial<RichMenuProperties>,
 ): Promise<string> => {
   try {
     const richMenuProperties = {
@@ -156,7 +162,7 @@ export const createRichMenu = async (
 export const uploadRichMenuImage = async (
   richMenuId: string,
   imageBuffer: Buffer,
-  contentType: string = 'image/png'
+  contentType = "image/png",
 ): Promise<void> => {
   try {
     const client = getLineClient();
@@ -164,7 +170,10 @@ export const uploadRichMenuImage = async (
     logger.info(`リッチメニュー画像をアップロードしました: ${richMenuId}`);
   } catch (error) {
     logger.error(`リッチメニュー画像アップロードエラー: ${richMenuId}`, error);
-    throw new AppError(`リッチメニュー画像のアップロードに失敗しました: ${richMenuId}`, 500);
+    throw new AppError(
+      `リッチメニュー画像のアップロードに失敗しました: ${richMenuId}`,
+      500,
+    );
   }
 };
 
@@ -178,7 +187,10 @@ export const setDefaultRichMenu = async (richMenuId: string): Promise<void> => {
     logger.info(`デフォルトリッチメニューを設定しました: ${richMenuId}`);
   } catch (error) {
     logger.error(`デフォルトリッチメニュー設定エラー: ${richMenuId}`, error);
-    throw new AppError(`デフォルトリッチメニューの設定に失敗しました: ${richMenuId}`, 500);
+    throw new AppError(
+      `デフォルトリッチメニューの設定に失敗しました: ${richMenuId}`,
+      500,
+    );
   }
 };
 
@@ -187,15 +199,20 @@ export const setDefaultRichMenu = async (richMenuId: string): Promise<void> => {
  */
 export const linkRichMenuToUser = async (
   userId: string,
-  richMenuId: string
+  richMenuId: string,
 ): Promise<void> => {
   try {
     const client = getLineClient();
     await client.linkRichMenuToUser(userId, richMenuId);
-    logger.info(`ユーザーにリッチメニューを紐付けました: ${userId} -> ${richMenuId}`);
+    logger.info(
+      `ユーザーにリッチメニューを紐付けました: ${userId} -> ${richMenuId}`,
+    );
   } catch (error) {
     logger.error(`リッチメニューユーザー紐付けエラー: ${userId}`, error);
-    throw new AppError(`リッチメニューのユーザー紐付けに失敗しました: ${userId}`, 500);
+    throw new AppError(
+      `リッチメニューのユーザー紐付けに失敗しました: ${userId}`,
+      500,
+    );
   }
 };
 
@@ -204,7 +221,7 @@ export const linkRichMenuToUser = async (
  */
 export const setupRichMenu = async (
   imageBuffer: Buffer,
-  properties?: Partial<RichMenuProperties>
+  properties?: Partial<RichMenuProperties>,
 ): Promise<string> => {
   try {
     logger.info("リッチメニューのセットアップを開始します");

@@ -80,14 +80,13 @@ export const PREDEFINED_THEMES: Record<string, RichMenuTheme> = {
 export const loadExistingRichMenuImage = (): Buffer => {
   try {
     const imagePath = path.resolve(process.cwd(), "assets/images/richmenu.png");
-    
+
     if (fs.existsSync(imagePath)) {
       logger.info("既存のリッチメニュー画像を読み込みました");
       return fs.readFileSync(imagePath);
-    } else {
-      logger.warn("リッチメニュー画像が見つかりません。透明画像を生成します");
-      return generateTransparentImage();
     }
+    logger.warn("リッチメニュー画像が見つかりません。透明画像を生成します");
+    return generateTransparentImage();
   } catch (error) {
     logger.error("リッチメニュー画像の読み込みに失敗しました", error);
     return generateTransparentImage();
@@ -99,8 +98,9 @@ export const loadExistingRichMenuImage = (): Buffer => {
  */
 export const generateTransparentImage = (): Buffer => {
   // 1x1の透明PNG画像のBase64エンコードデータ
-  const transparentPngBase64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";
-  return Buffer.from(transparentPngBase64, 'base64');
+  const transparentPngBase64 =
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";
+  return Buffer.from(transparentPngBase64, "base64");
 };
 
 /**
@@ -109,8 +109,10 @@ export const generateTransparentImage = (): Buffer => {
  */
 export const generateRichMenuImage = (content?: RichMenuContent): Buffer => {
   try {
-    logger.info("リッチメニュー画像を生成します", { content: content?.title || "デフォルト" });
-    
+    logger.info("リッチメニュー画像を生成します", {
+      content: content?.title || "デフォルト",
+    });
+
     // 現在は既存の画像を返す
     // TODO: contentに基づいて動的に画像を生成する
     return loadExistingRichMenuImage();
@@ -125,24 +127,24 @@ export const generateRichMenuImage = (content?: RichMenuContent): Buffer => {
  * 注意: この関数を完全に実装するには canvas ライブラリが必要です
  */
 export const generateDynamicRichMenuImage = async (
-  content: RichMenuContent = DEFAULT_CONTENT
+  _content: RichMenuContent = DEFAULT_CONTENT,
 ): Promise<Buffer> => {
   try {
     logger.info("動的リッチメニュー画像の生成を試行します");
-    
+
     // TODO: canvas ライブラリを使用した実装
     // const canvas = createCanvas(2500, 1686);
     // const ctx = canvas.getContext('2d');
-    // 
+    //
     // // 背景を描画
     // ctx.fillStyle = content.theme?.backgroundColor || DEFAULT_THEME.backgroundColor;
     // ctx.fillRect(0, 0, 2500, 1686);
-    // 
+    //
     // // ボタンとテキストを描画
     // drawButtons(ctx, content.buttons, content.theme);
-    // 
+    //
     // return canvas.toBuffer('image/png');
-    
+
     // 現在は既存画像を返す
     logger.warn("動的画像生成はまだ実装されていません。既存画像を使用します。");
     return loadExistingRichMenuImage();
@@ -156,11 +158,13 @@ export const generateDynamicRichMenuImage = async (
  * テーマ別のリッチメニュー画像を生成
  */
 export const generateThemedRichMenuImage = (
-  themeName: string = "default",
-  customContent?: Partial<RichMenuContent>
+  themeName = "default",
+  customContent?: Partial<RichMenuContent>,
 ): Buffer => {
   try {
-    const theme = PREDEFINED_THEMES[themeName] || DEFAULT_THEME;
+    const theme = Object.prototype.hasOwnProperty.call(PREDEFINED_THEMES, themeName) 
+      ? PREDEFINED_THEMES[themeName] 
+      : DEFAULT_THEME;
     const content: RichMenuContent = {
       ...DEFAULT_CONTENT,
       ...customContent,
@@ -170,7 +174,10 @@ export const generateThemedRichMenuImage = (
     logger.info(`テーマ「${themeName}」でリッチメニュー画像を生成します`);
     return generateRichMenuImage(content);
   } catch (error) {
-    logger.error(`テーマ「${themeName}」でのリッチメニュー画像生成に失敗しました`, error);
+    logger.error(
+      `テーマ「${themeName}」でのリッチメニュー画像生成に失敗しました`,
+      error,
+    );
     return generateTransparentImage();
   }
 };
@@ -180,19 +187,19 @@ export const generateThemedRichMenuImage = (
  */
 export const saveRichMenuImageToTemp = (
   imageBuffer: Buffer,
-  filename: string = `richmenu-${Date.now()}.png`
+  filename = `richmenu-${Date.now()}.png`,
 ): string => {
   try {
     const tempDir = path.resolve(process.cwd(), "temp");
-    
+
     // tempディレクトリが存在しない場合は作成
     if (!fs.existsSync(tempDir)) {
       fs.mkdirSync(tempDir, { recursive: true });
     }
-    
+
     const filePath = path.join(tempDir, filename);
     fs.writeFileSync(filePath, imageBuffer);
-    
+
     logger.info(`リッチメニュー画像を保存しました: ${filePath}`);
     return filePath;
   } catch (error) {

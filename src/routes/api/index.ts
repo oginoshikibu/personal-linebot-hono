@@ -3,9 +3,13 @@ import { sendEveningNotification } from "../../features/notification/services/ev
 import { sendMorningNotification } from "../../features/notification/services/morning";
 import { asyncHandler } from "../../lib/errors";
 import { logger } from "../../lib/logger";
-import type { ApiResponse } from "../../types";
 import { setupRichMenu } from "../../services/richmenu";
-import { generateThemedRichMenuImage, PREDEFINED_THEMES, saveRichMenuImageToTemp } from "../../utils/richMenuImage";
+import type { ApiResponse } from "../../types";
+import {
+  generateThemedRichMenuImage,
+  PREDEFINED_THEMES,
+  saveRichMenuImageToTemp,
+} from "../../utils/richMenuImage";
 
 /**
  * ヘルスチェック用のエンドポイント
@@ -82,7 +86,7 @@ export const setupRichMenuEndpoint = asyncHandler(
       const saveTemp = c.req.query("save") === "true";
 
       // テーマが有効かチェック
-      if (!PREDEFINED_THEMES[theme]) {
+      if (!Object.prototype.hasOwnProperty.call(PREDEFINED_THEMES, theme)) {
         const response: ApiResponse = {
           status: "error",
           message: `無効なテーマです: ${theme}。利用可能なテーマ: ${Object.keys(PREDEFINED_THEMES).join(", ")}`,
@@ -96,7 +100,10 @@ export const setupRichMenuEndpoint = asyncHandler(
       // 一時ファイルとして保存（オプション）
       let tempFilePath: string | undefined;
       if (saveTemp) {
-        tempFilePath = saveRichMenuImageToTemp(imageBuffer, `richmenu-${theme}-${Date.now()}.png`);
+        tempFilePath = saveRichMenuImageToTemp(
+          imageBuffer,
+          `richmenu-${theme}-${Date.now()}.png`,
+        );
       }
 
       // リッチメニューをセットアップ
@@ -116,7 +123,7 @@ export const setupRichMenuEndpoint = asyncHandler(
       return c.json(response);
     } catch (error) {
       logger.error("リッチメニューセットアップエラー", error);
-      
+
       const response: ApiResponse = {
         status: "error",
         message: `リッチメニューのセットアップに失敗しました: ${error instanceof Error ? error.message : "不明なエラー"}`,
