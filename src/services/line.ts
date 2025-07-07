@@ -153,25 +153,38 @@ export const broadcastTextMessage = async (
   text: string,
 ): Promise<MessageAPIResponseBase[]> => {
   try {
-    const results: MessageAPIResponseBase[] = [];
-    const errors: Error[] = [];
-
     // データベースから全ユーザーを取得
     const users = await prisma.user.findMany();
 
-    for (const user of users) {
-      try {
-        const result = await sendTextMessage(user.lineId, text);
-        results.push(result);
-      } catch (error) {
-        if (error instanceof Error) {
-          errors.push(error);
+    // Promise.allSettledを使用して並列処理（エラーがあっても全てのプロミスを実行）
+    const settledResults = await Promise.allSettled(
+      users.map(async (user) => {
+        try {
+          return await sendTextMessage(user.lineId, text);
+        } catch (error) {
+          logger.error(
+            `ユーザーへのメッセージ送信に失敗: ${user.lineId}`,
+            error,
+          );
+          throw error;
         }
-      }
-    }
+      }),
+    );
 
+    // 成功した結果のみを抽出
+    const results = settledResults
+      .filter(
+        (result): result is PromiseFulfilledResult<MessageAPIResponseBase> =>
+          result.status === "fulfilled",
+      )
+      .map((result) => result.value);
+
+    // エラーの数をカウント
+    const errors = settledResults.filter(
+      (result) => result.status === "rejected",
+    );
     if (errors.length > 0) {
-      logger.error(`一部のメッセージ送信に失敗: ${errors.length}件`, errors[0]);
+      logger.error(`一部のメッセージ送信に失敗: ${errors.length}件`);
     }
 
     return results;
