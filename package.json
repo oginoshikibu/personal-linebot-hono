@@ -19,7 +19,13 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "test:ui": "vitest --ui"
+    "test:ui": "vitest --ui",
+    "add-user": "tsx scripts/add_user.ts",
+    "delete-user": "tsx scripts/delete_user.ts",
+    "list-users": "tsx scripts/list_users.ts",
+    "find-user": "tsx scripts/find_user.ts",
+    "setup-richmenu": "tsx scripts/setupRichMenu.ts",
+    "setup-richmenu:mock": "tsx scripts/setupRichMenuWithMock.ts"
   },
   "keywords": [
     "line",
@@ -30,12 +36,15 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "@hono/node-server": "^1.2.0",
+    "@hono/node-server": "^1.15.0",
     "@line/bot-sdk": "^7.5.2",
     "@prisma/client": "^5.4.2",
+    "date-fns": "^4.1.0",
     "dotenv": "^16.3.1",
-    "hono": "^3.9.0",
+    "hono": "^4.8.4",
     "node-cron": "^3.0.2",
+    "pino": "^9.7.0",
+    "pino-pretty": "^13.0.0",
     "zod": "^3.22.4"
   },
   "devDependencies": {
@@ -52,7 +61,7 @@
     "msw": "^2.10.2",
     "prettier": "^3.0.3",
     "prisma": "^5.4.2",
-    "tsx": "^3.14.0",
+    "tsx": "^4.20.3",
     "typescript": "^5.2.2",
     "vitest": "^3.2.4"
   },

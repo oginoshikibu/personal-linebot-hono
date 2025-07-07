@@ -8,11 +8,14 @@ import {
   type TemplateMessage,
   type TextMessage,
 } from "@line/bot-sdk";
+import type { MealType } from "@prisma/client";
 import { config } from "../config";
+import { prisma } from "../lib/prisma";
 import type { MealPlanData } from "../types";
 import { isAllowedLineId } from "../utils/auth";
 import { AppError } from "../utils/error";
 import { logger } from "../utils/logger";
+import { createCalendarFlexMessage } from "./calendar";
 
 // LINE Client初期化
 const lineClient = new Client({
@@ -31,7 +34,8 @@ export const sendTextMessage = async (
   text: string,
 ): Promise<MessageAPIResponseBase> => {
   try {
-    if (!isAllowedLineId(to)) {
+    const isAllowed = await isAllowedLineId(to);
+    if (!isAllowed) {
       throw new AppError(`未承認のLINE ID: ${to}`, 403);
     }
 
@@ -58,7 +62,8 @@ export const sendTextMessages = async (
   texts: string[],
 ): Promise<MessageAPIResponseBase> => {
   try {
-    if (!isAllowedLineId(to)) {
+    const isAllowed = await isAllowedLineId(to);
+    if (!isAllowed) {
       throw new AppError(`未承認のLINE ID: ${to}`, 403);
     }
 
@@ -87,7 +92,8 @@ export const sendFlexMessage = async (
   altText: string,
 ): Promise<MessageAPIResponseBase> => {
   try {
-    if (!isAllowedLineId(to)) {
+    const isAllowed = await isAllowedLineId(to);
+    if (!isAllowed) {
       throw new AppError(`未承認のLINE ID: ${to}`, 403);
     }
 
@@ -117,7 +123,8 @@ export const sendTemplateMessage = async (
   altText: string,
 ): Promise<MessageAPIResponseBase> => {
   try {
-    if (!isAllowedLineId(to)) {
+    const isAllowed = await isAllowedLineId(to);
+    if (!isAllowed) {
       throw new AppError(`未承認のLINE ID: ${to}`, 403);
     }
 
@@ -146,22 +153,38 @@ export const broadcastTextMessage = async (
   text: string,
 ): Promise<MessageAPIResponseBase[]> => {
   try {
-    const results: MessageAPIResponseBase[] = [];
-    const errors: Error[] = [];
+    // データベースから全ユーザーを取得
+    const users = await prisma.user.findMany();
 
-    for (const userId of config.line.allowedLineIds) {
-      try {
-        const result = await sendTextMessage(userId, text);
-        results.push(result);
-      } catch (error) {
-        if (error instanceof Error) {
-          errors.push(error);
+    // Promise.allSettledを使用して並列処理（エラーがあっても全てのプロミスを実行）
+    const settledResults = await Promise.allSettled(
+      users.map(async (user) => {
+        try {
+          return await sendTextMessage(user.lineId, text);
+        } catch (error) {
+          logger.error(
+            `ユーザーへのメッセージ送信に失敗: ${user.lineId}`,
+            error,
+          );
+          throw error;
         }
-      }
-    }
+      }),
+    );
 
+    // 成功した結果のみを抽出
+    const results = settledResults
+      .filter(
+        (result): result is PromiseFulfilledResult<MessageAPIResponseBase> =>
+          result.status === "fulfilled",
+      )
+      .map((result) => result.value);
+
+    // エラーの数をカウント
+    const errors = settledResults.filter(
+      (result) => result.status === "rejected",
+    );
     if (errors.length > 0) {
-      logger.error(`一部のメッセージ送信に失敗: ${errors.length}件`, errors[0]);
+      logger.error(`一部のメッセージ送信に失敗: ${errors.length}件`);
     }
 
     return results;
@@ -187,7 +210,7 @@ export const createMealPlanFlexMessage = (
   const getPreparationTypeText = (type: string, cooker?: string) => {
     switch (type) {
       case "COOK_BY_SELF":
-        return cooker ? `${cooker}が作る` : "自炊";
+        return cooker ? `${cooker}が作る` : "自分が作る";
       case "INDIVIDUAL":
         return "各自自由に";
       case "BUY_TOGETHER":
@@ -300,9 +323,10 @@ export const initializeLineNotification = async (): Promise<string> => {
       throw new AppError("LINE APIの設定が不足しています", 500);
     }
 
-    // 許可されたLINE IDの検証
-    if (config.line.allowedLineIds.length === 0) {
-      throw new AppError("許可されたLINE IDがありません", 500);
+    // データベースからユーザーを確認
+    const userCount = await prisma.user.count();
+    if (userCount === 0) {
+      throw new AppError("登録されたユーザーがいません", 500);
     }
 
     // テストメッセージを送信
@@ -440,11 +464,101 @@ export const createMainMenuTemplate = (): TemplateContent => {
       },
       {
         type: "message" as const,
-        label: "ヘルプ",
-        text: "ヘルプ",
+        label: "今後の予定",
+        text: "今後の予定",
       },
     ],
   };
+};
+
+/**
+ * カレンダー選択メッセージを送信
+ * @param to 送信先ユーザーID
+ * @param selectedDate 選択された日付（ハイライト表示）
+ * @returns 送信結果
+ */
+export const sendCalendarMessage = async (
+  to: string,
+  selectedDate?: Date,
+): Promise<MessageAPIResponseBase> => {
+  try {
+    const isAllowed = await isAllowedLineId(to);
+    if (!isAllowed) {
+      throw new AppError(`未承認のLINE ID: ${to}`, 403);
+    }
+
+    const calendarContent = createCalendarFlexMessage(selectedDate);
+    return await sendFlexMessage(to, calendarContent, "カレンダー");
+  } catch (error) {
+    logger.error(`カレンダーメッセージ送信エラー: ${to}`, error);
+    throw new AppError(`カレンダーメッセージの送信に失敗しました: ${to}`, 500);
+  }
+};
+
+/**
+ * 参加状態と準備方法を選択するためのテンプレートメッセージを送信
+ * @param to 送信先ユーザーID
+ * @param dateText 日付の表示テキスト
+ * @param mealTypeText 食事タイプの表示テキスト
+ * @param dateStr ISO形式の日付文字列
+ * @param mealType 食事タイプ
+ * @returns 送信結果
+ */
+export const sendRegistrationOptions = async (
+  to: string,
+  dateText: string,
+  mealTypeText: string,
+  dateStr: string,
+  mealType: MealType,
+): Promise<MessageAPIResponseBase> => {
+  try {
+    const isAllowed = await isAllowedLineId(to);
+    if (!isAllowed) {
+      throw new AppError(`未承認のLINE ID: ${to}`, 403);
+    }
+
+    // 参加状態を選択するテンプレート
+    const attendanceTemplate: TemplateContent = {
+      type: "buttons",
+      title: `${dateText}の${mealTypeText}予定`,
+      text: "参加しますか？",
+      actions: [
+        {
+          type: "postback",
+          label: "家で食べる（担当：自分）",
+          data: `confirm_registration?date=${dateStr}&mealType=${mealType}&attend=true&prepType=COOK_BY_SELF`,
+          displayText: "家で食べる（担当：自分）",
+        },
+        {
+          type: "postback",
+          label: "家で食べる（担当：誰か）",
+          data: `confirm_registration?date=${dateStr}&mealType=${mealType}&attend=true&prepType=BUY_TOGETHER`,
+          displayText: "家で食べる（担当：誰か）",
+        },
+        {
+          type: "postback",
+          label: "各自外で食べる",
+          data: `confirm_registration?date=${dateStr}&mealType=${mealType}&attend=true&prepType=INDIVIDUAL`,
+          displayText: "各自外で食べる",
+        },
+        {
+          type: "postback",
+          label: "参加しない",
+          data: `confirm_registration?date=${dateStr}&mealType=${mealType}&attend=false&prepType=INDIVIDUAL`,
+          displayText: "参加しない",
+        },
+      ],
+    };
+
+    return await sendTemplateMessage(
+      to,
+      attendanceTemplate,
+      `${dateText}の${mealTypeText}予定登録`,
+    );
+  } catch (error) {
+    logger.error(`登録オプション送信エラー: ${to}`, error);
+    throw new AppError(`登録オプションの送信に失敗しました: ${to}`, 500);
+  }
 };
 
 // LINEクライアントをエクスポート

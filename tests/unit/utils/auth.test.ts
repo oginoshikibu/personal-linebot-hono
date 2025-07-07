@@ -23,6 +23,25 @@ vi.mock("../../../src/utils/logger", () => ({
   },
 }));
 
+// prismaのモック
+vi.mock("../../../src/lib/prisma", () => ({
+  prisma: {
+    user: {
+      findUnique: vi.fn().mockImplementation(({ where }) => {
+        // テスト用のユーザーデータ
+        const testUsers = {
+          user1: { id: "1", lineId: "user1", name: "User 1" },
+          user2: { id: "2", lineId: "user2", name: "User 2" },
+          user3: { id: "3", lineId: "user3", name: "User 3" },
+        };
+        
+        // lineIdに一致するユーザーを返す
+        return Promise.resolve(testUsers[where.lineId] || null);
+      }),
+    },
+  },
+}));
+
 // auth関数をインポート - モック設定の後にインポートする
 import { verifyLineSignature, isAllowedLineId, lineSignatureMiddleware } from "../../../src/utils/auth";
 
@@ -88,18 +107,18 @@ describe("認証ユーティリティ", () => {
   });
 
   describe("isAllowedLineId関数", () => {
-    it("許可されたLINE IDの場合にtrueを返すこと", () => {
-      const result = isAllowedLineId("user1");
+    it("許可されたLINE IDの場合にtrueを返すこと", async () => {
+      const result = await isAllowedLineId("user1");
       expect(result).toBe(true);
     });
 
-    it("許可されていないLINE IDの場合にfalseを返すこと", () => {
-      const result = isAllowedLineId("unknown_user");
+    it("許可されていないLINE IDの場合にfalseを返すこと", async () => {
+      const result = await isAllowedLineId("unknown_user");
       expect(result).toBe(false);
     });
 
-    it("空のLINE IDの場合にfalseを返すこと", () => {
-      const result = isAllowedLineId("");
+    it("空のLINE IDの場合にfalseを返すこと", async () => {
+      const result = await isAllowedLineId("");
       expect(result).toBe(false);
     });
   });

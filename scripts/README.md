@@ -1,64 +1,71 @@
-# LINE Botユーザー管理スクリプト
+# スクリプトディレクトリ
 
-このディレクトリには、LINE Botのユーザーを管理するためのスクリプトが含まれています。
+このディレクトリには、アプリケーションの管理や設定に使用する各種スクリプトが含まれています。
 
-## 前提条件
+## リッチメニュー関連スクリプト
 
-- Node.jsがインストールされていること
-- プロジェクトのルートディレクトリで`npm install`が実行済みであること
+### setupRichMenu.ts
 
-## スクリプト一覧
-
-### ユーザー一覧の表示
+実際のLINE APIを使用してリッチメニューをセットアップするスクリプトです。
 
 ```bash
-node scripts/list_users.js
+npm run setup-richmenu
 ```
 
-データベースに登録されているすべてのユーザーを一覧表示します。
+### setupRichMenuWithMock.ts
 
-### ユーザーの追加
+LINE APIをモック化してリッチメニューのセットアップをテストするスクリプトです。
+実際のAPIを呼び出さずに、リッチメニューのセットアップフローをテストできます。
 
 ```bash
-node scripts/add_user.js <LINE_ID> [ユーザー名]
+npm run setup-richmenu:mock
 ```
 
-- `<LINE_ID>`: 追加するLINE ID（必須）
-- `[ユーザー名]`: ユーザーの名前（省略可能、デフォルトは「ユーザー」）
+このスクリプトは以下の機能を持っています：
 
-例:
-```bash
-node scripts/add_user.js Ubd6e392bbba3020dbdd6bb8c9b07894f "テストユーザー"
-```
+- リッチメニュー画像の生成
+- 画像バッファのMIMEタイプ検証
+- モックLINE APIによるリッチメニューのセットアップシミュレーション
+- 生成された画像の保存（`temp/` ディレクトリ）
 
-### ユーザーの検索
+## ユーザー管理スクリプト
 
-```bash
-node scripts/find_user.js <LINE_ID>
-```
+### create_user.ts
 
-- `<LINE_ID>`: 検索するLINE ID（必須）
-
-例:
-```bash
-node scripts/find_user.js Ubd6e392bbba3020dbdd6bb8c9b07894f
-```
-
-### ユーザーの削除
+新しいユーザーを作成するスクリプトです。
 
 ```bash
-node scripts/delete_user.js <LINE_ID>
+npm run create-user
 ```
 
-- `<LINE_ID>`: 削除するLINE ID（必須）
+### delete_user.ts
 
-例:
+既存のユーザーを削除するスクリプトです。
+
 ```bash
-node scripts/delete_user.js Ubd6e392bbba3020dbdd6bb8c9b07894f
+npm run delete-user
 ```
 
-## 注意事項
+### list_users.ts
 
-- これらのスクリプトは、データベースに直接アクセスします。
-- 本番環境で使用する場合は、十分な注意が必要です。
-- ユーザーを削除する前に、関連するデータ（食事参加情報など）も削除する必要がある場合があります。 
+登録されているユーザーの一覧を表示するスクリプトです。
+
+```bash
+npm run list-users
+```
+
+### find_user.ts
+
+特定のユーザーを検索するスクリプトです。
+
+```bash
+npm run find-user
+```
+
+## スクリプトの追加方法
+
+新しいスクリプトを追加する場合は、以下の手順に従ってください：
+
+1. `scripts/` ディレクトリに新しいTypeScriptファイルを作成
+2. `package.json` の `scripts` セクションにコマンドを追加
+3. このREADMEファイルに説明を追加 

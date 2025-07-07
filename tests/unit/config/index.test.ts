@@ -30,11 +30,10 @@ describe("設定モジュール", () => {
     process.env.EVENING_NOTIFICATION_MINUTE = "45";
     
     // モジュールをインポート
-    const { config } = await import("../../../src/config");
+    const { config } = await import("../../../src/config/index.js");
     
     // データベース設定
     expect(config.database.url).toBe("postgresql://user:pass@localhost:5432/mydb");
-    
     // LINE設定
     expect(config.line.channelSecret).toBe("test_secret");
     expect(config.line.channelAccessToken).toBe("test_token");

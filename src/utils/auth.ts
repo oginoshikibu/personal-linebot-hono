@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import type { Context, Next } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { config } from "../config";
+import { prisma } from "../lib/prisma";
 import { logger } from "./logger";
 
 /**
@@ -36,17 +37,17 @@ export const verifyLineSignature = (
  * @param lineId LINE ID
  * @returns 許可されたIDの場合はtrue、そうでない場合はfalse
  */
-export const isAllowedLineId = (lineId: string): boolean => {
+export const isAllowedLineId = async (lineId: string): Promise<boolean> => {
   try {
-    const allowedLineIds = config.line.allowedLineIds;
-    if (allowedLineIds.length === 0) {
-      logger.warn("許可されたLINE IDが設定されていません");
-      return false;
-    }
+    // データベースからユーザーを検索
+    const user = await prisma.user.findUnique({
+      where: { lineId },
+    });
 
-    return allowedLineIds.includes(lineId);
+    // ユーザーが存在すればtrue、存在しなければfalse
+    return !!user;
   } catch (error) {
-    logger.error("LINE ID検証エラー", error);
+    logger.error(`LINE ID検証エラー: ${lineId}`, error);
     return false;
   }
 };

@@ -1,11 +1,20 @@
 /**
+ * HTTPステータスコードの型定義
+ */
+export type HttpStatusCode = 400 | 401 | 403 | 404 | 500 | 502 | 503;
+
+/**
  * アプリケーション固有のエラークラス
  */
 export class AppError extends Error {
-  statusCode: number;
+  statusCode: HttpStatusCode;
   isOperational: boolean;
 
-  constructor(message: string, statusCode = 500, isOperational = true) {
+  constructor(
+    message: string,
+    statusCode: HttpStatusCode = 500,
+    isOperational = true,
+  ) {
     super(message);
     this.statusCode = statusCode;
     this.isOperational = isOperational;
