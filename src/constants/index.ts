@@ -3,9 +3,9 @@ export const COMMAND_PREFIX = "/";
 
 // 準備方法の日本語表示マッピング
 export const PREPARATION_TYPE_TEXT = {
-  COOK_BY_SELF: "自炊",
-  INDIVIDUAL: "各自自由",
-  BUY_TOGETHER: "買って一緒に食べる",
+  COOK_BY_SELF: "家で食べる（担当：自分）",
+  INDIVIDUAL: "各自外で食べる",
+  BUY_TOGETHER: "家で食べる（担当：誰か）",
 } as const;
 
 // 食事タイプの日本語表示マッピング
@@ -22,7 +22,7 @@ export const MESSAGES = {
     INVALID_MEAL_TYPE:
       "無効な食事タイプです。lunch または dinner を使用してください。",
     INVALID_PREPARATION_TYPE:
-      "無効な準備方法です。cook, individual, または buy を使用してください。",
+      "無効な準備方法です。cook（家で食べる・担当：自分）, individual（各自外で食べる）, または buy（家で食べる・担当：誰か）を使用してください。",
     MISSING_PARAMETERS:
       "必要なパラメータが不足しています。もう一度お試しください。",
     REGISTRATION_FAILED:
@@ -39,7 +39,7 @@ export const MESSAGES = {
   日付: today, tomorrow, YYYY-MM-DD
   食事タイプ: lunch, dinner
   参加: yes, no
-  準備方法: cook, individual, buy
+  準備方法: cook（家で食べる・担当：自分）, individual（各自外で食べる）, buy（家で食べる・担当：誰か）
 /check [日付] - 食事予定を確認
   例: /check tomorrow
   日付: today, tomorrow, YYYY-MM-DD (省略時は today)
@@ -54,7 +54,7 @@ export const MESSAGES = {
 ヘルプ - このヘルプを表示`,
     CALENDAR_EXPLANATION: "カレンダーから日付を選択して、予定を確認できます。",
     REGISTER_USAGE:
-      "使用方法: /register <日付(today/tomorrow/YYYY-MM-DD)> <食事タイプ(lunch/dinner)> <参加(yes/no)> [準備方法(cook/individual/buy)]",
+      "使用方法: /register <日付(today/tomorrow/YYYY-MM-DD)> <食事タイプ(lunch/dinner)> <参加(yes/no)> [準備方法(cook:家で食べる・担当：自分/individual:各自外で食べる/buy:家で食べる・担当：誰か)]",
   },
   SUCCESS: {
     REGISTRATION_COMPLETE: "予定を登録しました。",

@@ -189,11 +189,11 @@ export const createMealPlanFlexMessage = (
   const getPreparationTypeText = (type: string, cooker?: string) => {
     switch (type) {
       case "COOK_BY_SELF":
-        return cooker ? `${cooker}が作る` : "自炊";
+        return cooker ? `家で食べる（担当：${cooker}）` : "家で食べる（担当：自分）";
       case "INDIVIDUAL":
-        return "各自自由に";
+        return "各自外で食べる";
       case "BUY_TOGETHER":
-        return "買って一緒に食べる";
+        return "家で食べる（担当：誰か）";
       default:
         return "未定";
     }
@@ -501,21 +501,21 @@ export const sendRegistrationOptions = async (
       actions: [
         {
           type: "postback",
-          label: "参加する",
+          label: "家で食べる（担当：自分）",
           data: `confirm_registration?date=${dateStr}&mealType=${mealType}&attend=true&prepType=COOK_BY_SELF`,
-          displayText: "参加する（自炊）",
+          displayText: "家で食べる（担当：自分）",
         },
         {
           type: "postback",
-          label: "参加する（各自）",
-          data: `confirm_registration?date=${dateStr}&mealType=${mealType}&attend=true&prepType=INDIVIDUAL`,
-          displayText: "参加する（各自自由に）",
-        },
-        {
-          type: "postback",
-          label: "参加する（買う）",
+          label: "家で食べる（担当：誰か）",
           data: `confirm_registration?date=${dateStr}&mealType=${mealType}&attend=true&prepType=BUY_TOGETHER`,
-          displayText: "参加する（買って一緒に食べる）",
+          displayText: "家で食べる（担当：誰か）",
+        },
+        {
+          type: "postback",
+          label: "各自外で食べる",
+          data: `confirm_registration?date=${dateStr}&mealType=${mealType}&attend=true&prepType=INDIVIDUAL`,
+          displayText: "各自外で食べる",
         },
         {
           type: "postback",
