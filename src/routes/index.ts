@@ -2,7 +2,6 @@ import type { Hono } from "hono";
 import { webhookRoute } from "../features/line/webhooks";
 import { logger } from "../lib/logger";
 import { apiRoutes } from "./api";
-import { setupRichMenuHandler } from "./setup";
 
 /**
  * アプリケーションのルートを設定
@@ -21,8 +20,7 @@ export const setupRoutes = (app: Hono): void => {
     app.post("/api/notification/morning", apiRoutes.notification.morning.post);
     app.post("/api/notification/evening", apiRoutes.notification.evening.post);
 
-    // セットアップルート
-    app.get("/setup/richmenu", setupRichMenuHandler);
+
 
     logger.info("ルートを設定しました");
   } catch (error) {
