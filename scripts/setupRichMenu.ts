@@ -13,7 +13,7 @@ const lineClient = new Client({
 /**
  * デフォルトのリッチメニュープロパティ
  */
-const getDefaultRichMenuProperties = () => {
+export const getDefaultRichMenuProperties = () => {
   return {
     size: {
       width: 2500,
@@ -25,15 +25,15 @@ const getDefaultRichMenuProperties = () => {
     areas: [
       {
         bounds: { x: 0, y: 0, width: 833, height: 843 },
-        action: { type: "message" as const, text: "予定登録" },
+        action: { type: "message" as const, text: "今日の予定" },
       },
       {
         bounds: { x: 833, y: 0, width: 834, height: 843 },
-        action: { type: "message" as const, text: "予定変更" },
+        action: { type: "message" as const, text: "明日の予定" },
       },
       {
         bounds: { x: 1667, y: 0, width: 833, height: 843 },
-        action: { type: "message" as const, text: "予定確認" },
+        action: { type: "message" as const, text: "今週の予定" },
       },
       {
         bounds: { x: 0, y: 843, width: 1250, height: 843 },

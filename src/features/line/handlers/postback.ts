@@ -1,8 +1,11 @@
 import type { PostbackEvent } from "@line/bot-sdk";
-import { handlePostbackData } from "../../../handlers/postbacks/main";
 import { logger } from "../../../utils/logger";
 import { getUserByLineId } from "../../meal/services/user";
 import { sendTextMessage } from "../client";
+import { handleEditPostback } from "./postbacks/edit";
+import { handleDateSelection } from "./postbacks/date";
+import { handleLunchPostback } from "./postbacks/lunch";
+import { handleDinnerPostback } from "./postbacks/dinner";
 
 /**
  * ポストバックイベントを処理
@@ -11,9 +14,10 @@ import { sendTextMessage } from "../client";
 export const handlePostbackEvent = async (
   event: PostbackEvent,
 ): Promise<void> => {
+  // ユーザー情報を取得
   const userId = event.source.userId ?? "";
   if (!userId) {
-    logger.error("ポストバックイベント: ユーザーIDが取得できませんでした");
+    logger.error("ユーザーIDが取得できませんでした");
     return;
   }
 
@@ -22,9 +26,11 @@ export const handlePostbackEvent = async (
   });
 
   try {
-    // ユーザー情報を取得
     const user = await getUserByLineId(userId);
-    logger.debug(`ポストバックユーザー情報取得: ${userId}`, { found: !!user });
+    logger.debug(`ユーザー情報取得: ${userId}`, {
+      found: !!user,
+      userName: user?.name,
+    });
 
     // ユーザーが登録されていない場合
     if (!user) {
@@ -37,34 +43,36 @@ export const handlePostbackEvent = async (
       return;
     }
 
-    // action=registerで始まるポストバックデータの場合、日付選択ピッカーからの応答を処理
-    if (
-      event.postback.data.startsWith("action=register") &&
-      event.postback.params &&
-      "date" in event.postback.params
-    ) {
-      logger.debug(`日付選択ピッカーからのポストバック: ${userId}`, {
-        data: event.postback.data,
-        params: event.postback.params,
-      });
-
-      // 日付選択ピッカーからの日付を取得してデータに追加
-      const date = event.postback.params.date;
-      if (date) {
-        // 日付情報をポストバックデータに追加
-        const updatedData = `${event.postback.data}&date=${date}`;
-        logger.debug(`更新されたポストバックデータ: ${updatedData}`);
-
-        // 更新されたデータで処理
-        await handlePostbackData(updatedData, user);
-        logger.info(`日付選択ポストバックイベント処理完了: ${userId}`);
-        return;
-      }
+    // ポストバックデータを処理
+    const data = event.postback.data;
+    
+    // 日付選択のポストバック
+    if (data.startsWith("date_")) {
+      await handleDateSelection(data.substring(5), user);
+      return;
     }
-
-    // 通常のポストバックデータを処理
-    await handlePostbackData(event.postback.data, user);
-    logger.info(`ポストバックイベント処理完了: ${userId}`);
+    
+    // 編集のポストバック
+    if (data.startsWith("action=edit")) {
+      await handleEditPostback(data, user);
+      return;
+    }
+    
+    // 昼食の予定質問のポストバック
+    if (data.startsWith("action=lunch_")) {
+      await handleLunchPostback(data, user);
+      return;
+    }
+    
+    // 夕食の予定質問のポストバック
+    if (data.startsWith("action=dinner_")) {
+      await handleDinnerPostback(data, user);
+      return;
+    }
+    
+    // その他のポストバック
+    logger.warn(`未対応のポストバックデータ: ${data}`);
+    await sendTextMessage(userId, "この操作はまだ対応していません。");
   } catch (error) {
     logger.error(`ポストバックイベント処理エラー: ${userId}`, {
       error: error instanceof Error ? error.message : String(error),

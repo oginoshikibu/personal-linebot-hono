@@ -262,3 +262,57 @@ export const getMealPlan = async (
     return null;
   }
 };
+
+/**
+ * 指定期間の食事予定を取得
+ * @param startDate 開始日
+ * @param endDate 終了日
+ * @returns 食事予定の配列
+ */
+export const getMealPlans = async (
+  startDate: Date,
+  endDate: Date,
+): Promise<MealPlan[]> => {
+  try {
+    logger.info(`期間の食事予定を取得: ${startDate.toISOString()} - ${endDate.toISOString()}`);
+    
+    const mealPlans = await prisma.mealPlan.findMany({
+      where: {
+        date: {
+          gte: startDate,
+          lt: endDate,
+        },
+      },
+      include: {
+        participations: {
+          include: {
+            user: true,
+          },
+        },
+        cooker: true,
+      },
+      orderBy: {
+        date: 'asc',
+      },
+    });
+    
+    // 参加情報をフラット化して返す
+    return mealPlans.flatMap(plan => 
+      plan.participations.map(participation => ({
+        id: plan.id,
+        date: plan.date,
+        mealType: plan.mealType,
+        preparationType: plan.preparationType,
+        cookerId: plan.cookerId,
+        createdAt: plan.createdAt,
+        updatedAt: plan.updatedAt,
+        userId: participation.userId,
+        userName: participation.user.name,
+        attendance: participation.isAttending ? "ATTEND" : "ABSENT",
+      }))
+    );
+  } catch (error) {
+    logger.error(`期間の食事予定取得エラー: ${startDate.toISOString()} - ${endDate.toISOString()}`, error);
+    throw new AppError("期間の食事予定の取得に失敗しました", 500);
+  }
+};

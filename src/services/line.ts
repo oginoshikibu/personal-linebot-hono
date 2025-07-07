@@ -23,7 +23,10 @@ let lineClient: Client | null = null;
 const getLineClient = (): Client => {
   if (!lineClient) {
     if (!config.line.channelSecret || !config.line.channelAccessToken) {
-      throw new AppError("LINE APIの設定が不足しています。環境変数を確認してください。", 500);
+      throw new AppError(
+        "LINE APIの設定が不足しています。環境変数を確認してください。",
+        500,
+      );
     }
     lineClient = new Client({
       channelSecret: config.line.channelSecret,
