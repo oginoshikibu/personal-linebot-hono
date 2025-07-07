@@ -1,7 +1,49 @@
-import { generateRichMenuImage } from "../src/utils/richMenuImage";
+// Rich menu image generation functions moved inline
 import { logger } from "../src/utils/logger";
 import fs from "node:fs";
 import path from "node:path";
+
+/**
+ * 既存のリッチメニュー画像を読み込み
+ */
+const loadExistingRichMenuImage = (): Buffer => {
+  try {
+    const imagePath = path.resolve(process.cwd(), "assets/images/richmenu.png");
+    
+    if (fs.existsSync(imagePath)) {
+      logger.info("既存のリッチメニュー画像を読み込みました");
+      return fs.readFileSync(imagePath);
+    } else {
+      logger.warn("リッチメニュー画像が見つかりません。透明画像を生成します");
+      return generateTransparentImage();
+    }
+  } catch (error) {
+    logger.error("リッチメニュー画像の読み込みに失敗しました", error);
+    return generateTransparentImage();
+  }
+};
+
+/**
+ * 透明な画像を生成（フォールバック）
+ */
+const generateTransparentImage = (): Buffer => {
+  // 1x1の透明PNG画像のBase64エンコードデータ
+  const transparentPngBase64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";
+  return Buffer.from(transparentPngBase64, 'base64');
+};
+
+/**
+ * リッチメニュー画像を生成
+ */
+const generateRichMenuImage = (): Buffer => {
+  try {
+    logger.info("リッチメニュー画像を生成します");
+    return loadExistingRichMenuImage();
+  } catch (error) {
+    logger.error("リッチメニュー画像の生成に失敗しました", error);
+    return generateTransparentImage();
+  }
+};
 
 /**
  * 画像バッファのMIMEタイプを検証する関数

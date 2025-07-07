@@ -64,59 +64,16 @@ npm run setup-richmenu:mock
 
 このコマンドは `scripts/setupRichMenuWithMock.ts` を実行し、LINE APIをモック化してリッチメニューのセットアップをシミュレートします。モック版を実行すると、`temp/` ディレクトリにリッチメニュー画像が保存されます。
 
-### 2. エンドポイントを使用する方法
+### 2. メインアプリケーションへの影響について
 
-サーバー起動後に以下のエンドポイントにアクセスしてリッチメニューをセットアップできます：
+リッチメニュー機能は**スクリプトのみで完結**し、メインアプリケーションには一切影響を与えません。
 
-#### リッチメニューのセットアップ
+- リッチメニュー関連のAPIエンドポイントは存在しません
+- データベースへの影響はありません
+- 既存のLINE Bot機能には影響しません
+- 完全に独立したスクリプトとして動作します
 
-```
-GET /api/richmenu/setup
-```
-
-**クエリパラメータ：**
-- `theme`: 使用するテーマ（default, dark, blue, warm）
-- `save`: `true` にすると画像を一時ファイルとして保存
-
-**使用例：**
-```bash
-# デフォルトテーマでセットアップ
-curl "http://localhost:3000/api/richmenu/setup"
-
-# ダークテーマでセットアップし、画像を保存
-curl "http://localhost:3000/api/richmenu/setup?theme=dark&save=true"
-
-# ブルーテーマでセットアップ
-curl "http://localhost:3000/api/richmenu/setup?theme=blue"
-```
-
-#### 利用可能なテーマ一覧の取得
-
-```
-GET /api/richmenu/themes
-```
-
-テーマの一覧とそれぞれの詳細情報（色設定など）を取得できます。
-
-**レスポンス例：**
-```json
-{
-  "status": "success",
-  "message": "利用可能なリッチメニューテーマ一覧",
-  "data": {
-    "themes": ["default", "dark", "blue", "warm"],
-    "themeDetails": {
-      "default": {
-        "backgroundColor": "#FFFFFF",
-        "textColor": "#333333",
-        "borderColor": "#CCCCCC",
-        "accentColor": "#00C851"
-      },
-      // ... 他のテーマの詳細
-    }
-  }
-}
-```
+この設計により、リッチメニューの設定や変更がメインアプリケーションの動作に影響することはありません。
 
 ## リッチメニューの画像について
 
