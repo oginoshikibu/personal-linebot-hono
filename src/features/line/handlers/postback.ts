@@ -1,6 +1,6 @@
 import type { PostbackEvent } from "@line/bot-sdk";
 import { logger } from "../../../utils/logger";
-import { handlePostbackData } from "../../meal/postbacks";
+import { handlePostbackData } from "../../../handlers/postbacks/main";
 import { getUserByLineId } from "../../meal/services/user";
 import { sendTextMessage } from "../client";
 
@@ -38,7 +38,7 @@ export const handlePostbackEvent = async (
     }
 
     // ポストバックデータを処理
-    await handlePostbackData(event.postback.data, event.postback.params, user);
+    await handlePostbackData(event.postback.data, user);
     logger.info(`ポストバックイベント処理完了: ${userId}`);
   } catch (error) {
     logger.error(`ポストバックイベント処理エラー: ${userId}`, {
