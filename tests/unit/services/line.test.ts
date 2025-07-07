@@ -28,10 +28,34 @@ vi.mock("../../../src/config", () => ({
   },
 }));
 
+// prismaのモック
+vi.mock("../../../src/lib/prisma", () => ({
+  prisma: {
+    user: {
+      findUnique: vi.fn().mockImplementation(({ where }) => {
+        // テスト用のユーザーデータ
+        const testUsers = {
+          user1: { id: "1", lineId: "user1", name: "User 1" },
+          user2: { id: "2", lineId: "user2", name: "User 2" },
+          user3: { id: "3", lineId: "user3", name: "User 3" },
+        };
+        
+        // lineIdに一致するユーザーを返す
+        return Promise.resolve(testUsers[where.lineId] || null);
+      }),
+      findMany: vi.fn().mockResolvedValue([
+        { id: "1", lineId: "user1", name: "User 1" },
+        { id: "2", lineId: "user2", name: "User 2" },
+        { id: "3", lineId: "user3", name: "User 3" },
+      ]),
+    },
+  },
+}));
+
 // 認証ユーティリティのモック
 vi.mock("../../../src/utils/auth", () => {
   return {
-    isAllowedLineId: (id: string) => {
+    isAllowedLineId: async (id: string) => {
       if (id === "unknown_user") {
         return false;
       }
@@ -115,7 +139,7 @@ describe("LINEサービス", () => {
   });
 
   describe("broadcastTextMessage関数", () => {
-    it("全ての許可されたLINE IDにメッセージをブロードキャストできること", async () => {
+    it("全ての登録ユーザーにメッセージをブロードキャストできること", async () => {
       const results = await broadcastTextMessage("ブロードキャストテスト");
       
       expect(results).toHaveLength(3); // 3人のユーザーにメッセージが送信される

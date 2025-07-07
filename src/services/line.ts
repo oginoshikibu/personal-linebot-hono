@@ -10,6 +10,7 @@ import {
 } from "@line/bot-sdk";
 import type { MealType } from "@prisma/client";
 import { config } from "../config";
+import { prisma } from "../lib/prisma";
 import type { MealPlanData } from "../types";
 import { isAllowedLineId } from "../utils/auth";
 import { AppError } from "../utils/error";
@@ -33,7 +34,8 @@ export const sendTextMessage = async (
   text: string,
 ): Promise<MessageAPIResponseBase> => {
   try {
-    if (!isAllowedLineId(to)) {
+    const isAllowed = await isAllowedLineId(to);
+    if (!isAllowed) {
       throw new AppError(`未承認のLINE ID: ${to}`, 403);
     }
 
@@ -60,7 +62,8 @@ export const sendTextMessages = async (
   texts: string[],
 ): Promise<MessageAPIResponseBase> => {
   try {
-    if (!isAllowedLineId(to)) {
+    const isAllowed = await isAllowedLineId(to);
+    if (!isAllowed) {
       throw new AppError(`未承認のLINE ID: ${to}`, 403);
     }
 
@@ -89,7 +92,8 @@ export const sendFlexMessage = async (
   altText: string,
 ): Promise<MessageAPIResponseBase> => {
   try {
-    if (!isAllowedLineId(to)) {
+    const isAllowed = await isAllowedLineId(to);
+    if (!isAllowed) {
       throw new AppError(`未承認のLINE ID: ${to}`, 403);
     }
 
@@ -119,7 +123,8 @@ export const sendTemplateMessage = async (
   altText: string,
 ): Promise<MessageAPIResponseBase> => {
   try {
-    if (!isAllowedLineId(to)) {
+    const isAllowed = await isAllowedLineId(to);
+    if (!isAllowed) {
       throw new AppError(`未承認のLINE ID: ${to}`, 403);
     }
 
@@ -151,9 +156,12 @@ export const broadcastTextMessage = async (
     const results: MessageAPIResponseBase[] = [];
     const errors: Error[] = [];
 
-    for (const userId of config.line.allowedLineIds) {
+    // データベースから全ユーザーを取得
+    const users = await prisma.user.findMany();
+
+    for (const user of users) {
       try {
-        const result = await sendTextMessage(userId, text);
+        const result = await sendTextMessage(user.lineId, text);
         results.push(result);
       } catch (error) {
         if (error instanceof Error) {
@@ -302,9 +310,10 @@ export const initializeLineNotification = async (): Promise<string> => {
       throw new AppError("LINE APIの設定が不足しています", 500);
     }
 
-    // 許可されたLINE IDの検証
-    if (config.line.allowedLineIds.length === 0) {
-      throw new AppError("許可されたLINE IDがありません", 500);
+    // データベースからユーザーを確認
+    const userCount = await prisma.user.count();
+    if (userCount === 0) {
+      throw new AppError("登録されたユーザーがいません", 500);
     }
 
     // テストメッセージを送信
@@ -460,7 +469,8 @@ export const sendCalendarMessage = async (
   selectedDate?: Date,
 ): Promise<MessageAPIResponseBase> => {
   try {
-    if (!isAllowedLineId(to)) {
+    const isAllowed = await isAllowedLineId(to);
+    if (!isAllowed) {
       throw new AppError(`未承認のLINE ID: ${to}`, 403);
     }
 
@@ -489,7 +499,8 @@ export const sendRegistrationOptions = async (
   mealType: MealType,
 ): Promise<MessageAPIResponseBase> => {
   try {
-    if (!isAllowedLineId(to)) {
+    const isAllowed = await isAllowedLineId(to);
+    if (!isAllowed) {
       throw new AppError(`未承認のLINE ID: ${to}`, 403);
     }
 

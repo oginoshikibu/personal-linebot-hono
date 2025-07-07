@@ -8,6 +8,7 @@ import {
   type TextMessage,
 } from "@line/bot-sdk";
 import { config } from "../../config";
+import { prisma } from "../../lib/prisma";
 import { isAllowedLineId } from "../../utils/auth";
 import { AppError } from "../../utils/error";
 import { logger } from "../../utils/logger";
@@ -54,7 +55,8 @@ export class LineClientService {
     text: string,
   ): Promise<MessageAPIResponseBase> {
     try {
-      if (!isAllowedLineId(to)) {
+      const isAllowed = await isAllowedLineId(to);
+      if (!isAllowed) {
         throw new AppError(`未承認のLINE ID: ${to}`, 403);
       }
 
@@ -81,7 +83,8 @@ export class LineClientService {
     texts: string[],
   ): Promise<MessageAPIResponseBase> {
     try {
-      if (!isAllowedLineId(to)) {
+      const isAllowed = await isAllowedLineId(to);
+      if (!isAllowed) {
         throw new AppError(`未承認のLINE ID: ${to}`, 403);
       }
 
@@ -110,7 +113,8 @@ export class LineClientService {
     altText: string,
   ): Promise<MessageAPIResponseBase> {
     try {
-      if (!isAllowedLineId(to)) {
+      const isAllowed = await isAllowedLineId(to);
+      if (!isAllowed) {
         throw new AppError(`未承認のLINE ID: ${to}`, 403);
       }
 
@@ -140,7 +144,8 @@ export class LineClientService {
     altText: string,
   ): Promise<MessageAPIResponseBase> {
     try {
-      if (!isAllowedLineId(to)) {
+      const isAllowed = await isAllowedLineId(to);
+      if (!isAllowed) {
         throw new AppError(`未承認のLINE ID: ${to}`, 403);
       }
 
@@ -170,9 +175,12 @@ export class LineClientService {
       const results: MessageAPIResponseBase[] = [];
       const errors: Error[] = [];
 
-      for (const userId of config.line.allowedLineIds) {
+      // データベースから全ユーザーを取得
+      const users = await prisma.user.findMany();
+
+      for (const user of users) {
         try {
-          const result = await this.sendTextMessage(userId, text);
+          const result = await this.sendTextMessage(user.lineId, text);
           results.push(result);
         } catch (error) {
           if (error instanceof Error) {
