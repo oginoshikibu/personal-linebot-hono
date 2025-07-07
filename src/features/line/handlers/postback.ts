@@ -37,7 +37,32 @@ export const handlePostbackEvent = async (
       return;
     }
 
-    // ポストバックデータを処理
+    // action=registerで始まるポストバックデータの場合、日付選択ピッカーからの応答を処理
+    if (
+      event.postback.data.startsWith("action=register") &&
+      event.postback.params &&
+      "date" in event.postback.params
+    ) {
+      logger.debug(`日付選択ピッカーからのポストバック: ${userId}`, {
+        data: event.postback.data,
+        params: event.postback.params,
+      });
+
+      // 日付選択ピッカーからの日付を取得してデータに追加
+      const date = event.postback.params.date;
+      if (date) {
+        // 日付情報をポストバックデータに追加
+        const updatedData = `${event.postback.data}&date=${date}`;
+        logger.debug(`更新されたポストバックデータ: ${updatedData}`);
+
+        // 更新されたデータで処理
+        await handlePostbackData(updatedData, user);
+        logger.info(`日付選択ポストバックイベント処理完了: ${userId}`);
+        return;
+      }
+    }
+
+    // 通常のポストバックデータを処理
     await handlePostbackData(event.postback.data, user);
     logger.info(`ポストバックイベント処理完了: ${userId}`);
   } catch (error) {
