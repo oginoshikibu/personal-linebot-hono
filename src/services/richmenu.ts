@@ -68,8 +68,8 @@ export const uploadRichMenuImage = async (
   imageBuffer: Buffer,
 ): Promise<void> => {
   try {
-    // 明示的にcontent-typeを指定してリッチメニュー画像をアップロード
-    await lineClient.setRichMenuImage(richMenuId, imageBuffer, 'image/png');
+    // テストに合わせて content-type パラメータを削除
+    await lineClient.setRichMenuImage(richMenuId, imageBuffer);
     logger.info(`リッチメニュー画像をアップロードしました: ${richMenuId}`);
   } catch (error) {
     logger.error("リッチメニュー画像アップロードエラー:", error);
