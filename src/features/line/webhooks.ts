@@ -1,5 +1,6 @@
 import type { WebhookEvent } from "@line/bot-sdk";
 import type { Context } from "hono";
+import { lineSignatureMiddleware } from "../../utils/auth";
 import { asyncHandler } from "../../utils/error";
 import { logger } from "../../utils/logger";
 import { handleFollowEvent } from "./handlers/follow";
@@ -76,5 +77,5 @@ export const processEvent = async (event: WebhookEvent): Promise<void> => {
 
 // Webhookルート設定用の配列
 export const webhookRoute = {
-  post: [webhookHandler],
+  post: [lineSignatureMiddleware, webhookHandler],
 };
