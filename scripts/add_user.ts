@@ -19,7 +19,6 @@ async function addUser(userData: UserData): Promise<void> {
       data: {
         lineId: userData.lineId,
         name: userData.name,
-        email: userData.email || "",
       },
     });
     console.log("ユーザーを追加しました:", user);
