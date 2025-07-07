@@ -10,7 +10,7 @@
 
 ### 1. スクリプトを使用する方法
 
-#### 実際のLINE APIを使用する場合
+#### 基本的なセットアップ（実際のLINE APIを使用）
 
 ```bash
 npm run setup-richmenu
@@ -24,7 +24,39 @@ npm run setup-richmenu
 4. リッチメニュー画像のアップロード
 5. デフォルトリッチメニューとして設定
 
-#### モックを使用してテストする場合
+#### テーマ対応セットアップ（NEW!）
+
+```bash
+# デフォルトテーマでセットアップ
+npm run setup-richmenu:theme
+
+# 特定のテーマを指定してセットアップ
+npm run setup-richmenu:theme -- --theme dark
+
+# 画像を一時ファイルとして保存
+npm run setup-richmenu:theme -- --theme blue --save
+
+# モックモードで実行（テスト用）
+npm run setup-richmenu:theme -- --theme warm --mock
+
+# ヘルプを表示
+npm run setup-richmenu:theme -- --help
+```
+
+**利用可能なテーマ：**
+- `default`: 標準的な白ベースのテーマ
+- `dark`: ダークモード風のテーマ
+- `blue`: 青系のカラーテーマ
+- `warm`: 温かみのあるオレンジ系テーマ
+
+**季節自動対応機能：**
+スクリプトは実行時期に基づいて、季節に応じたコンテンツを自動的に適用します：
+- 春（3-5月）: 春野菜料理、お花見弁当など
+- 夏（6-8月）: さっぱり料理、夏祭りグルメなど
+- 秋（9-11月）: 秋の味覚、季節のレシピなど
+- 冬（12-2月）: 温かい料理、冬のレシピなど
+
+#### モックモードでのテスト
 
 ```bash
 npm run setup-richmenu:mock
@@ -36,8 +68,54 @@ npm run setup-richmenu:mock
 
 サーバー起動後に以下のエンドポイントにアクセスしてリッチメニューをセットアップできます：
 
+#### リッチメニューのセットアップ
+
 ```
-GET /setup/richmenu
+GET /api/richmenu/setup
+```
+
+**クエリパラメータ：**
+- `theme`: 使用するテーマ（default, dark, blue, warm）
+- `save`: `true` にすると画像を一時ファイルとして保存
+
+**使用例：**
+```bash
+# デフォルトテーマでセットアップ
+curl "http://localhost:3000/api/richmenu/setup"
+
+# ダークテーマでセットアップし、画像を保存
+curl "http://localhost:3000/api/richmenu/setup?theme=dark&save=true"
+
+# ブルーテーマでセットアップ
+curl "http://localhost:3000/api/richmenu/setup?theme=blue"
+```
+
+#### 利用可能なテーマ一覧の取得
+
+```
+GET /api/richmenu/themes
+```
+
+テーマの一覧とそれぞれの詳細情報（色設定など）を取得できます。
+
+**レスポンス例：**
+```json
+{
+  "status": "success",
+  "message": "利用可能なリッチメニューテーマ一覧",
+  "data": {
+    "themes": ["default", "dark", "blue", "warm"],
+    "themeDetails": {
+      "default": {
+        "backgroundColor": "#FFFFFF",
+        "textColor": "#333333",
+        "borderColor": "#CCCCCC",
+        "accentColor": "#00C851"
+      },
+      // ... 他のテーマの詳細
+    }
+  }
+}
 ```
 
 ## リッチメニューの画像について
@@ -49,6 +127,25 @@ GET /setup/richmenu
 - ファイルサイズ: 1MB以下
 
 このアプリケーションでは、`assets/images/richmenu.png` にリッチメニュー画像を配置します。ファイルが存在しない場合は、透明な画像が自動生成されます。
+
+### 動的画像生成について
+
+現在の実装では、テーマとコンテンツに基づいたリッチメニュー画像の生成機能が含まれていますが、完全な動的画像生成を実現するには、`canvas` ライブラリの追加が必要です。
+
+**完全な動的画像生成を有効にするには：**
+
+```bash
+npm install canvas @types/canvas
+```
+
+その後、`src/utils/richMenuImage.ts` の `generateDynamicRichMenuImage` 関数のコメントアウトされた部分を実装してください。これにより以下が可能になります：
+
+- リアルタイムでの画像生成
+- テーマに基づいた背景色とテキスト色の適用
+- 季節やイベントに応じたレイアウトの変更
+- カスタムフォントや画像の埋め込み
+
+**注意：** Canvas ライブラリはネイティブの依存関係を持つため、インストール時にコンパイルが必要です。Docker環境では追加の設定が必要な場合があります。
 
 ## トラブルシューティング
 
