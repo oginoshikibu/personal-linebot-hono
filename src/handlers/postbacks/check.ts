@@ -22,7 +22,7 @@ export const handleCheckPostback = async (
 
     // データをパースして日付と食事タイプを取得
     const params = parsePostbackData(data);
-    
+
     if (!params) {
       logger.warn(`不正な確認ポストバックデータ: ${data}`);
       await sendTextMessage(user.lineId, MESSAGES.ERRORS.INVALID_DATE);
@@ -33,11 +33,11 @@ export const handleCheckPostback = async (
 
     // 指定された食事タイプの予定を取得するか、両方を取得
     const [lunch, dinner, users] = await Promise.all([
-      !mealType || mealType === MealType.LUNCH 
-        ? getMealPlan(date, MealType.LUNCH) 
+      !mealType || mealType === MealType.LUNCH
+        ? getMealPlan(date, MealType.LUNCH)
         : null,
-      !mealType || mealType === MealType.DINNER 
-        ? getMealPlan(date, MealType.DINNER) 
+      !mealType || mealType === MealType.DINNER
+        ? getMealPlan(date, MealType.DINNER)
         : null,
       getAllUsers(),
     ]);
@@ -77,21 +77,27 @@ export const handleCheckPostback = async (
  * @param data ポストバックデータ
  * @returns パース済みのパラメータ
  */
-const parsePostbackData = (data: string): { date: Date; mealType?: MealType } | null => {
+const parsePostbackData = (
+  data: string,
+): { date: Date; mealType?: MealType } | null => {
   // action=check_meal&date=2024-01-01&mealType=DINNER 形式
   if (data.startsWith("action=check_meal")) {
     const params = new URLSearchParams(data);
     const dateStr = params.get("date");
     const mealTypeStr = params.get("mealType");
-    
+
     if (!dateStr) return null;
-    
+
     const date = parseDate(dateStr);
     if (!date) return null;
-    
-    const mealType = mealTypeStr === "LUNCH" ? MealType.LUNCH : 
-                    mealTypeStr === "DINNER" ? MealType.DINNER : undefined;
-    
+
+    const mealType =
+      mealTypeStr === "LUNCH"
+        ? MealType.LUNCH
+        : mealTypeStr === "DINNER"
+          ? MealType.DINNER
+          : undefined;
+
     return { date, mealType };
   }
 
@@ -136,6 +142,7 @@ const parsePostbackData = (data: string): { date: Date; mealType?: MealType } | 
  * @param obj 判定対象のオブジェクト
  * @returns MealPlanWithRelations型かどうか
  */
+// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 const isMealPlanWithRelations = (
   obj: unknown,
 ): obj is MealPlanWithRelations => {
@@ -144,23 +151,33 @@ const isMealPlanWithRelations = (
   }
 
   try {
-    // 型アサーションを避けるために、プロパティアクセスを安全に行う
-    const hasId = "id" in obj;
-    const hasPreparationType = "preparationType" in obj;
-    const hasParticipations = "participations" in obj;
-
-    if (!hasId || !hasPreparationType || !hasParticipations) {
+    // オブジェクトとしてのプロパティの存在を確認
+    if (
+      !("id" in obj) ||
+      !("preparationType" in obj) ||
+      !("participations" in obj)
+    ) {
       return false;
     }
 
-    // 型アサーションを避けて、プロパティの型を安全にチェック
-    const idType = typeof (obj as any).id;
-    const prepType = typeof (obj as any).preparationType;
-    const participationsIsArray = Array.isArray((obj as any).participations);
+    // プロパティの型を安全にチェック
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    const record = obj as Record<string, unknown>;
 
-    return (
-      idType === "string" && prepType === "string" && participationsIsArray
-    );
+    // 型チェック
+    if (typeof record.id !== "string") {
+      return false;
+    }
+
+    if (typeof record.preparationType !== "string") {
+      return false;
+    }
+
+    if (!Array.isArray(record.participations)) {
+      return false;
+    }
+
+    return true;
   } catch {
     return false;
   }
