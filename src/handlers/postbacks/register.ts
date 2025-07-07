@@ -29,6 +29,45 @@ export const handleRegisterPostback = async (
   try {
     logger.debug(`ポストバックデータ処理: ${data}, ユーザー: ${user.name}`);
 
+    // register_date_lunch?date=YYYY-MM-DD 形式を処理
+    if (
+      data.startsWith("register_date_lunch") ||
+      data.startsWith("register_date_dinner")
+    ) {
+      const params = new URLSearchParams(data.substring(data.indexOf("?") + 1));
+      const dateStr = params.get("date");
+      const mealTypeStr = data.includes("_lunch") ? "lunch" : "dinner";
+
+      if (!dateStr) {
+        await sendTextMessage(user.lineId, MESSAGES.ERRORS.MISSING_PARAMETERS);
+        return;
+      }
+
+      // 日付を解析
+      const date = parseDate(dateStr);
+      if (!date) {
+        await sendTextMessage(user.lineId, MESSAGES.ERRORS.INVALID_DATE);
+        return;
+      }
+
+      // 食事タイプを解析
+      const mealType = parseMealType(mealTypeStr);
+      if (!mealType) {
+        await sendTextMessage(user.lineId, MESSAGES.ERRORS.INVALID_MEAL_TYPE);
+        return;
+      }
+
+      // 参加状態と準備方法を選択するためのオプションを表示
+      await sendRegistrationOptions(
+        user.lineId,
+        formatDateJP(date),
+        getMealTypeText(mealType),
+        date.toISOString().split("T")[0],
+        mealType,
+      );
+      return;
+    }
+
     // 単純な文字列形式のデータを処理（register_today_lunch など）
     const parts = data.split("_");
     if (parts.length === 3) {

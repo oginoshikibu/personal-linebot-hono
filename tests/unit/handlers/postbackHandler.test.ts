@@ -1,5 +1,5 @@
-import { describe, expect, it, vi } from "vitest";
-import type { PostbackEvent, TemplateContent } from "@line/bot-sdk";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { TemplateContent } from "@line/bot-sdk";
 import { MealType, PreparationType, type MealPlan } from "@prisma/client";
 import { handlePostbackData } from "../../../src/handlers/postbackHandler";
 import * as mealService from "../../../src/services/meal";

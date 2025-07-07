@@ -189,13 +189,11 @@ export const createMealPlanFlexMessage = (
   const getPreparationTypeText = (type: string, cooker?: string) => {
     switch (type) {
       case "COOK_BY_SELF":
-        return cooker
-          ? `家で食べる（担当：${cooker}）`
-          : "家で食べる（担当：自分）";
+        return cooker ? "ユーザー1が作る" : "自分が作る";
       case "INDIVIDUAL":
-        return "各自外で食べる";
+        return "各自自由に";
       case "BUY_TOGETHER":
-        return "家で食べる（担当：誰か）";
+        return "買って一緒に食べる";
       default:
         return "未定";
     }

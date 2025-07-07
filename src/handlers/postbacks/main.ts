@@ -31,7 +31,7 @@ export const handlePostbackData = async (
 
     // 特定日付の予定登録のポストバック
     if (data.startsWith("register_date_")) {
-      await handleRegisterPostback(data.substring(14), user);
+      await handleRegisterPostback(data, user);
       return;
     }
 
