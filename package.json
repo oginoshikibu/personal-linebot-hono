@@ -23,7 +23,9 @@
     "add-user": "tsx scripts/add_user.ts",
     "delete-user": "tsx scripts/delete_user.ts",
     "list-users": "tsx scripts/list_users.ts",
-    "find-user": "tsx scripts/find_user.ts"
+    "find-user": "tsx scripts/find_user.ts",
+    "setup-richmenu": "tsx scripts/setupRichMenu.ts",
+    "setup-richmenu:mock": "tsx scripts/setupRichMenuWithMock.ts"
   },
   "keywords": [
     "line",
