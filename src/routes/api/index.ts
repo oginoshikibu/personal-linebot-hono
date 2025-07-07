@@ -1,11 +1,9 @@
 import type { Context } from "hono";
-import {
-  sendEveningNotification,
-  sendMorningNotification,
-} from "../../services/notification";
+import { sendEveningNotification } from "../../features/notification/services/evening";
+import { sendMorningNotification } from "../../features/notification/services/morning";
+import { asyncHandler } from "../../lib/errors";
+import { logger } from "../../lib/logger";
 import type { ApiResponse } from "../../types";
-import { asyncHandler } from "../../utils/error";
-import { logger } from "../../utils/logger";
 
 /**
  * ヘルスチェック用のエンドポイント

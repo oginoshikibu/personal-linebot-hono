@@ -55,6 +55,14 @@ export const MESSAGES = {
     CALENDAR_EXPLANATION: "カレンダーから日付を選択して、予定を確認できます。",
     REGISTER_USAGE:
       "使用方法: /register <日付(today/tomorrow/YYYY-MM-DD)> <食事タイプ(lunch/dinner)> <参加(yes/no)> [準備方法(cook:家で食べる・担当：自分/individual:各自外で食べる/buy:家で食べる・担当：誰か)]",
+    GENERAL:
+      "食事予定管理ボットへようこそ！\n\n以下のコマンドが利用可能です：\n\n/help - このヘルプを表示\n/register - 食事予定を登録\n/check - 食事予定を確認\n/cal - カレンダーを表示",
+    REGISTER_COMMAND:
+      "【登録コマンド】\n/register <日付> <食事タイプ> <参加> [準備方法]\n\n例: /register today lunch yes cook\n\n日付: today, tomorrow, YYYY-MM-DD\n食事タイプ: lunch, dinner\n参加: yes, no\n準備方法: cook（家で食べる・担当：自分）, individual（各自外で食べる）, buy（家で食べる・担当：誰か）",
+    CHECK_COMMAND:
+      "【確認コマンド】\n/check [日付]\n\n例: /check tomorrow\n\n日付: today, tomorrow, YYYY-MM-DD (省略時は today)",
+    CALENDAR_COMMAND:
+      "【カレンダーコマンド】\n/cal [日付]\n\n例: /cal 2023-07-15\n\n日付: YYYY-MM-DD (省略時は選択なし)",
   },
   SUCCESS: {
     REGISTRATION_COMPLETE: "予定を登録しました。",
