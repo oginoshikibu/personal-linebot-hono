@@ -71,6 +71,17 @@ export const parseDate = (dateStr: string): Date | null => {
       return null;
     }
 
+    // 作成されたDateオブジェクトの年月日が元の入力と一致するかチェック
+    // JavaScript の Date コンストラクタは無効な日付（例：2月30日）を自動的に調整するため
+    // 調整後の日付が元の入力と一致しない場合は無効とみなす
+    if (
+      date.getFullYear() !== year ||
+      date.getMonth() !== month - 1 ||
+      date.getDate() !== day
+    ) {
+      return null;
+    }
+
     return date;
   } catch (_) {
     return null;
