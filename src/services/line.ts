@@ -17,11 +17,24 @@ import { AppError } from "../utils/error";
 import { logger } from "../utils/logger";
 import { createCalendarFlexMessage } from "./calendar";
 
-// LINE Client初期化
-const lineClient = new Client({
-  channelSecret: config.line.channelSecret,
-  channelAccessToken: config.line.channelAccessToken,
-});
+// LINE Client初期化（遅延初期化）
+let lineClient: Client | null = null;
+
+const getLineClient = (): Client => {
+  if (!lineClient) {
+    if (!config.line.channelSecret || !config.line.channelAccessToken) {
+      throw new AppError(
+        "LINE APIの設定が不足しています。環境変数を確認してください。",
+        500,
+      );
+    }
+    lineClient = new Client({
+      channelSecret: config.line.channelSecret,
+      channelAccessToken: config.line.channelAccessToken,
+    });
+  }
+  return lineClient;
+};
 
 /**
  * テキストメッセージを送信
@@ -44,7 +57,8 @@ export const sendTextMessage = async (
       text,
     };
 
-    return await lineClient.pushMessage(to, message);
+    const client = getLineClient();
+    return await client.pushMessage(to, message);
   } catch (error) {
     logger.error(`テキストメッセージ送信エラー: ${to}`, error);
     throw new AppError(`メッセージの送信に失敗しました: ${to}`, 500);
@@ -72,7 +86,8 @@ export const sendTextMessages = async (
       text,
     }));
 
-    return await lineClient.pushMessage(to, messages);
+    const client = getLineClient();
+    return await client.pushMessage(to, messages);
   } catch (error) {
     logger.error(`複数テキストメッセージ送信エラー: ${to}`, error);
     throw new AppError(`複数メッセージの送信に失敗しました: ${to}`, 500);
@@ -103,7 +118,8 @@ export const sendFlexMessage = async (
       contents: flexContent,
     };
 
-    return await lineClient.pushMessage(to, message);
+    const client = getLineClient();
+    return await client.pushMessage(to, message);
   } catch (error) {
     logger.error(`Flexメッセージ送信エラー: ${to}`, error);
     throw new AppError(`Flexメッセージの送信に失敗しました: ${to}`, 500);
@@ -134,7 +150,8 @@ export const sendTemplateMessage = async (
       template,
     };
 
-    return await lineClient.pushMessage(to, message);
+    const client = getLineClient();
+    return await client.pushMessage(to, message);
   } catch (error) {
     logger.error(`テンプレートメッセージ送信エラー: ${to}`, error);
     throw new AppError(

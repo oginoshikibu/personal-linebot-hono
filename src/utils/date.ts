@@ -45,6 +45,50 @@ export const formatDate = (date: Date = new Date()): string => {
 };
 
 /**
+ * 文字列からDateオブジェクトに変換
+ * @param dateStr 日付文字列（YYYY-MM-DD形式）
+ * @returns Dateオブジェクト、無効な形式の場合はnull
+ */
+export const parseDate = (dateStr: string): Date | null => {
+  try {
+    // YYYY-MM-DD形式かどうかをチェック
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+      return null;
+    }
+
+    const [year, month, day] = dateStr.split("-").map(Number);
+
+    // 日付の妥当性をチェック
+    if (month < 1 || month > 12 || day < 1 || day > 31) {
+      return null;
+    }
+
+    const date = new Date(year, month - 1, day);
+    date.setHours(0, 0, 0, 0);
+
+    // 正しく変換できたかチェック
+    if (Number.isNaN(date.getTime())) {
+      return null;
+    }
+
+    // 作成されたDateオブジェクトの年月日が元の入力と一致するかチェック
+    // JavaScript の Date コンストラクタは無効な日付（例：2月30日）を自動的に調整するため
+    // 調整後の日付が元の入力と一致しない場合は無効とみなす
+    if (
+      date.getFullYear() !== year ||
+      date.getMonth() !== month - 1 ||
+      date.getDate() !== day
+    ) {
+      return null;
+    }
+
+    return date;
+  } catch (_) {
+    return null;
+  }
+};
+
+/**
  * 日付を日本語の曜日付きフォーマットに変換（例: 2023年10月1日（日））
  * @param date 日付
  * @returns 日本語の曜日付き日付文字列

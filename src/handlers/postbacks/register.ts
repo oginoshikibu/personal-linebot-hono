@@ -29,6 +29,56 @@ export const handleRegisterPostback = async (
   try {
     logger.debug(`ポストバックデータ処理: ${data}, ユーザー: ${user.name}`);
 
+    // action=register&mealType=LUNCH/DINNER 形式を処理（日付選択ピッカーからのデータ）
+    if (data === "action=register" || data.startsWith("action=register&")) {
+      const params = new URLSearchParams(data);
+      const mealTypeStr = params.get("mealType");
+      const dateStr = params.get("date");
+
+      if (mealTypeStr) {
+        logger.debug(
+          `日付選択ピッカーからのポストバック: ${mealTypeStr}, ユーザー: ${user.name}`,
+          {
+            date: dateStr || "日付なし",
+          },
+        );
+
+        // 食事タイプを解析
+        const mealType = parseMealType(mealTypeStr);
+        if (!mealType) {
+          await sendTextMessage(user.lineId, MESSAGES.ERRORS.INVALID_MEAL_TYPE);
+          return;
+        }
+
+        // 日付を解析
+        let date: Date;
+        if (dateStr) {
+          // 日付選択ピッカーから日付が提供された場合
+          const parsedDate = parseDate(dateStr);
+          if (!parsedDate) {
+            await sendTextMessage(user.lineId, MESSAGES.ERRORS.INVALID_DATE);
+            return;
+          }
+          date = parsedDate;
+        } else {
+          // 日付が提供されていない場合は現在の日付を使用
+          date = new Date();
+        }
+
+        const formattedDateStr = date.toISOString().split("T")[0];
+
+        // 参加状態と準備方法を選択するためのオプションを表示
+        await sendRegistrationOptions(
+          user.lineId,
+          formatDateJP(date),
+          getMealTypeText(mealType),
+          formattedDateStr,
+          mealType,
+        );
+        return;
+      }
+    }
+
     // register_date_lunch?date=YYYY-MM-DD 形式を処理
     if (
       data.startsWith("register_date_lunch") ||
@@ -119,6 +169,12 @@ export const handleRegisterPostback = async (
       case "register_meal":
         await handleRegisterMeal(params, user);
         break;
+      case "register_attend":
+      case "register_absent":
+      case "register_cook":
+      case "register_buy":
+        await handleRegistrationAction(action, params, user);
+        break;
       default:
         await sendTextMessage(user.lineId, `未対応のアクション: ${action}`);
         break;
@@ -126,6 +182,97 @@ export const handleRegisterPostback = async (
   } catch (error) {
     logger.error(`ポストバックデータ処理エラー: ${data}`, error);
     await sendTextMessage(user.lineId, MESSAGES.ERRORS.PROCESSING_ERROR);
+  }
+};
+
+/**
+ * 登録アクション（参加・不参加・自炊・購入）を処理
+ * @param action アクション
+ * @param params URLSearchParamsオブジェクト
+ * @param user ユーザー
+ */
+const handleRegistrationAction = async (
+  action: string,
+  params: URLSearchParams,
+  user: User,
+): Promise<void> => {
+  // パラメータを取得
+  const dateStr = params.get("date");
+  const mealTypeStr = params.get("mealType");
+
+  // パラメータのバリデーション
+  if (!dateStr || !mealTypeStr) {
+    await sendTextMessage(user.lineId, MESSAGES.ERRORS.MISSING_PARAMETERS);
+    return;
+  }
+
+  // 日付を解析
+  const date = parseDate(dateStr);
+  if (!date) {
+    await sendTextMessage(user.lineId, MESSAGES.ERRORS.INVALID_DATE);
+    return;
+  }
+
+  // 食事タイプを解析
+  const mealType = parseMealType(mealTypeStr);
+  if (!mealType) {
+    await sendTextMessage(user.lineId, MESSAGES.ERRORS.INVALID_MEAL_TYPE);
+    return;
+  }
+
+  // アクションに基づいて参加状態と準備方法を設定
+  let isAttending = true;
+  let preparationType: PreparationType = PreparationType.INDIVIDUAL;
+
+  switch (action) {
+    case "register_attend":
+      isAttending = true;
+      preparationType = PreparationType.BUY_TOGETHER;
+      break;
+    case "register_absent":
+      isAttending = false;
+      preparationType = PreparationType.INDIVIDUAL;
+      break;
+    case "register_cook":
+      isAttending = true;
+      preparationType = PreparationType.COOK_BY_SELF;
+      break;
+    case "register_buy":
+      isAttending = true;
+      preparationType = PreparationType.BUY_TOGETHER;
+      break;
+    default:
+      preparationType = PreparationType.INDIVIDUAL;
+      break;
+  }
+
+  try {
+    // 食事予定を作成または更新
+    const cookerId =
+      preparationType === PreparationType.COOK_BY_SELF ? user.id : undefined;
+    const mealPlan = await createOrUpdateMealPlan(
+      date,
+      mealType,
+      preparationType,
+      cookerId,
+    );
+
+    // 参加状態を設定
+    await setMealParticipation(mealPlan.id, user.id, isAttending);
+
+    // 確認メッセージを送信
+    await sendTextMessage(
+      user.lineId,
+      `${formatDateJP(date)}の${getMealTypeText(mealType)}予定を登録しました。\n` +
+        `参加: ${isAttending ? "はい" : "いいえ"}\n` +
+        `準備: ${getPreparationTypeText(preparationType)}`,
+    );
+
+    // 他のユーザーに通知
+    await sendMealPlanChangeNotification(user.id, mealPlan);
+  } catch (error) {
+    logger.error("食事予定登録エラー:", error);
+    await sendTextMessage(user.lineId, MESSAGES.ERRORS.REGISTRATION_FAILED);
   }
 };
 

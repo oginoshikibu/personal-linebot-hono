@@ -65,6 +65,25 @@ export const handlePostbackData = async (
       return;
     }
 
+    // action=registerで始まるポストバック（日付選択ピッカーからのデータ）
+    if (data === "action=register" || data.startsWith("action=register&")) {
+      const params = new URLSearchParams(data);
+      const mealType = params.get("mealType");
+
+      if (mealType) {
+        // 日付選択ピッカーからの応答を処理するため、handleDateSelectionを呼び出す
+        // 日付はpostbackEventのパラメータから取得する必要がある
+        logger.info(`日付選択ピッカーからのポストバック処理: ${user.lineId}`, {
+          mealType,
+        });
+
+        // 日付選択ピッカーの場合は、event.postback.paramsから日付を取得する必要があるが、
+        // ここでは直接アクセスできないため、日付選択後の処理をハンドラーに委譲する
+        await handleRegisterPostback(data, user);
+        return;
+      }
+    }
+
     // 未知のポストバック
     logger.warn(`未知のポストバックデータ: ${data}`, { userId: user.lineId });
     await sendTextMessage(user.lineId, MESSAGES.ERRORS.UNKNOWN_POSTBACK);

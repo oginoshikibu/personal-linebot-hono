@@ -1,6 +1,8 @@
 import type { MessageEvent, TextEventMessage } from "@line/bot-sdk";
 import type { User } from "@prisma/client";
 import { COMMAND_PREFIX, MESSAGES } from "../../../constants";
+import { formatDate } from "../../../utils/date";
+import { formatDateText, formatMealPlans } from "../../../utils/formatter";
 import { logger } from "../../../utils/logger";
 import {
   handleCalendarCommand,
@@ -9,11 +11,13 @@ import {
   handleRegisterCommand,
 } from "../../meal/commands";
 import { sendCalendarMessage } from "../../meal/services/calendar";
+import { getMealPlans } from "../../meal/services/meal";
 import { getUserByLineId } from "../../meal/services/user";
 import { sendTemplateMessage, sendTextMessage } from "../client";
 import {
   createChangeMenuTemplate,
   createCheckMenuTemplate,
+  createEditOptionsTemplate,
   createMainMenuTemplate,
   createRegisterMenuTemplate,
 } from "../messages/templates";
@@ -114,6 +118,18 @@ export const handleTextMessage = async (
 
   // メニュー選択に基づく処理
   switch (text) {
+    case "今日の予定":
+      await handleTodayMenu(user);
+      break;
+    case "明日の予定":
+      await handleTomorrowMenu(user);
+      break;
+    case "今週の予定":
+      await handleThisWeekMenu(user);
+      break;
+    case "今後の予定":
+      await handleFutureMenu(user);
+      break;
     case "予定登録":
       await handleRegisterMenu(user);
       break;
@@ -122,9 +138,6 @@ export const handleTextMessage = async (
       break;
     case "予定確認":
       await handleCheckMenu(user);
-      break;
-    case "今後の予定":
-      await handleFutureMenu(user);
       break;
     case "ヘルプ":
       await handleHelpCommand([], user);
@@ -165,6 +178,73 @@ const handleCommand = async (command: string, user: User): Promise<void> => {
       );
       break;
   }
+};
+
+/**
+ * 今日の予定メニューを処理
+ * @param user ユーザー
+ */
+const handleTodayMenu = async (user: User): Promise<void> => {
+  const today = new Date();
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  // 今日の0時
+  today.setHours(0, 0, 0, 0);
+  // 明日の0時
+  tomorrow.setHours(0, 0, 0, 0);
+
+  const mealPlans = await getMealPlans(today, tomorrow);
+  const dateText = formatDateText(today);
+
+  const message =
+    mealPlans.length > 0
+      ? `${dateText}の予定:\n${formatMealPlans(mealPlans)}`
+      : `${dateText}の予定はまだ登録されていません。`;
+
+  await sendTextMessage(user.lineId, message);
+
+  // 編集オプションを表示
+  const dateStr = formatDate(today);
+  const editTemplate = createEditOptionsTemplate(dateText, dateStr);
+  await sendTemplateMessage(user.lineId, editTemplate, "予定編集");
+};
+
+/**
+ * 明日の予定メニューを処理
+ * @param user ユーザー
+ */
+const handleTomorrowMenu = async (user: User): Promise<void> => {
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  tomorrow.setHours(0, 0, 0, 0);
+
+  const dayAfterTomorrow = new Date(tomorrow);
+  dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 1);
+
+  const mealPlans = await getMealPlans(tomorrow, dayAfterTomorrow);
+  const dateText = formatDateText(tomorrow);
+
+  const message =
+    mealPlans.length > 0
+      ? `${dateText}の予定:\n${formatMealPlans(mealPlans)}`
+      : `${dateText}の予定はまだ登録されていません。`;
+
+  await sendTextMessage(user.lineId, message);
+
+  // 編集オプションを表示
+  const dateStr = formatDate(tomorrow);
+  const editTemplate = createEditOptionsTemplate(dateText, dateStr);
+  await sendTemplateMessage(user.lineId, editTemplate, "予定編集");
+};
+
+/**
+ * 今週の予定メニューを処理
+ * @param user ユーザー
+ */
+const handleThisWeekMenu = async (user: User): Promise<void> => {
+  // 週間カレンダーを表示
+  await sendCalendarMessage(user.lineId);
 };
 
 /**
