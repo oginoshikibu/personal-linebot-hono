@@ -118,4 +118,3 @@ export const formatMealPlans = (mealPlans: ExtendedMealPlan[]): string => {
 
   return result;
 };
- 
