@@ -272,7 +272,7 @@ export const createDinnerOptionsTemplate = (
   return {
     type: "buttons",
     text: "夕食の予定を選択してください",
-    actions: actions.slice(0, 4), // LINEのボタンは最大4つまで
+    actions: canCancel ? actions.slice(0, 3).concat(actions.slice(-1)) : actions.slice(0, 4), // LINEのボタンは最大4つまで
   };
 };
 
