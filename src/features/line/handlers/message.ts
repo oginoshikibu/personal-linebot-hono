@@ -10,9 +10,7 @@ import {
   handleHelpCommand,
   handleRegisterCommand,
 } from "../../meal/commands";
-import {
-  send7DayCalendarMessage,
-} from "../../meal/services/calendar";
+import { send7DayCalendarMessage } from "../../meal/services/calendar";
 import { getMealPlans } from "../../meal/services/meal";
 import { getUserByLineId } from "../../meal/services/user";
 import {
@@ -274,7 +272,7 @@ const handleThisWeekMenu = async (
   replyToken: string,
 ): Promise<void> => {
   // 週間カレンダーを表示
-  await sendCalendarMessage(user.lineId, replyToken);
+  await send7DayCalendarMessage(user.lineId, replyToken);
 };
 
 /**
