@@ -26,7 +26,9 @@
     "find-user": "tsx scripts/find_user.ts",
     "setup-richmenu": "tsx scripts/setupRichMenu.ts",
     "setup-richmenu:mock": "tsx scripts/setupRichMenuWithMock.ts",
-    "setup-richmenu:theme": "tsx scripts/setupRichMenuWithTheme.ts"
+    "setup-richmenu:theme": "tsx scripts/setupRichMenuWithTheme.ts",
+    "ci": "npm run format && npm run check && npm run lint && npm run test && npm run build",
+    "verify": "npm run format && npm run check && npm run lint && npm run test && npm run build"
   },
   "keywords": [
     "line",
