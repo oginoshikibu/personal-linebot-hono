@@ -61,7 +61,7 @@ describe("メッセージハンドラー", () => {
   it("「今後の予定」メッセージを処理できること", async () => {
     // モックのセットアップ
     const send7DayCalendarMessageMock = vi.spyOn(calendarService, "send7DayCalendarMessage");
-    const sendTextMessageMock = vi.spyOn(lineService, "sendTextMessage");
+    const sendTextMessageMock = vi.spyOn(client, "sendTextMessage");
     
     // テスト対象の実行
     const mockUser = { lineId: "test-user-id", name: "Test User", id: 1 };
