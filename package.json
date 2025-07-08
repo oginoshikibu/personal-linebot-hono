@@ -29,7 +29,6 @@
     "setup-richmenu:mock": "tsx scripts/setupRichMenuWithMock.ts",
     "setup-richmenu:theme": "tsx scripts/setupRichMenuWithTheme.ts",
     "ci": "npm run format && npm run check && npm run lint && npm run test && npm run type-check",
-    "verify": "npm run format && npm run check && npm run lint && npm run test && npm run type-check",
     "ci:build": "npm run format && npm run check && npm run lint && npm run test && npm run build"
   },
   "keywords": [
