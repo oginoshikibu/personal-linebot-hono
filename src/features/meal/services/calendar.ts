@@ -6,7 +6,7 @@ import type {
 } from "@line/bot-sdk";
 import { AppError } from "../../../utils/error";
 import { logger } from "../../../utils/logger";
-import { sendFlexMessage } from "../../line/client";
+import { replyFlexMessage, sendFlexMessage } from "../../line/client";
 
 /**
  * カレンダーFlexメッセージを作成
@@ -159,13 +159,126 @@ export const createCalendarFlexMessage = (
 };
 
 /**
+ * 7日間カレンダーFlexメッセージを作成
+ * @param startDate 開始日（デフォルトは今日）
+ * @returns Flexメッセージのコンテンツ
+ */
+export const create7DayCalendarFlexMessage = (
+  startDate: Date = new Date(),
+): FlexBubble => {
+  // 開始日を今日の0時に設定
+  const start = new Date(startDate);
+  start.setHours(0, 0, 0, 0);
+
+  // 曜日の配列
+  const weekdays = ["日", "月", "火", "水", "木", "金", "土"];
+
+  // 7日分の日付情報を作成
+  const days: FlexComponent[] = [];
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  for (let i = 0; i < 7; i++) {
+    const currentDate = new Date(start);
+    currentDate.setDate(currentDate.getDate() + i);
+
+    const isToday = currentDate.getTime() === today.getTime();
+    const dayOfWeek = currentDate.getDay();
+    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+
+    days.push({
+      type: "box" as const,
+      layout: "vertical" as const,
+      contents: [
+        {
+          type: "text" as const,
+          text: weekdays[dayOfWeek],
+          size: "xs",
+          align: "center",
+          color: isWeekend
+            ? dayOfWeek === 0
+              ? "#FF0000"
+              : "#0000FF"
+            : "#666666",
+        },
+        {
+          type: "text" as const,
+          text: String(currentDate.getDate()),
+          size: "md",
+          align: "center",
+          weight: isToday ? "bold" : "regular",
+          color: isToday
+            ? "#FFFFFF"
+            : isWeekend
+              ? dayOfWeek === 0
+                ? "#FF0000"
+                : "#0000FF"
+              : "#333333",
+        },
+      ],
+      backgroundColor: isToday ? "#1DB446" : "transparent",
+      cornerRadius: "md",
+      paddingAll: "sm",
+      action: {
+        type: "postback" as const,
+        data: `action=select_date&date=${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, "0")}-${String(currentDate.getDate()).padStart(2, "0")}`,
+        displayText: `${currentDate.getFullYear()}年${currentDate.getMonth() + 1}月${currentDate.getDate()}日を選択しました`,
+        label: `${currentDate.getMonth() + 1}/${currentDate.getDate()}`,
+      },
+    });
+  }
+
+  // Flexメッセージを作成
+  return {
+    type: "bubble",
+    header: {
+      type: "box",
+      layout: "vertical",
+      contents: [
+        {
+          type: "text",
+          text: "今後7日間の予定",
+          weight: "bold",
+          color: "#1DB446",
+          size: "lg",
+          align: "center",
+        },
+        {
+          type: "text",
+          text: "日付をタップして詳細を確認",
+          size: "xs",
+          align: "center",
+          color: "#666666",
+          margin: "sm",
+        },
+      ],
+      paddingAll: "md",
+    },
+    body: {
+      type: "box",
+      layout: "horizontal",
+      contents: days,
+      spacing: "xs",
+      paddingAll: "md",
+    },
+    styles: {
+      footer: {
+        separator: true,
+      },
+    },
+  };
+};
+
+/**
  * カレンダーメッセージを送信
  * @param to 送信先ユーザーID
+ * @param replyToken 応答トークン（指定された場合は応答メッセージとして送信）
  * @param selectedDate 選択された日付（デフォルトは現在の日付）
  * @returns 送信結果
  */
 export const sendCalendarMessage = async (
   to: string,
+  replyToken?: string,
   selectedDate?: Date,
 ): Promise<MessageAPIResponseBase> => {
   try {
@@ -173,14 +286,47 @@ export const sendCalendarMessage = async (
     const date = selectedDate || new Date();
     const year = date.getFullYear();
     const month = date.getMonth() + 1;
+    const altText = `${year}年${month}月のカレンダー`;
 
-    return await sendFlexMessage(
-      to,
-      flexMessage,
-      `${year}年${month}月のカレンダー`,
-    );
+    // replyTokenが指定されていれば応答メッセージとして送信
+    if (replyToken) {
+      return await replyFlexMessage(replyToken, flexMessage, altText);
+    }
+
+    // そうでなければプッシュメッセージとして送信
+    return await sendFlexMessage(to, flexMessage, altText);
   } catch (error) {
     logger.error(`カレンダーメッセージ送信エラー: ${to}`, error);
     throw new AppError("カレンダーメッセージの送信に失敗しました", 500);
+  }
+};
+
+/**
+ * 7日間カレンダーメッセージを送信
+ * @param to 送信先ユーザーID
+ * @param replyToken 応答トークン（指定された場合は応答メッセージとして送信）
+ * @param startDate 開始日（デフォルトは今日）
+ * @returns 送信結果
+ */
+export const send7DayCalendarMessage = async (
+  to: string,
+  replyToken?: string,
+  startDate?: Date,
+): Promise<MessageAPIResponseBase> => {
+  try {
+    const flexMessage = create7DayCalendarFlexMessage(startDate);
+    const date = startDate || new Date();
+    const altText = `今後7日間のカレンダー (${date.getMonth() + 1}/${date.getDate()}〜)`;
+
+    // replyTokenが指定されていれば応答メッセージとして送信
+    if (replyToken) {
+      return await replyFlexMessage(replyToken, flexMessage, altText);
+    }
+
+    // そうでなければプッシュメッセージとして送信
+    return await sendFlexMessage(to, flexMessage, altText);
+  } catch (error) {
+    logger.error(`7日間カレンダーメッセージ送信エラー: ${to}`, error);
+    throw new AppError("7日間カレンダーメッセージの送信に失敗しました", 500);
   }
 };

@@ -10,10 +10,17 @@ import {
   handleHelpCommand,
   handleRegisterCommand,
 } from "../../meal/commands";
-import { sendCalendarMessage } from "../../meal/services/calendar";
+import {
+  send7DayCalendarMessage,
+} from "../../meal/services/calendar";
 import { getMealPlans } from "../../meal/services/meal";
 import { getUserByLineId } from "../../meal/services/user";
-import { sendTemplateMessage, sendTextMessage } from "../client";
+import {
+  replyTemplateMessage,
+  replyTextMessage,
+  sendTemplateMessage,
+  sendTextMessage,
+} from "../client";
 import {
   createChangeMenuTemplate,
   createCheckMenuTemplate,
@@ -50,8 +57,8 @@ export const handleMessageEvent = async (
     // ユーザーが登録されていない場合
     if (!user) {
       logger.warn(`ユーザーがデータベースに登録されていません: ${userId}`);
-      await sendTextMessage(
-        userId,
+      await replyTextMessage(
+        event.replyToken,
         "申し訳ありませんが、システムに登録されていません。管理者に連絡してください。",
       );
       logger.info(`未登録ユーザーへの通知送信完了: ${userId}`);
@@ -67,7 +74,7 @@ export const handleMessageEvent = async (
             textMessage.text.substring(0, 20) +
             (textMessage.text.length > 20 ? "..." : ""),
         });
-        await handleTextMessage(textMessage, user);
+        await handleTextMessage(textMessage, user, event.replyToken);
         logger.info(`テキストメッセージ処理完了: ${userId}`);
         break;
       }
@@ -75,7 +82,10 @@ export const handleMessageEvent = async (
         logger.info(`未対応のメッセージタイプ: ${event.message.type}`, {
           userId,
         });
-        await sendTextMessage(userId, "テキストメッセージのみ対応しています。");
+        await replyTextMessage(
+          event.replyToken,
+          "テキストメッセージのみ対応しています。",
+        );
         logger.info(`未対応メッセージタイプの通知送信完了: ${userId}`);
         break;
     }
@@ -85,8 +95,8 @@ export const handleMessageEvent = async (
       stack: error instanceof Error ? error.stack : undefined,
     });
     try {
-      await sendTextMessage(
-        userId,
+      await replyTextMessage(
+        event.replyToken,
         "メッセージの処理中にエラーが発生しました。もう一度お試しください。",
       );
       logger.info(`エラー通知送信完了: ${userId}`);
@@ -103,48 +113,50 @@ export const handleMessageEvent = async (
  * テキストメッセージを処理
  * @param message テキストメッセージイベント
  * @param user ユーザー
+ * @param replyToken 応答トークン
  */
 export const handleTextMessage = async (
   message: TextEventMessage,
   user: User,
+  replyToken: string,
 ): Promise<void> => {
   const text = message.text.trim();
 
   // コマンドかどうかを判定
   if (text.startsWith(COMMAND_PREFIX)) {
-    await handleCommand(text.substring(1), user);
+    await handleCommand(text.substring(1), user, replyToken);
     return;
   }
 
   // メニュー選択に基づく処理
   switch (text) {
     case "今日の予定":
-      await handleTodayMenu(user);
+      await handleTodayMenu(user, replyToken);
       break;
     case "明日の予定":
-      await handleTomorrowMenu(user);
+      await handleTomorrowMenu(user, replyToken);
       break;
     case "今週の予定":
-      await handleThisWeekMenu(user);
+      await handleThisWeekMenu(user, replyToken);
       break;
     case "今後の予定":
-      await handleFutureMenu(user);
+      await handleFutureMenu(user, replyToken);
       break;
     case "予定登録":
-      await handleRegisterMenu(user);
+      await handleRegisterMenu(user, replyToken);
       break;
     case "予定変更":
-      await handleChangeMenu(user);
+      await handleChangeMenu(user, replyToken);
       break;
     case "予定確認":
-      await handleCheckMenu(user);
+      await handleCheckMenu(user, replyToken);
       break;
     case "ヘルプ":
-      await handleHelpCommand([], user);
+      await handleHelpCommand([], user, replyToken);
       break;
     default:
       // デフォルトのメニューを表示
-      await sendDefaultMenu(user.lineId);
+      await sendDefaultMenu(user.lineId, replyToken);
       break;
   }
 };
@@ -153,27 +165,32 @@ export const handleTextMessage = async (
  * コマンドを処理
  * @param command コマンド
  * @param user ユーザー
+ * @param replyToken 応答トークン
  */
-const handleCommand = async (command: string, user: User): Promise<void> => {
+const handleCommand = async (
+  command: string,
+  user: User,
+  replyToken: string,
+): Promise<void> => {
   const parts = command.split(" ");
   const mainCommand = parts[0].toLowerCase();
 
   switch (mainCommand) {
     case "help":
-      await handleHelpCommand(parts.slice(1), user);
+      await handleHelpCommand(parts.slice(1), user, replyToken);
       break;
     case "register":
-      await handleRegisterCommand(parts.slice(1), user);
+      await handleRegisterCommand(parts.slice(1), user, replyToken);
       break;
     case "check":
-      await handleCheckCommand(parts.slice(1), user);
+      await handleCheckCommand(parts.slice(1), user, replyToken);
       break;
     case "cal":
-      await handleCalendarCommand(parts.slice(1), user);
+      await handleCalendarCommand(parts.slice(1), user, replyToken);
       break;
     default:
-      await sendTextMessage(
-        user.lineId,
+      await replyTextMessage(
+        replyToken,
         `未知のコマンド: ${mainCommand}\n${MESSAGES.HELP.COMMAND_LIST}`,
       );
       break;
@@ -183,8 +200,12 @@ const handleCommand = async (command: string, user: User): Promise<void> => {
 /**
  * 今日の予定メニューを処理
  * @param user ユーザー
+ * @param replyToken 応答トークン
  */
-const handleTodayMenu = async (user: User): Promise<void> => {
+const handleTodayMenu = async (
+  user: User,
+  replyToken: string,
+): Promise<void> => {
   const today = new Date();
   const tomorrow = new Date(today);
   tomorrow.setDate(tomorrow.getDate() + 1);
@@ -202,9 +223,10 @@ const handleTodayMenu = async (user: User): Promise<void> => {
       ? `${dateText}の予定:\n${formatMealPlans(mealPlans)}`
       : `${dateText}の予定はまだ登録されていません。`;
 
-  await sendTextMessage(user.lineId, message);
+  await replyTextMessage(replyToken, message);
 
-  // 編集オプションを表示
+  // 編集オプションを表示（プッシュメッセージとして送信）
+  // 注: replyToken は一度しか使えないため、2つ目のメッセージはプッシュメッセージとして送信
   const dateStr = formatDate(today);
   const editTemplate = createEditOptionsTemplate(dateText, dateStr);
   await sendTemplateMessage(user.lineId, editTemplate, "予定編集");
@@ -213,8 +235,12 @@ const handleTodayMenu = async (user: User): Promise<void> => {
 /**
  * 明日の予定メニューを処理
  * @param user ユーザー
+ * @param replyToken 応答トークン
  */
-const handleTomorrowMenu = async (user: User): Promise<void> => {
+const handleTomorrowMenu = async (
+  user: User,
+  replyToken: string,
+): Promise<void> => {
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
   tomorrow.setHours(0, 0, 0, 0);
@@ -230,7 +256,7 @@ const handleTomorrowMenu = async (user: User): Promise<void> => {
       ? `${dateText}の予定:\n${formatMealPlans(mealPlans)}`
       : `${dateText}の予定はまだ登録されていません。`;
 
-  await sendTextMessage(user.lineId, message);
+  await replyTextMessage(replyToken, message);
 
   // 編集オプションを表示
   const dateStr = formatDate(tomorrow);
@@ -241,56 +267,100 @@ const handleTomorrowMenu = async (user: User): Promise<void> => {
 /**
  * 今週の予定メニューを処理
  * @param user ユーザー
+ * @param replyToken 応答トークン
  */
-const handleThisWeekMenu = async (user: User): Promise<void> => {
+const handleThisWeekMenu = async (
+  user: User,
+  replyToken: string,
+): Promise<void> => {
   // 週間カレンダーを表示
-  await sendCalendarMessage(user.lineId);
-};
-
-/**
- * 予定登録メニューを処理
- * @param user ユーザー
- */
-const handleRegisterMenu = async (user: User): Promise<void> => {
-  const buttonTemplate = createRegisterMenuTemplate();
-  await sendTemplateMessage(user.lineId, buttonTemplate, "食事予定登録");
-};
-
-/**
- * 予定変更メニューを処理
- * @param user ユーザー
- */
-const handleChangeMenu = async (user: User): Promise<void> => {
-  const buttonTemplate = createChangeMenuTemplate();
-  await sendTemplateMessage(user.lineId, buttonTemplate, "食事予定変更");
-};
-
-/**
- * 予定確認メニューを処理
- * @param user ユーザー
- */
-const handleCheckMenu = async (user: User): Promise<void> => {
-  const buttonTemplate = createCheckMenuTemplate();
-  await sendTemplateMessage(user.lineId, buttonTemplate, "食事予定確認");
+  await sendCalendarMessage(user.lineId, replyToken);
 };
 
 /**
  * 今後の予定メニューを処理
  * @param user ユーザー
+ * @param replyToken 応答トークン
  */
-const handleFutureMenu = async (user: User): Promise<void> => {
-  // カレンダーを表示
-  await sendCalendarMessage(user.lineId);
+const handleFutureMenu = async (
+  user: User,
+  replyToken: string,
+): Promise<void> => {
+  // 7日間カレンダーを表示
+  await send7DayCalendarMessage(user.lineId, replyToken);
 
-  // 説明メッセージを送信
-  await sendTextMessage(user.lineId, MESSAGES.HELP.CALENDAR_EXPLANATION);
+  // 今後の予定の詳細を追加メッセージとして送信
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const nextWeek = new Date(today);
+  nextWeek.setDate(nextWeek.getDate() + 7);
+
+  const mealPlans = await getMealPlans(today, nextWeek);
+
+  let explanationMessage = "📅 今後7日間のカレンダーです\n\n";
+
+  if (mealPlans.length > 0) {
+    explanationMessage += `📋 登録済みの予定:\n${formatMealPlans(mealPlans)}\n\n`;
+  } else {
+    explanationMessage += "📋 登録済みの予定はまだありません\n\n";
+  }
+
+  explanationMessage += "💡 日付をタップすると詳細確認・編集ができます";
+
+  // プッシュメッセージとして詳細説明を送信
+  // 注: replyToken は一度しか使えないため、2つ目のメッセージはプッシュメッセージとして送信
+  await sendTextMessage(user.lineId, explanationMessage);
 };
 
 /**
- * デフォルトメニューを送信
- * @param lineId LINE ID
+ * 予定登録メニューを処理
+ * @param user ユーザー
+ * @param replyToken 応答トークン
  */
-const sendDefaultMenu = async (lineId: string): Promise<void> => {
-  const buttonTemplate = createMainMenuTemplate();
-  await sendTemplateMessage(lineId, buttonTemplate, "メインメニュー");
+const handleRegisterMenu = async (
+  _user: User,
+  replyToken: string,
+): Promise<void> => {
+  const template = createRegisterMenuTemplate();
+  await replyTemplateMessage(replyToken, template, "予定登録");
+};
+
+/**
+ * 予定変更メニューを処理
+ * @param user ユーザー
+ * @param replyToken 応答トークン
+ */
+const handleChangeMenu = async (
+  _user: User,
+  replyToken: string,
+): Promise<void> => {
+  const template = createChangeMenuTemplate();
+  await replyTemplateMessage(replyToken, template, "予定変更");
+};
+
+/**
+ * 予定確認メニューを処理
+ * @param user ユーザー
+ * @param replyToken 応答トークン
+ */
+const handleCheckMenu = async (
+  _user: User,
+  replyToken: string,
+): Promise<void> => {
+  const template = createCheckMenuTemplate();
+  await replyTemplateMessage(replyToken, template, "予定確認");
+};
+
+/**
+ * デフォルトのメニューを送信
+ * @param lineId LINE ID
+ * @param replyToken 応答トークン
+ */
+const sendDefaultMenu = async (
+  _lineId: string,
+  replyToken: string,
+): Promise<void> => {
+  const template = createMainMenuTemplate();
+  await replyTemplateMessage(replyToken, template, "メインメニュー");
 };
