@@ -166,6 +166,110 @@ export class LineClientService {
   }
 
   /**
+   * テキストメッセージを応答として送信
+   * @param replyToken 応答トークン
+   * @param text メッセージテキスト
+   * @returns 送信結果
+   */
+  async replyTextMessage(
+    replyToken: string,
+    text: string,
+  ): Promise<MessageAPIResponseBase> {
+    try {
+      const message: TextMessage = {
+        type: "text",
+        text,
+      };
+
+      return await this.client.replyMessage(replyToken, message);
+    } catch (error) {
+      logger.error(`テキスト応答メッセージ送信エラー: ${replyToken}`, error);
+      throw new AppError("応答メッセージの送信に失敗しました", 500);
+    }
+  }
+
+  /**
+   * 複数のテキストメッセージを応答として送信
+   * @param replyToken 応答トークン
+   * @param texts メッセージテキストの配列
+   * @returns 送信結果
+   */
+  async replyTextMessages(
+    replyToken: string,
+    texts: string[],
+  ): Promise<MessageAPIResponseBase> {
+    try {
+      const messages: TextMessage[] = texts.map((text) => ({
+        type: "text",
+        text,
+      }));
+
+      return await this.client.replyMessage(replyToken, messages);
+    } catch (error) {
+      logger.error(
+        `複数テキスト応答メッセージ送信エラー: ${replyToken}`,
+        error,
+      );
+      throw new AppError("複数応答メッセージの送信に失敗しました", 500);
+    }
+  }
+
+  /**
+   * Flexメッセージを応答として送信
+   * @param replyToken 応答トークン
+   * @param flexContent Flexメッセージのコンテンツ
+   * @param altText 代替テキスト
+   * @returns 送信結果
+   */
+  async replyFlexMessage(
+    replyToken: string,
+    flexContent: FlexContainer,
+    altText: string,
+  ): Promise<MessageAPIResponseBase> {
+    try {
+      const message: FlexMessage = {
+        type: "flex",
+        altText,
+        contents: flexContent,
+      };
+
+      return await this.client.replyMessage(replyToken, message);
+    } catch (error) {
+      logger.error(`Flex応答メッセージ送信エラー: ${replyToken}`, error);
+      throw new AppError("Flex応答メッセージの送信に失敗しました", 500);
+    }
+  }
+
+  /**
+   * テンプレートメッセージを応答として送信
+   * @param replyToken 応答トークン
+   * @param template テンプレートオブジェクト
+   * @param altText 代替テキスト
+   * @returns 送信結果
+   */
+  async replyTemplateMessage(
+    replyToken: string,
+    template: TemplateContent,
+    altText: string,
+  ): Promise<MessageAPIResponseBase> {
+    try {
+      const message: TemplateMessage = {
+        type: "template",
+        altText,
+        template,
+      };
+
+      return await this.client.replyMessage(replyToken, message);
+    } catch (error) {
+      logger.error(
+        `テンプレート応答メッセージ送信エラー: ${replyToken}`,
+        error,
+      );
+      throw new AppError("テンプレート応答メッセージの送信に失敗しました", 500);
+    }
+  }
+
+  /**
    * 全ての登録ユーザーにメッセージを送信
    * @param text メッセージテキスト
    * @returns 送信結果の配列
@@ -235,5 +339,32 @@ export const sendTemplateMessage = (
 export const broadcastTextMessage = (
   text: string,
 ): Promise<MessageAPIResponseBase[]> => lineService.broadcastTextMessage(text);
+
+// 応答メッセージ関数をエクスポート
+export const replyTextMessage = (
+  replyToken: string,
+  text: string,
+): Promise<MessageAPIResponseBase> =>
+  lineService.replyTextMessage(replyToken, text);
+
+export const replyTextMessages = (
+  replyToken: string,
+  texts: string[],
+): Promise<MessageAPIResponseBase> =>
+  lineService.replyTextMessages(replyToken, texts);
+
+export const replyFlexMessage = (
+  replyToken: string,
+  flexContent: FlexContainer,
+  altText: string,
+): Promise<MessageAPIResponseBase> =>
+  lineService.replyFlexMessage(replyToken, flexContent, altText);
+
+export const replyTemplateMessage = (
+  replyToken: string,
+  template: TemplateContent,
+  altText: string,
+): Promise<MessageAPIResponseBase> =>
+  lineService.replyTemplateMessage(replyToken, template, altText);
 
 export { lineClient };

@@ -6,7 +6,7 @@ import type {
 } from "@line/bot-sdk";
 import { AppError } from "../../../utils/error";
 import { logger } from "../../../utils/logger";
-import { sendFlexMessage } from "../../line/client";
+import { replyFlexMessage, sendFlexMessage } from "../../line/client";
 
 /**
  * カレンダーFlexメッセージを作成
@@ -161,11 +161,13 @@ export const createCalendarFlexMessage = (
 /**
  * カレンダーメッセージを送信
  * @param to 送信先ユーザーID
+ * @param replyToken 応答トークン（指定された場合は応答メッセージとして送信）
  * @param selectedDate 選択された日付（デフォルトは現在の日付）
  * @returns 送信結果
  */
 export const sendCalendarMessage = async (
   to: string,
+  replyToken?: string,
   selectedDate?: Date,
 ): Promise<MessageAPIResponseBase> => {
   try {
@@ -173,12 +175,15 @@ export const sendCalendarMessage = async (
     const date = selectedDate || new Date();
     const year = date.getFullYear();
     const month = date.getMonth() + 1;
+    const altText = `${year}年${month}月のカレンダー`;
 
-    return await sendFlexMessage(
-      to,
-      flexMessage,
-      `${year}年${month}月のカレンダー`,
-    );
+    // replyTokenが指定されていれば応答メッセージとして送信
+    if (replyToken) {
+      return await replyFlexMessage(replyToken, flexMessage, altText);
+    }
+
+    // そうでなければプッシュメッセージとして送信
+    return await sendFlexMessage(to, flexMessage, altText);
   } catch (error) {
     logger.error(`カレンダーメッセージ送信エラー: ${to}`, error);
     throw new AppError("カレンダーメッセージの送信に失敗しました", 500);
