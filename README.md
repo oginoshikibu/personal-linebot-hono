@@ -12,10 +12,11 @@
 ## 技術スタック
 
 - フレームワーク: [Hono](https://honojs.dev/)
-- データベース: SQLite ([Prisma ORM](https://www.prisma.io/))
+- データベース: SQLite (開発) / MySQL (本番) ([Prisma ORM](https://www.prisma.io/))
 - インフラ: AWS EC2
 - CI/CD: GitHub Actions
 - 外部API: LINE Messaging API
+- 開発ツール: Biome (リンター・フォーマッター), Vitest (テスト), Zod (バリデーション)
 
 ## クイックスタート
 
@@ -51,7 +52,10 @@ npm run dev
 `.env`ファイルに以下の環境変数を設定してください：
 
 ```
-DATABASE_URL="file:./dev.db"
+# データベース設定
+DATABASE_URL="file:./dev.db"  # 開発環境（SQLite）
+# DATABASE_URL="mysql://user:password@localhost:3306/database"  # 本番環境（MySQL）
+
 LINE_CHANNEL_SECRET="your_line_channel_secret"
 LINE_CHANNEL_ACCESS_TOKEN="your_line_channel_access_token"
 ALLOWED_LINE_IDS="userId1,userId2"
@@ -83,6 +87,58 @@ npm run setup-richmenu:theme
 
 # モックモードでテスト
 npm run setup-richmenu:mock
+```
+
+## ユーザー管理
+
+ユーザーの管理には以下のスクリプトを使用できます：
+
+```bash
+# ユーザーを追加
+npm run add-user
+
+# ユーザーを削除
+npm run delete-user
+
+# ユーザー一覧を表示
+npm run list-users
+
+# ユーザーを検索
+npm run find-user
+```
+
+## 開発
+
+### コード品質管理
+
+```bash
+# Biomeによるリント・フォーマット
+npm run check
+
+# Prismaスキーマの確認
+npm run prisma:format
+
+# テストの実行
+npm run test
+
+# テスト（ウォッチモード）
+npm run test:watch
+
+# テストカバレッジ確認
+npm run test:coverage
+```
+
+### データベース管理
+
+```bash
+# Prismaクライアント生成
+npm run prisma:generate
+
+# マイグレーション実行
+npm run prisma:migrate
+
+# Prisma Studio（データベースGUI）
+npm run prisma:studio
 ```
 
 ## デプロイ
