@@ -1,6 +1,15 @@
 import type { MealPlan, MealType } from "@prisma/client";
 
 /**
+ * 表示用に拡張された食事予定の型
+ */
+interface ExtendedMealPlan extends Omit<MealPlan, "id"> {
+  id: string;
+  userName: string;
+  attendance: string;
+}
+
+/**
  * 日付をフォーマットして表示用のテキストを生成
  * @param date 日付
  * @returns フォーマットされた日付テキスト
@@ -8,26 +17,26 @@ import type { MealPlan, MealType } from "@prisma/client";
 export const formatDateText = (date: Date): string => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  
+
   const tomorrow = new Date(today);
   tomorrow.setDate(tomorrow.getDate() + 1);
-  
+
   // 日付の0時に設定
   const targetDate = new Date(date);
   targetDate.setHours(0, 0, 0, 0);
-  
+
   // 曜日の配列
   const dayOfWeek = ["日", "月", "火", "水", "木", "金", "土"];
-  
+
   // 今日、明日、それ以外で表示を分ける
   if (targetDate.getTime() === today.getTime()) {
     return "今日";
   }
-  
+
   if (targetDate.getTime() === tomorrow.getTime()) {
     return "明日";
   }
-  
+
   const month = targetDate.getMonth() + 1;
   const day = targetDate.getDate();
   const weekday = dayOfWeek[targetDate.getDay()];
@@ -77,35 +86,36 @@ export const formatAttendanceText = (attendance: string): string => {
  * @param mealPlans 食事予定の配列
  * @returns フォーマットされた食事予定テキスト
  */
-export const formatMealPlans = (mealPlans: MealPlan[]): string => {
+export const formatMealPlans = (mealPlans: ExtendedMealPlan[]): string => {
   if (mealPlans.length === 0) {
     return "予定はありません";
   }
-  
+
   // 食事タイプごとにグループ化
-  const lunchPlans = mealPlans.filter(plan => plan.mealType === "LUNCH");
-  const dinnerPlans = mealPlans.filter(plan => plan.mealType === "DINNER");
-  
+  const lunchPlans = mealPlans.filter((plan) => plan.mealType === "LUNCH");
+  const dinnerPlans = mealPlans.filter((plan) => plan.mealType === "DINNER");
+
   let result = "";
-  
+
   // 昼食の予定をフォーマット
   if (lunchPlans.length > 0) {
     result += "【昼食】\n";
-    lunchPlans.forEach(plan => {
+    lunchPlans.forEach((plan) => {
       result += `- ${plan.userName}: ${formatAttendanceText(plan.attendance)}\n`;
     });
   }
-  
+
   // 夕食の予定をフォーマット
   if (dinnerPlans.length > 0) {
     if (result.length > 0) {
       result += "\n";
     }
     result += "【夕食】\n";
-    dinnerPlans.forEach(plan => {
+    dinnerPlans.forEach((plan) => {
       result += `- ${plan.userName}: ${formatAttendanceText(plan.attendance)}\n`;
     });
   }
-  
+
   return result;
-}; 
+};
+ 

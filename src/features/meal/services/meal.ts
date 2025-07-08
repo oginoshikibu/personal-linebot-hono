@@ -272,10 +272,14 @@ export const getMealPlan = async (
 export const getMealPlans = async (
   startDate: Date,
   endDate: Date,
-): Promise<MealPlan[]> => {
+): Promise<
+  Array<MealPlan & { userId: string; userName: string; attendance: string }>
+> => {
   try {
-    logger.info(`期間の食事予定を取得: ${startDate.toISOString()} - ${endDate.toISOString()}`);
-    
+    logger.info(
+      `期間の食事予定を取得: ${startDate.toISOString()} - ${endDate.toISOString()}`,
+    );
+
     const mealPlans = await prisma.mealPlan.findMany({
       where: {
         date: {
@@ -292,13 +296,13 @@ export const getMealPlans = async (
         cooker: true,
       },
       orderBy: {
-        date: 'asc',
+        date: "asc",
       },
     });
-    
+
     // 参加情報をフラット化して返す
-    return mealPlans.flatMap(plan => 
-      plan.participations.map(participation => ({
+    return mealPlans.flatMap((plan) =>
+      plan.participations.map((participation) => ({
         id: plan.id,
         date: plan.date,
         mealType: plan.mealType,
@@ -309,10 +313,13 @@ export const getMealPlans = async (
         userId: participation.userId,
         userName: participation.user.name,
         attendance: participation.isAttending ? "ATTEND" : "ABSENT",
-      }))
+      })),
     );
   } catch (error) {
-    logger.error(`期間の食事予定取得エラー: ${startDate.toISOString()} - ${endDate.toISOString()}`, error);
+    logger.error(
+      `期間の食事予定取得エラー: ${startDate.toISOString()} - ${endDate.toISOString()}`,
+      error,
+    );
     throw new AppError("期間の食事予定の取得に失敗しました", 500);
   }
 };

@@ -188,7 +188,9 @@ export const createEditOptionsTemplate = (
  * @param dateStr 日付文字列
  * @returns テンプレートオブジェクト
  */
-export const createLunchOptionsTemplate = (dateStr: string): TemplateContent => {
+export const createLunchOptionsTemplate = (
+  dateStr: string,
+): TemplateContent => {
   return {
     type: "buttons",
     text: "昼食の予定を選択してください",
@@ -233,25 +235,25 @@ export const createDinnerOptionsTemplate = (
 ): TemplateContent => {
   const actions = [
     {
-      type: "postback",
+      type: "postback" as const,
       label: "参加する",
       data: `action=dinner_attend&date=${dateStr}`,
       displayText: "夕食に参加します",
     },
     {
-      type: "postback",
+      type: "postback" as const,
       label: "参加しない",
       data: `action=dinner_absent&date=${dateStr}`,
       displayText: "夕食に参加しません",
     },
     {
-      type: "postback",
+      type: "postback" as const,
       label: "自分が作る",
       data: `action=dinner_cook&date=${dateStr}`,
       displayText: "夕食は自分が作ります",
     },
     {
-      type: "postback",
+      type: "postback" as const,
       label: "未定",
       data: `action=dinner_undecided&date=${dateStr}`,
       displayText: "夕食は未定です",
@@ -260,7 +262,7 @@ export const createDinnerOptionsTemplate = (
 
   if (canCancel) {
     actions.push({
-      type: "postback",
+      type: "postback" as const,
       label: "キャンセル",
       data: `action=dinner_cancel&date=${dateStr}`,
       displayText: "夕食の入力をキャンセルします",

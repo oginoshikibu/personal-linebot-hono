@@ -1,6 +1,8 @@
 import type { MessageEvent, TextEventMessage } from "@line/bot-sdk";
 import type { User } from "@prisma/client";
 import { COMMAND_PREFIX, MESSAGES } from "../../../constants";
+import { formatDate } from "../../../utils/date";
+import { formatDateText, formatMealPlans } from "../../../utils/formatter";
 import { logger } from "../../../utils/logger";
 import {
   handleCalendarCommand,
@@ -19,8 +21,6 @@ import {
   createMainMenuTemplate,
   createRegisterMenuTemplate,
 } from "../messages/templates";
-import { formatDateText, formatMealPlans } from "../../../utils/formatter";
-import { formatDate } from "../../../utils/date";
 
 /**
  * メッセージイベントを処理
@@ -188,21 +188,22 @@ const handleTodayMenu = async (user: User): Promise<void> => {
   const today = new Date();
   const tomorrow = new Date(today);
   tomorrow.setDate(tomorrow.getDate() + 1);
-  
+
   // 今日の0時
   today.setHours(0, 0, 0, 0);
   // 明日の0時
   tomorrow.setHours(0, 0, 0, 0);
-  
+
   const mealPlans = await getMealPlans(today, tomorrow);
   const dateText = formatDateText(today);
-  
-  const message = mealPlans.length > 0 
-    ? `${dateText}の予定:\n${formatMealPlans(mealPlans)}`
-    : `${dateText}の予定はまだ登録されていません。`;
-  
+
+  const message =
+    mealPlans.length > 0
+      ? `${dateText}の予定:\n${formatMealPlans(mealPlans)}`
+      : `${dateText}の予定はまだ登録されていません。`;
+
   await sendTextMessage(user.lineId, message);
-  
+
   // 編集オプションを表示
   const dateStr = formatDate(today);
   const editTemplate = createEditOptionsTemplate(dateText, dateStr);
@@ -217,19 +218,20 @@ const handleTomorrowMenu = async (user: User): Promise<void> => {
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
   tomorrow.setHours(0, 0, 0, 0);
-  
+
   const dayAfterTomorrow = new Date(tomorrow);
   dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 1);
-  
+
   const mealPlans = await getMealPlans(tomorrow, dayAfterTomorrow);
   const dateText = formatDateText(tomorrow);
-  
-  const message = mealPlans.length > 0 
-    ? `${dateText}の予定:\n${formatMealPlans(mealPlans)}`
-    : `${dateText}の予定はまだ登録されていません。`;
-  
+
+  const message =
+    mealPlans.length > 0
+      ? `${dateText}の予定:\n${formatMealPlans(mealPlans)}`
+      : `${dateText}の予定はまだ登録されていません。`;
+
   await sendTextMessage(user.lineId, message);
-  
+
   // 編集オプションを表示
   const dateStr = formatDate(tomorrow);
   const editTemplate = createEditOptionsTemplate(dateText, dateStr);

@@ -2,10 +2,10 @@ import type { PostbackEvent } from "@line/bot-sdk";
 import { logger } from "../../../utils/logger";
 import { getUserByLineId } from "../../meal/services/user";
 import { sendTextMessage } from "../client";
-import { handleEditPostback } from "./postbacks/edit";
 import { handleDateSelection } from "./postbacks/date";
-import { handleLunchPostback } from "./postbacks/lunch";
 import { handleDinnerPostback } from "./postbacks/dinner";
+import { handleEditPostback } from "./postbacks/edit";
+import { handleLunchPostback } from "./postbacks/lunch";
 
 /**
  * ポストバックイベントを処理
@@ -45,31 +45,31 @@ export const handlePostbackEvent = async (
 
     // ポストバックデータを処理
     const data = event.postback.data;
-    
+
     // 日付選択のポストバック
     if (data.startsWith("date_")) {
       await handleDateSelection(data.substring(5), user);
       return;
     }
-    
+
     // 編集のポストバック
     if (data.startsWith("action=edit")) {
       await handleEditPostback(data, user);
       return;
     }
-    
+
     // 昼食の予定質問のポストバック
     if (data.startsWith("action=lunch_")) {
       await handleLunchPostback(data, user);
       return;
     }
-    
+
     // 夕食の予定質問のポストバック
     if (data.startsWith("action=dinner_")) {
       await handleDinnerPostback(data, user);
       return;
     }
-    
+
     // その他のポストバック
     logger.warn(`未対応のポストバックデータ: ${data}`);
     await sendTextMessage(userId, "この操作はまだ対応していません。");
