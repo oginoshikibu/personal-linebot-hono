@@ -12,7 +12,6 @@ import {
 } from "../../meal/commands";
 import {
   send7DayCalendarMessage,
-  sendCalendarMessage,
 } from "../../meal/services/calendar";
 import { getMealPlans } from "../../meal/services/meal";
 import { getUserByLineId } from "../../meal/services/user";
