@@ -10,13 +10,16 @@ import {
   handleHelpCommand,
   handleRegisterCommand,
 } from "../../meal/commands";
-import { sendCalendarMessage } from "../../meal/services/calendar";
+import {
+  send7DayCalendarMessage,
+} from "../../meal/services/calendar";
 import { getMealPlans } from "../../meal/services/meal";
 import { getUserByLineId } from "../../meal/services/user";
 import {
   replyTemplateMessage,
   replyTextMessage,
   sendTemplateMessage,
+  sendTextMessage,
 } from "../client";
 import {
   createChangeMenuTemplate,
@@ -280,10 +283,13 @@ const handleThisWeekMenu = async (
  * @param replyToken 応答トークン
  */
 const handleFutureMenu = async (
-  _user: User,
+  user: User,
   replyToken: string,
 ): Promise<void> => {
-  // 今後の予定を表示（例: 1週間分）
+  // 7日間カレンダーを表示
+  await send7DayCalendarMessage(user.lineId, replyToken);
+
+  // 今後の予定の詳細を追加メッセージとして送信
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
@@ -292,17 +298,19 @@ const handleFutureMenu = async (
 
   const mealPlans = await getMealPlans(today, nextWeek);
 
+  let explanationMessage = "📅 今後7日間のカレンダーです\n\n";
+
   if (mealPlans.length > 0) {
-    await replyTextMessage(
-      replyToken,
-      `今後1週間の予定:\n${formatMealPlans(mealPlans)}`,
-    );
+    explanationMessage += `📋 登録済みの予定:\n${formatMealPlans(mealPlans)}\n\n`;
   } else {
-    await replyTextMessage(
-      replyToken,
-      "今後1週間の予定はまだ登録されていません。",
-    );
+    explanationMessage += "📋 登録済みの予定はまだありません\n\n";
   }
+
+  explanationMessage += "💡 日付をタップすると詳細確認・編集ができます";
+
+  // プッシュメッセージとして詳細説明を送信
+  // 注: replyToken は一度しか使えないため、2つ目のメッセージはプッシュメッセージとして送信
+  await sendTextMessage(user.lineId, explanationMessage);
 };
 
 /**
