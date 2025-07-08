@@ -181,7 +181,7 @@ export const create7DayCalendarFlexMessage = (
   for (let i = 0; i < 7; i++) {
     const currentDate = new Date(start);
     currentDate.setDate(currentDate.getDate() + i);
-    
+
     const isToday = currentDate.getTime() === today.getTime();
     const dayOfWeek = currentDate.getDay();
     const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
@@ -195,8 +195,10 @@ export const create7DayCalendarFlexMessage = (
           text: weekdays[dayOfWeek],
           size: "xs",
           align: "center",
-          color: isWeekend 
-            ? dayOfWeek === 0 ? "#FF0000" : "#0000FF" 
+          color: isWeekend
+            ? dayOfWeek === 0
+              ? "#FF0000"
+              : "#0000FF"
             : "#666666",
         },
         {
@@ -208,7 +210,9 @@ export const create7DayCalendarFlexMessage = (
           color: isToday
             ? "#FFFFFF"
             : isWeekend
-              ? dayOfWeek === 0 ? "#FF0000" : "#0000FF"
+              ? dayOfWeek === 0
+                ? "#FF0000"
+                : "#0000FF"
               : "#333333",
         },
       ],

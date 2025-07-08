@@ -10,7 +10,10 @@ import {
   handleHelpCommand,
   handleRegisterCommand,
 } from "../../meal/commands";
-import { sendCalendarMessage, send7DayCalendarMessage } from "../../meal/services/calendar";
+import {
+  send7DayCalendarMessage,
+  sendCalendarMessage,
+} from "../../meal/services/calendar";
 import { getMealPlans } from "../../meal/services/meal";
 import { getUserByLineId } from "../../meal/services/user";
 import {
@@ -297,13 +300,13 @@ const handleFutureMenu = async (
   const mealPlans = await getMealPlans(today, nextWeek);
 
   let explanationMessage = "📅 今後7日間のカレンダーです\n\n";
-  
+
   if (mealPlans.length > 0) {
     explanationMessage += `📋 登録済みの予定:\n${formatMealPlans(mealPlans)}\n\n`;
   } else {
     explanationMessage += "📋 登録済みの予定はまだありません\n\n";
   }
-  
+
   explanationMessage += "💡 日付をタップすると詳細確認・編集ができます";
 
   // プッシュメッセージとして詳細説明を送信
