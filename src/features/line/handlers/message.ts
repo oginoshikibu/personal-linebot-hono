@@ -1,8 +1,9 @@
 import type { MessageEvent, TextEventMessage } from "@line/bot-sdk";
 import type { User } from "@prisma/client";
+import { MealType } from "@prisma/client";
 import { COMMAND_PREFIX, MESSAGES } from "../../../constants";
 import { formatDate } from "../../../utils/date";
-import { formatDateText, formatMealPlans } from "../../../utils/formatter";
+import { formatDateText } from "../../../utils/formatter";
 import { logger } from "../../../utils/logger";
 import {
   handleCalendarCommand,
@@ -11,13 +12,16 @@ import {
   handleRegisterCommand,
 } from "../../meal/commands";
 import { send7DayCalendarMessage } from "../../meal/services/calendar";
-import { getMealPlans } from "../../meal/services/meal";
-import { getUserByLineId } from "../../meal/services/user";
+import { getMealPlan } from "../../meal/services/meal";
+import { getAllUsers, getUserByLineId } from "../../meal/services/user";
+import { prepareMealPlanData } from "../../notification/templates/mealPlan";
 import {
+  replyFlexMessage,
   replyTemplateMessage,
   replyTextMessage,
   sendTemplateMessage,
 } from "../client";
+import { createMealPlanFlexMessage } from "../messages/flex";
 import {
   createChangeMenuTemplate,
   createCheckMenuTemplate,
@@ -204,29 +208,54 @@ const handleTodayMenu = async (
   replyToken: string,
 ): Promise<void> => {
   const today = new Date();
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-
   // 今日の0時
   today.setHours(0, 0, 0, 0);
-  // 明日の0時
-  tomorrow.setHours(0, 0, 0, 0);
 
-  const mealPlans = await getMealPlans(today, tomorrow);
-  const dateText = formatDateText(today);
+  try {
+    // 昼食と夕食の予定を取得
+    const [lunch, dinner, users] = await Promise.all([
+      getMealPlan(today, MealType.LUNCH),
+      getMealPlan(today, MealType.DINNER),
+      getAllUsers(),
+    ]);
 
-  const message =
-    mealPlans.length > 0
-      ? `${dateText}の予定:\n${formatMealPlans(mealPlans)}`
-      : `${dateText}の予定はまだ登録されていません。`;
+    const dateText = formatDateText(today);
 
-  await replyTextMessage(replyToken, message);
+    // 予定がない場合のメッセージ
+    if (!lunch && !dinner) {
+      await replyTextMessage(
+        replyToken,
+        `${dateText}の食事予定はまだ登録されていません。`,
+      );
+      return;
+    }
 
-  // 編集オプションを表示（プッシュメッセージとして送信）
-  // 注: replyToken は一度しか使えないため、2つ目のメッセージはプッシュメッセージとして送信
-  const dateStr = formatDate(today);
-  const editTemplate = createEditOptionsTemplate(dateText, dateStr);
-  await sendTemplateMessage(user.lineId, editTemplate, "予定編集");
+    // Flexメッセージ用のデータを準備
+    const lunchData = lunch
+      ? prepareMealPlanData(lunch, users)
+      : { participants: [], preparationType: "UNDECIDED" };
+
+    const dinnerData = dinner
+      ? prepareMealPlanData(dinner, users)
+      : { participants: [], preparationType: "UNDECIDED" };
+
+    // Flexメッセージを作成して送信
+    const flexMessage = createMealPlanFlexMessage(
+      `【${dateText}の食事予定】`,
+      lunchData,
+      dinnerData,
+    );
+
+    await replyFlexMessage(replyToken, flexMessage, `${dateText}の食事予定`);
+
+    // 編集オプションを表示（プッシュメッセージとして送信）
+    const dateStr = formatDate(today);
+    const editTemplate = createEditOptionsTemplate(dateText, dateStr);
+    await sendTemplateMessage(user.lineId, editTemplate, "予定編集");
+  } catch (error) {
+    logger.error("今日の予定表示エラー:", error);
+    await replyTextMessage(replyToken, MESSAGES.ERRORS.PROCESSING_ERROR);
+  }
 };
 
 /**
@@ -242,23 +271,51 @@ const handleTomorrowMenu = async (
   tomorrow.setDate(tomorrow.getDate() + 1);
   tomorrow.setHours(0, 0, 0, 0);
 
-  const dayAfterTomorrow = new Date(tomorrow);
-  dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 1);
+  try {
+    // 昼食と夕食の予定を取得
+    const [lunch, dinner, users] = await Promise.all([
+      getMealPlan(tomorrow, MealType.LUNCH),
+      getMealPlan(tomorrow, MealType.DINNER),
+      getAllUsers(),
+    ]);
 
-  const mealPlans = await getMealPlans(tomorrow, dayAfterTomorrow);
-  const dateText = formatDateText(tomorrow);
+    const dateText = formatDateText(tomorrow);
 
-  const message =
-    mealPlans.length > 0
-      ? `${dateText}の予定:\n${formatMealPlans(mealPlans)}`
-      : `${dateText}の予定はまだ登録されていません。`;
+    // 予定がない場合のメッセージ
+    if (!lunch && !dinner) {
+      await replyTextMessage(
+        replyToken,
+        `${dateText}の食事予定はまだ登録されていません。`,
+      );
+      return;
+    }
 
-  await replyTextMessage(replyToken, message);
+    // Flexメッセージ用のデータを準備
+    const lunchData = lunch
+      ? prepareMealPlanData(lunch, users)
+      : { participants: [], preparationType: "UNDECIDED" };
 
-  // 編集オプションを表示
-  const dateStr = formatDate(tomorrow);
-  const editTemplate = createEditOptionsTemplate(dateText, dateStr);
-  await sendTemplateMessage(user.lineId, editTemplate, "予定編集");
+    const dinnerData = dinner
+      ? prepareMealPlanData(dinner, users)
+      : { participants: [], preparationType: "UNDECIDED" };
+
+    // Flexメッセージを作成して送信
+    const flexMessage = createMealPlanFlexMessage(
+      `【${dateText}の食事予定】`,
+      lunchData,
+      dinnerData,
+    );
+
+    await replyFlexMessage(replyToken, flexMessage, `${dateText}の食事予定`);
+
+    // 編集オプションを表示（プッシュメッセージとして送信）
+    const dateStr = formatDate(tomorrow);
+    const editTemplate = createEditOptionsTemplate(dateText, dateStr);
+    await sendTemplateMessage(user.lineId, editTemplate, "予定編集");
+  } catch (error) {
+    logger.error("明日の予定表示エラー:", error);
+    await replyTextMessage(replyToken, MESSAGES.ERRORS.PROCESSING_ERROR);
+  }
 };
 
 /**
@@ -270,30 +327,45 @@ const handleThisWeekMenu = async (
   user: User,
   replyToken: string,
 ): Promise<void> => {
-  // 今週の予定の詳細を先に送信
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  try {
+    // 今日の日付を準備
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-  const nextWeek = new Date(today);
-  nextWeek.setDate(nextWeek.getDate() + 7);
+    // 最初の日付の予定を取得して表示
+    const [lunch, dinner, users] = await Promise.all([
+      getMealPlan(today, MealType.LUNCH),
+      getMealPlan(today, MealType.DINNER),
+      getAllUsers(),
+    ]);
 
-  const mealPlans = await getMealPlans(today, nextWeek);
+    const dateText = formatDateText(today);
 
-  let explanationMessage = "📅 今週の予定カレンダーです\n\n";
+    // Flexメッセージ用のデータを準備
+    const lunchData = lunch
+      ? prepareMealPlanData(lunch, users)
+      : { participants: [], preparationType: "UNDECIDED" };
 
-  if (mealPlans.length > 0) {
-    explanationMessage += `📋 登録済みの予定:\n${formatMealPlans(mealPlans)}\n\n`;
-  } else {
-    explanationMessage += "📋 登録済みの予定はまだありません\n\n";
+    const dinnerData = dinner
+      ? prepareMealPlanData(dinner, users)
+      : { participants: [], preparationType: "UNDECIDED" };
+
+    // Flexメッセージを作成して送信
+    const flexMessage = createMealPlanFlexMessage(
+      `【${dateText}の食事予定】`,
+      lunchData,
+      dinnerData,
+    );
+
+    // 先にFlexメッセージとして今日の予定を送信
+    await replyFlexMessage(replyToken, flexMessage, `${dateText}の食事予定`);
+
+    // その後、7日間カレンダーをプッシュメッセージとして表示
+    await send7DayCalendarMessage(user.lineId);
+  } catch (error) {
+    logger.error("今週の予定表示エラー:", error);
+    await replyTextMessage(replyToken, MESSAGES.ERRORS.PROCESSING_ERROR);
   }
-
-  explanationMessage += "💡 日付をタップすると詳細確認・編集ができます";
-
-  // 先にテキストメッセージとして説明を送信
-  await replyTextMessage(replyToken, explanationMessage);
-
-  // その後、7日間カレンダーをプッシュメッセージとして表示
-  await send7DayCalendarMessage(user.lineId);
 };
 
 /**
@@ -305,31 +377,45 @@ const handleFutureMenu = async (
   user: User,
   replyToken: string,
 ): Promise<void> => {
-  // 今後の予定の詳細を先に送信
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  try {
+    // 今日の日付を準備
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-  const nextWeek = new Date(today);
-  nextWeek.setDate(nextWeek.getDate() + 7);
+    // 最初の日付の予定を取得して表示
+    const [lunch, dinner, users] = await Promise.all([
+      getMealPlan(today, MealType.LUNCH),
+      getMealPlan(today, MealType.DINNER),
+      getAllUsers(),
+    ]);
 
-  const mealPlans = await getMealPlans(today, nextWeek);
+    const dateText = formatDateText(today);
 
-  let explanationMessage = "📅 今後7日間のカレンダーです\n\n";
+    // Flexメッセージ用のデータを準備
+    const lunchData = lunch
+      ? prepareMealPlanData(lunch, users)
+      : { participants: [], preparationType: "UNDECIDED" };
 
-  if (mealPlans.length > 0) {
-    explanationMessage += `📋 登録済みの予定:\n${formatMealPlans(mealPlans)}\n\n`;
-  } else {
-    explanationMessage += "📋 登録済みの予定はまだありません\n\n";
+    const dinnerData = dinner
+      ? prepareMealPlanData(dinner, users)
+      : { participants: [], preparationType: "UNDECIDED" };
+
+    // Flexメッセージを作成して送信
+    const flexMessage = createMealPlanFlexMessage(
+      `【${dateText}の食事予定】`,
+      lunchData,
+      dinnerData,
+    );
+
+    // 先にFlexメッセージとして今日の予定を送信
+    await replyFlexMessage(replyToken, flexMessage, `${dateText}の食事予定`);
+
+    // その後、7日間カレンダーをプッシュメッセージとして表示
+    await send7DayCalendarMessage(user.lineId);
+  } catch (error) {
+    logger.error("今後の予定表示エラー:", error);
+    await replyTextMessage(replyToken, MESSAGES.ERRORS.PROCESSING_ERROR);
   }
-
-  explanationMessage += "💡 日付をタップすると詳細確認・編集ができます";
-
-  // 先にテキストメッセージとして説明を送信
-  await replyTextMessage(replyToken, explanationMessage);
-
-  // その後、7日間カレンダーをプッシュメッセージとして表示
-  // replyTokenは一度しか使えないため、カレンダーはプッシュメッセージとして送信
-  await send7DayCalendarMessage(user.lineId);
 };
 
 /**
