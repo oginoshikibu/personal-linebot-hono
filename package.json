@@ -28,8 +28,8 @@
     "setup-richmenu": "tsx scripts/setupRichMenu.ts",
     "setup-richmenu:mock": "tsx scripts/setupRichMenuWithMock.ts",
     "setup-richmenu:theme": "tsx scripts/setupRichMenuWithTheme.ts",
-    "ci": "npm run format && npm run check && npm run lint && npm run test && npm run type-check",
-    "ci:build": "npm run format && npm run check && npm run lint && npm run test && npm run build"
+    "ci": "pnpm run format && pnpm run check && pnpm run lint && pnpm run test && pnpm run type-check",
+    "ci:build": "pnpm run format && pnpm run check && pnpm run lint && pnpm run test && pnpm run build"
   },
   "keywords": [
     "line",
