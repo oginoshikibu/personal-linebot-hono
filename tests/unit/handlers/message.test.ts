@@ -48,6 +48,7 @@ describe("メッセージハンドラー", () => {
   it("「今週の予定」メッセージを処理できること", async () => {
     // モックのセットアップ
     const send7DayCalendarMessageMock = vi.spyOn(calendarService, "send7DayCalendarMessage");
+    const replyTextMessageMock = vi.spyOn(lineService, "replyTextMessage");
     
     // テスト対象の実行
     const mockUser = { lineId: "test-user-id", name: "Test User", id: 1 };
@@ -55,13 +56,14 @@ describe("メッセージハンドラー", () => {
     await handleTextMessage({ type: "text", text: "今週の予定", id: "test-message-id", quoteToken: "test-quote-token" }, mockUser, mockReplyToken);
     
     // 検証
-    expect(send7DayCalendarMessageMock).toHaveBeenCalledWith(mockUser.lineId, mockReplyToken);
+    expect(replyTextMessageMock).toHaveBeenCalledWith(mockReplyToken, expect.any(String));
+    expect(send7DayCalendarMessageMock).toHaveBeenCalledWith(mockUser.lineId);
   });
 
   it("「今後の予定」メッセージを処理できること", async () => {
     // モックのセットアップ
     const send7DayCalendarMessageMock = vi.spyOn(calendarService, "send7DayCalendarMessage");
-    const sendTextMessageMock = vi.spyOn(lineService, "sendTextMessage");
+    const replyTextMessageMock = vi.spyOn(lineService, "replyTextMessage");
     
     // テスト対象の実行
     const mockUser = { lineId: "test-user-id", name: "Test User", id: 1 };
@@ -69,7 +71,7 @@ describe("メッセージハンドラー", () => {
     await handleTextMessage({ type: "text", text: "今後の予定", id: "test-message-id", quoteToken: "test-quote-token" }, mockUser, mockReplyToken);
     
     // 検証
-    expect(send7DayCalendarMessageMock).toHaveBeenCalledWith(mockUser.lineId, mockReplyToken);
-    expect(sendTextMessageMock).toHaveBeenCalledWith(mockUser.lineId, expect.any(String));
+    expect(replyTextMessageMock).toHaveBeenCalledWith(mockReplyToken, expect.any(String));
+    expect(send7DayCalendarMessageMock).toHaveBeenCalledWith(mockUser.lineId);
   });
 }); 

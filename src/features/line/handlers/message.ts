@@ -17,7 +17,6 @@ import {
   replyTemplateMessage,
   replyTextMessage,
   sendTemplateMessage,
-  sendTextMessage,
 } from "../client";
 import {
   createChangeMenuTemplate,
@@ -271,8 +270,30 @@ const handleThisWeekMenu = async (
   user: User,
   replyToken: string,
 ): Promise<void> => {
-  // 週間カレンダーを表示
-  await send7DayCalendarMessage(user.lineId, replyToken);
+  // 今週の予定の詳細を先に送信
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const nextWeek = new Date(today);
+  nextWeek.setDate(nextWeek.getDate() + 7);
+
+  const mealPlans = await getMealPlans(today, nextWeek);
+
+  let explanationMessage = "📅 今週の予定カレンダーです\n\n";
+
+  if (mealPlans.length > 0) {
+    explanationMessage += `📋 登録済みの予定:\n${formatMealPlans(mealPlans)}\n\n`;
+  } else {
+    explanationMessage += "📋 登録済みの予定はまだありません\n\n";
+  }
+
+  explanationMessage += "💡 日付をタップすると詳細確認・編集ができます";
+
+  // 先にテキストメッセージとして説明を送信
+  await replyTextMessage(replyToken, explanationMessage);
+
+  // その後、7日間カレンダーをプッシュメッセージとして表示
+  await send7DayCalendarMessage(user.lineId);
 };
 
 /**
@@ -284,10 +305,7 @@ const handleFutureMenu = async (
   user: User,
   replyToken: string,
 ): Promise<void> => {
-  // 7日間カレンダーを表示
-  await send7DayCalendarMessage(user.lineId, replyToken);
-
-  // 今後の予定の詳細を追加メッセージとして送信
+  // 今後の予定の詳細を先に送信
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
@@ -306,9 +324,12 @@ const handleFutureMenu = async (
 
   explanationMessage += "💡 日付をタップすると詳細確認・編集ができます";
 
-  // プッシュメッセージとして詳細説明を送信
-  // 注: replyToken は一度しか使えないため、2つ目のメッセージはプッシュメッセージとして送信
-  await sendTextMessage(user.lineId, explanationMessage);
+  // 先にテキストメッセージとして説明を送信
+  await replyTextMessage(replyToken, explanationMessage);
+
+  // その後、7日間カレンダーをプッシュメッセージとして表示
+  // replyTokenは一度しか使えないため、カレンダーはプッシュメッセージとして送信
+  await send7DayCalendarMessage(user.lineId);
 };
 
 /**
