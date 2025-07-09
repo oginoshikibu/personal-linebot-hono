@@ -1,7 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { handleTextMessage } from "../../../src/features/line/handlers/message";
 import * as lineService from "../../../src/features/line/client";
-import * as calendarService from "../../../src/features/meal/services/calendar";
 
 // モック
 vi.mock("../../../src/features/line/client");
@@ -27,65 +26,69 @@ describe("メッセージハンドラー", () => {
 
   it("「今日の予定」メッセージを処理できること", async () => {
     // モックのセットアップ
-    const replyTextMessageMock = vi.spyOn(lineService, "replyTextMessage");
+    const replyTemplateMessageMock = vi.spyOn(lineService, "replyTemplateMessage");
     
     // テスト対象の実行
     const mockUser = { lineId: "test-user-id", name: "Test User", id: 1 };
     const mockReplyToken = "test-reply-token";
     await handleTextMessage({ type: "text", text: "今日の予定", id: "test-message-id", quoteToken: "test-quote-token" }, mockUser, mockReplyToken);
     
-    // 検証
-    expect(replyTextMessageMock).toHaveBeenCalledWith(mockReplyToken, expect.stringContaining("予定はまだ登録されていません"));
+    // 検証 - 予定がない場合はテンプレートメッセージが送信される
+    expect(replyTemplateMessageMock).toHaveBeenCalledWith(
+      mockReplyToken,
+      expect.anything(),
+      expect.stringContaining("予定はまだ登録されていません")
+    );
   });
 
   it("「明日の予定」メッセージを処理できること", async () => {
     // モックのセットアップ
-    const replyTextMessageMock = vi.spyOn(lineService, "replyTextMessage");
+    const replyTemplateMessageMock = vi.spyOn(lineService, "replyTemplateMessage");
     
     // テスト対象の実行
     const mockUser = { lineId: "test-user-id", name: "Test User", id: 1 };
     const mockReplyToken = "test-reply-token";
     await handleTextMessage({ type: "text", text: "明日の予定", id: "test-message-id", quoteToken: "test-quote-token" }, mockUser, mockReplyToken);
     
-    // 検証
-    expect(replyTextMessageMock).toHaveBeenCalledWith(mockReplyToken, expect.stringContaining("予定はまだ登録されていません"));
+    // 検証 - 予定がない場合はテンプレートメッセージが送信される
+    expect(replyTemplateMessageMock).toHaveBeenCalledWith(
+      mockReplyToken,
+      expect.anything(),
+      expect.stringContaining("予定はまだ登録されていません")
+    );
   });
 
   it("「今週の予定」メッセージを処理できること", async () => {
     // モックのセットアップ
-    const replyFlexMessageMock = vi.spyOn(lineService, "replyFlexMessage");
-    const send7DayCalendarMessageMock = vi.spyOn(calendarService, "send7DayCalendarMessage");
+    const replyTemplateMessageMock = vi.spyOn(lineService, "replyTemplateMessage");
     
     // テスト対象の実行
     const mockUser = { lineId: "test-user-id", name: "Test User", id: 1 };
     const mockReplyToken = "test-reply-token";
     await handleTextMessage({ type: "text", text: "今週の予定", id: "test-message-id", quoteToken: "test-quote-token" }, mockUser, mockReplyToken);
     
-    // 検証
-    expect(replyFlexMessageMock).toHaveBeenCalledWith(
+    // 検証 - 予定がない場合はテンプレートメッセージが送信される
+    expect(replyTemplateMessageMock).toHaveBeenCalledWith(
       mockReplyToken,
       expect.anything(),
-      expect.stringContaining("の食事予定")
+      expect.stringContaining("予定はまだ登録されていません")
     );
-    expect(send7DayCalendarMessageMock).toHaveBeenCalledWith(mockUser.lineId);
   });
 
   it("「今後の予定」メッセージを処理できること", async () => {
     // モックのセットアップ
-    const replyFlexMessageMock = vi.spyOn(lineService, "replyFlexMessage");
-    const send7DayCalendarMessageMock = vi.spyOn(calendarService, "send7DayCalendarMessage");
+    const replyTemplateMessageMock = vi.spyOn(lineService, "replyTemplateMessage");
     
     // テスト対象の実行
     const mockUser = { lineId: "test-user-id", name: "Test User", id: 1 };
     const mockReplyToken = "test-reply-token";
     await handleTextMessage({ type: "text", text: "今後の予定", id: "test-message-id", quoteToken: "test-quote-token" }, mockUser, mockReplyToken);
     
-    // 検証
-    expect(replyFlexMessageMock).toHaveBeenCalledWith(
+    // 検証 - 予定がない場合はテンプレートメッセージが送信される
+    expect(replyTemplateMessageMock).toHaveBeenCalledWith(
       mockReplyToken,
       expect.anything(),
-      expect.stringContaining("の食事予定")
+      expect.stringContaining("予定はまだ登録されていません")
     );
-    expect(send7DayCalendarMessageMock).toHaveBeenCalledWith(mockUser.lineId);
   });
 }); 
