@@ -186,6 +186,7 @@ export const create7DayCalendarFlexMessage = (
     const dayOfWeek = currentDate.getDay();
     const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
 
+    // 各日付のボックスを簡素化
     days.push({
       type: "box" as const,
       layout: "vertical" as const,
@@ -204,31 +205,23 @@ export const create7DayCalendarFlexMessage = (
         {
           type: "text" as const,
           text: String(currentDate.getDate()),
-          size: "md",
+          size: "sm", // mdからsmに変更して小さくする
           align: "center",
           weight: isToday ? "bold" : "regular",
-          color: isToday
-            ? "#FFFFFF"
-            : isWeekend
-              ? dayOfWeek === 0
-                ? "#FF0000"
-                : "#0000FF"
-              : "#333333",
+          color: isToday ? "#FFFFFF" : "#333333", // 色を単純化
         },
       ],
       backgroundColor: isToday ? "#1DB446" : "transparent",
-      cornerRadius: "md",
-      paddingAll: "sm",
       action: {
         type: "postback" as const,
+        label: `${currentDate.getMonth() + 1}/${currentDate.getDate()}`, // labelプロパティを追加
         data: `action=select_date&date=${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, "0")}-${String(currentDate.getDate()).padStart(2, "0")}`,
-        displayText: `${currentDate.getFullYear()}年${currentDate.getMonth() + 1}月${currentDate.getDate()}日を選択しました`,
-        label: `${currentDate.getMonth() + 1}/${currentDate.getDate()}`,
+        displayText: `${currentDate.getMonth() + 1}/${currentDate.getDate()}選択`,
       },
     });
   }
 
-  // Flexメッセージを作成
+  // Flexメッセージを作成 - さらに簡素化
   return {
     type: "bubble",
     header: {
@@ -237,34 +230,19 @@ export const create7DayCalendarFlexMessage = (
       contents: [
         {
           type: "text",
-          text: "今後7日間の予定",
+          text: "今後7日間",
           weight: "bold",
           color: "#1DB446",
-          size: "lg",
+          size: "md", // lgからmdに変更して小さくする
           align: "center",
-        },
-        {
-          type: "text",
-          text: "日付をタップして詳細を確認",
-          size: "xs",
-          align: "center",
-          color: "#666666",
-          margin: "sm",
         },
       ],
-      paddingAll: "md",
     },
     body: {
       type: "box",
       layout: "horizontal",
       contents: days,
       spacing: "xs",
-      paddingAll: "md",
-    },
-    styles: {
-      footer: {
-        separator: true,
-      },
     },
   };
 };
