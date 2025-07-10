@@ -73,7 +73,7 @@ describe("メッセージハンドラー", () => {
     
     // 検証 - 7日間カレンダーが表示される
     expect(send7DayCalendarMessageMock).toHaveBeenCalledWith(
-      "",
+      mockUser.lineId,
       mockReplyToken,
       expect.any(Date)
     );
@@ -90,7 +90,7 @@ describe("メッセージハンドラー", () => {
     
     // 検証 - 月間カレンダーが表示される
     expect(sendCalendarMessageMock).toHaveBeenCalledWith(
-      "",
+      mockUser.lineId,
       mockReplyToken,
       expect.any(Date)
     );

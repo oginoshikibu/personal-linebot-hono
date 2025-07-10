@@ -11,6 +11,10 @@ import {
   handleHelpCommand,
   handleRegisterCommand,
 } from "../../meal/commands";
+import {
+  send7DayCalendarMessage,
+  sendCalendarMessage,
+} from "../../meal/services/calendar";
 import { getMealPlan } from "../../meal/services/meal";
 import { getAllUsers, getUserByLineId } from "../../meal/services/user";
 import { prepareMealPlanData } from "../../notification/templates/mealPlan";
@@ -21,7 +25,6 @@ import {
 } from "../client";
 import { createMealPlanFlexMessage } from "../messages/flex";
 import { createEditOptionsTemplate } from "../messages/templates";
-import { send7DayCalendarMessage, sendCalendarMessage } from "../../meal/services/calendar";
 
 /**
  * メッセージイベントを処理
@@ -314,8 +317,8 @@ const handleThisWeekMenu = async (
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
-    // 7日間カレンダーを送信
-    await send7DayCalendarMessage("", replyToken, today);
+    // 7日間カレンダーを送信（返信メッセージとして）
+    await send7DayCalendarMessage(_user.lineId, replyToken, today);
   } catch (error) {
     logger.error("今週の予定表示エラー:", error);
     await replyTextMessage(replyToken, MESSAGES.ERRORS.PROCESSING_ERROR);
@@ -336,8 +339,8 @@ const handleFutureMenu = async (
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
-    // 月間カレンダーを送信
-    await sendCalendarMessage("", replyToken, today);
+    // 月間カレンダーを送信（返信メッセージとして）
+    await sendCalendarMessage(_user.lineId, replyToken, today);
   } catch (error) {
     logger.error("今後の予定表示エラー:", error);
     await replyTextMessage(replyToken, MESSAGES.ERRORS.PROCESSING_ERROR);
