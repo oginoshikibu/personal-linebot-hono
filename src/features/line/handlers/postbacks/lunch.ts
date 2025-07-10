@@ -53,13 +53,13 @@ export const handleLunchPostback = async (
 
     // 昼食の予定を保存した旨のメッセージを送信
     const dateText = formatDateText(date);
-    
+
     // 夕食の予定質問を表示（昼食の予定も含めて返信）
     const dinnerTemplate = createDinnerOptionsTemplate(dateStr);
     await replyTemplateMessage(
-      replyToken, 
-      dinnerTemplate, 
-      `${dateText}の昼食: ${getAttendanceText(attendance)} - 夕食の予定を選択してください`
+      replyToken,
+      dinnerTemplate,
+      `${dateText}の昼食: ${getAttendanceText(attendance)} - 夕食の予定を選択してください`,
     );
   } catch (error) {
     logger.error("昼食ポストバック処理エラー", error);

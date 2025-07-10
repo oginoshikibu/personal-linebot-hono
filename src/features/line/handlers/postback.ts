@@ -72,7 +72,10 @@ export const handlePostbackEvent = async (
 
     // その他のポストバック
     logger.warn(`未対応のポストバックデータ: ${data}`);
-    await replyTextMessage(event.replyToken, "この操作はまだ対応していません。");
+    await replyTextMessage(
+      event.replyToken,
+      "この操作はまだ対応していません。",
+    );
   } catch (error) {
     logger.error(`ポストバックイベント処理エラー: ${userId}`, {
       error: error instanceof Error ? error.message : String(error),

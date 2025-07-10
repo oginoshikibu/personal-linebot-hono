@@ -316,7 +316,7 @@ const handleThisWeekMenu = async (
     // 7日間カレンダーを表示
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
+
     // 7日間カレンダーを送信（返信メッセージとして）
     await send7DayCalendarMessage(_user.lineId, replyToken, today);
   } catch (error) {
@@ -338,7 +338,7 @@ const handleFutureMenu = async (
     // 月間カレンダーを表示
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
+
     // 月間カレンダーを送信（返信メッセージとして）
     await sendCalendarMessage(_user.lineId, replyToken, today);
   } catch (error) {
