@@ -1,7 +1,7 @@
 import type { PostbackEvent } from "@line/bot-sdk";
 import { logger } from "../../../utils/logger";
 import { getUserByLineId } from "../../meal/services/user";
-import { sendTextMessage } from "../client";
+import { replyTextMessage } from "../client";
 import { handleDateSelection } from "./postbacks/date";
 import { handleDinnerPostback } from "./postbacks/dinner";
 import { handleEditPostback } from "./postbacks/edit";
@@ -35,8 +35,8 @@ export const handlePostbackEvent = async (
     // ユーザーが登録されていない場合
     if (!user) {
       logger.warn(`ユーザーがデータベースに登録されていません: ${userId}`);
-      await sendTextMessage(
-        userId,
+      await replyTextMessage(
+        event.replyToken,
         "申し訳ありませんが、システムに登録されていません。管理者に連絡してください。",
       );
       logger.info(`未登録ユーザーへの通知送信完了: ${userId}`);
@@ -48,39 +48,39 @@ export const handlePostbackEvent = async (
 
     // 日付選択のポストバック
     if (data.startsWith("date_")) {
-      await handleDateSelection(data.substring(5), user);
+      await handleDateSelection(data.substring(5), user, event.replyToken);
       return;
     }
 
     // 編集のポストバック
     if (data.startsWith("action=edit")) {
-      await handleEditPostback(data, user);
+      await handleEditPostback(data, user, event.replyToken);
       return;
     }
 
     // 昼食の予定質問のポストバック
     if (data.startsWith("action=lunch_")) {
-      await handleLunchPostback(data, user);
+      await handleLunchPostback(data, user, event.replyToken);
       return;
     }
 
     // 夕食の予定質問のポストバック
     if (data.startsWith("action=dinner_")) {
-      await handleDinnerPostback(data, user);
+      await handleDinnerPostback(data, user, event.replyToken);
       return;
     }
 
     // その他のポストバック
     logger.warn(`未対応のポストバックデータ: ${data}`);
-    await sendTextMessage(userId, "この操作はまだ対応していません。");
+    await replyTextMessage(event.replyToken, "この操作はまだ対応していません。");
   } catch (error) {
     logger.error(`ポストバックイベント処理エラー: ${userId}`, {
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
     });
     try {
-      await sendTextMessage(
-        userId,
+      await replyTextMessage(
+        event.replyToken,
         "ポストバックの処理中にエラーが発生しました。もう一度お試しください。",
       );
       logger.info(`エラー通知送信完了: ${userId}`);
