@@ -20,11 +20,12 @@ flowchart TD
     Today --> ShowToday[今日の予定表示]
     Tomorrow --> ShowTomorrow[明日の予定表示]
     ThisWeek --> ShowWeek[週間カレンダー表示]
-    Future --> DateSelectView[日付選択]
+    Future --> DateSelectView[月間カレンダー表示]
     
     ShowWeek --> SelectDateFromWeek[日付選択]
-    DateSelectView --> ShowDate[選択日の予定表示]
-    SelectDateFromWeek --> ShowDate
+    DateSelectView --> SelectDateFromMonth[日付選択]
+    SelectDateFromWeek --> ShowDate[選択日の予定表示]
+    SelectDateFromMonth --> ShowDate
     
     %% 予定表示後の編集オプション
     ShowToday --> EditOption[編集オプション]
@@ -73,8 +74,8 @@ flowchart TD
     CheckToday -->|いいえ| End
     NotifyOthers --> End
     
-    %% 週間予定入力リマインダー（日曜夜）
-    WeeklyReminder([日曜夜リマインダー]) --> PlanNextWeek[来週の予定入力]
+    %% 週間予定入力リマインダー（日曜夜）- 未実装
+    WeeklyReminder([日曜夜リマインダー\n（未実装）]) --> PlanNextWeek[来週の予定入力]
     PlanNextWeek --> WeeklyPlanning[曜日ごとに予定入力]
     WeeklyPlanning --> WeeklyComplete[週間予定入力完了]
     WeeklyPlanning -->|途中でキャンセル| PartialSave[入力済み分を保存]
@@ -89,8 +90,8 @@ flowchart TD
 
 2. **予定表示フロー**
    - 今日/明日：直接その日の予定を表示
-   - 今週：週間カレンダーを表示し、日付を選択可能
-   - 今後：日付選択から特定日の予定を表示
+   - 今週：週間カレンダー（7日間カレンダー）を表示し、日付を選択可能
+   - 今後：月間カレンダーを表示し、日付を選択可能
 
 3. **編集フロー**
    - 予定表示後に編集オプションを表示
@@ -100,8 +101,8 @@ flowchart TD
 
 4. **通知システム**
    - 今日/明日の予定変更時は他のユーザーに通知
-   - 日曜夜に来週の予定入力リマインダー
+   - 日曜夜に来週の予定入力リマインダー（未実装）
 
-5. **週間予定入力**
+5. **週間予定入力（未実装）**
    - 日曜夜のリマインダーから来週の予定を曜日ごとに入力
    - 途中でキャンセルした場合は入力済みの分だけ保存 

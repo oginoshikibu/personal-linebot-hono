@@ -6,12 +6,14 @@ import type { MealPlanData } from "../../../types";
  * @param title メッセージタイトル
  * @param lunchData 昼食データ
  * @param dinnerData 夕食データ
+ * @param dateStr 編集用の日付文字列（YYYY-MM-DD形式）
  * @returns Flexメッセージのコンテンツ
  */
 export const createMealPlanFlexMessage = (
   title: string,
   lunchData: MealPlanData,
   dinnerData: MealPlanData,
+  dateStr?: string,
 ): FlexBubble => {
   // 準備方法の日本語表示
   const getPreparationTypeText = (type: string, cooker?: string) => {
@@ -126,6 +128,36 @@ export const createMealPlanFlexMessage = (
     };
   };
 
+  // フッターの編集ボタンを作成
+  const footerContents = dateStr
+    ? [
+        {
+          type: "button" as const,
+          style: "primary" as const,
+          action: {
+            type: "postback" as const,
+            label: "昼食を編集",
+            data: `action=edit&date=${dateStr}&type=lunch`,
+            displayText: `${dateStr}の昼食を編集します`,
+          },
+          color: "#FF6B6E",
+          margin: "md",
+        },
+        {
+          type: "button" as const,
+          style: "primary" as const,
+          action: {
+            type: "postback" as const,
+            label: "夕食を編集",
+            data: `action=edit&date=${dateStr}&type=dinner`,
+            displayText: `${dateStr}の夕食を編集します`,
+          },
+          color: "#6B66FF",
+          margin: "md",
+        },
+      ]
+    : [];
+
   // Flexメッセージを作成
   return {
     type: "bubble",
@@ -152,6 +184,14 @@ export const createMealPlanFlexMessage = (
       ],
       paddingAll: "md",
     },
+    footer: dateStr
+      ? {
+          type: "box",
+          layout: "vertical",
+          contents: footerContents,
+          paddingAll: "md",
+        }
+      : undefined,
     styles: {
       footer: {
         separator: true,
