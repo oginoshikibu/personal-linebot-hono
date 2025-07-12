@@ -214,9 +214,9 @@ export const create7DayCalendarFlexMessage = (
       backgroundColor: isToday ? "#1DB446" : "transparent",
       action: {
         type: "postback" as const,
-        label: `${currentDate.getMonth() + 1}/${currentDate.getDate()}`, // labelプロパティを追加
-        data: `action=select_date&date=${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, "0")}-${String(currentDate.getDate()).padStart(2, "0")}`,
-        displayText: `${currentDate.getMonth() + 1}/${currentDate.getDate()}選択`,
+        // labelプロパティを削除
+        data: `date_${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, "0")}-${String(currentDate.getDate()).padStart(2, "0")}`,
+        displayText: `${currentDate.getMonth() + 1}/${currentDate.getDate()}を選択`,
       },
     });
   }
