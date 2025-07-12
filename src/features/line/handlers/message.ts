@@ -11,6 +11,10 @@ import {
   handleHelpCommand,
   handleRegisterCommand,
 } from "../../meal/commands";
+import { sendCalendarMessage } from "../../meal/services/calendar";
+import { getMealPlan } from "../../meal/services/meal";
+import { getAllUsers, getUserByLineId } from "../../meal/services/user";
+import { prepareMealPlanData } from "../../notification/templates/mealPlan";
 import {
   replyFlexMessage,
   replyTemplateMessage,
@@ -18,9 +22,6 @@ import {
 } from "../client";
 import { createMealPlanFlexMessage } from "../messages/flex";
 import { createEditOptionsTemplate } from "../messages/templates";
-import { sendCalendarMessage } from "../../meal/services/calendar";
-import { getMealPlan, getAllUsers } from "../../meal/services/meal";
-import { prepareMealPlanData } from "../../../utils/meal";
 
 /**
  * メッセージイベントを処理
