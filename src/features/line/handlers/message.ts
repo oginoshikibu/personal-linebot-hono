@@ -18,7 +18,7 @@ import {
 } from "../client";
 import { createMealPlanFlexMessage } from "../messages/flex";
 import { createEditOptionsTemplate } from "../messages/templates";
-import { send7DayCalendarMessage, sendCalendarMessage } from "../../meal/services/calendar";
+import { sendCalendarMessage } from "../../meal/services/calendar";
 import { getMealPlan, getAllUsers } from "../../meal/services/meal";
 import { prepareMealPlanData } from "../../../utils/meal";
 
@@ -313,7 +313,7 @@ const handleThisWeekMenu = async (
     const today = new Date();
     const dateText = formatDateText(today);
     const dateStr = formatDate(today);
-    
+
     // 今日の予定を表示
     const [lunch, dinner, users] = await Promise.all([
       getMealPlan(today, MealType.LUNCH),
