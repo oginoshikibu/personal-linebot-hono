@@ -363,7 +363,7 @@ const handleThisWeekMenu = async (
  * @param replyToken 応答トークン
  */
 const handleFutureMenu = async (
-  _user: User,
+  user: User,
   replyToken: string,
 ): Promise<void> => {
   try {
@@ -372,7 +372,7 @@ const handleFutureMenu = async (
     today.setHours(0, 0, 0, 0);
 
     // 月間カレンダーを送信（返信メッセージとして）
-    await sendCalendarMessage(_user.lineId, replyToken, today);
+    await sendCalendarMessage(user.lineId, replyToken, today);
   } catch (error) {
     logger.error("今後の予定表示エラー:", error);
     await replyTextMessage(replyToken, MESSAGES.ERRORS.PROCESSING_ERROR);
