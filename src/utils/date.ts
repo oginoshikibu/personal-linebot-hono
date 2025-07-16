@@ -89,6 +89,15 @@ export const parseDate = (dateStr: string): Date | null => {
 };
 
 /**
+ * 日付をポストバック用のフォーマットに変換（例: 2023-10-01）
+ * @param date 日付
+ * @returns YYYY-MM-DD形式の日付文字列
+ */
+export const formatDateForPostback = (date: Date): string => {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+};
+
+/**
  * 日付を日本語の曜日付きフォーマットに変換（例: 2023年10月1日（日））
  * @param date 日付
  * @returns 日本語の曜日付き日付文字列

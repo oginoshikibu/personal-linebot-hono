@@ -1,15 +1,13 @@
-import type { TemplateContent } from "@line/bot-sdk";
 import { MealType, type User } from "@prisma/client";
 import { MESSAGES } from "../../constants";
-import {
-  createMainMenuTemplate,
-  sendTemplateMessage,
-  sendTextMessage,
-} from "../../services/line";
-import { getMealPlan } from "../../services/meal";
-import { formatDateJP } from "../../utils/date";
+import { createMealPlanFlexMessage } from "../../features/line/messages/flex";
+import { getMealPlan } from "../../features/meal/services/meal";
+import { getAllUsers } from "../../features/meal/services/user";
+import { prepareMealPlanData } from "../../features/notification/templates/mealPlan";
+import { sendFlexMessage, sendTextMessage } from "../../services/line";
+import { parseDate } from "../../utils/date";
+import { formatDateText } from "../../utils/formatter";
 import { logger } from "../../utils/logger";
-import { parseDate } from "../../utils/meal";
 
 /**
  * 日付選択のポストバックを処理
@@ -21,69 +19,45 @@ export const handleDateSelection = async (
   user: User,
 ): Promise<void> => {
   try {
-    const selectedDate = parseDate(dateString);
-    if (!selectedDate) {
-      throw new Error("無効な日付形式です");
+    const date = parseDate(dateString);
+    if (!date) {
+      logger.warn("無効な日付形式です", { dateString });
+      await sendTextMessage(
+        user.lineId,
+        "無効な日付形式です。もう一度お試しください。",
+      );
+      return;
     }
 
-    // 選択された日付の食事予定を確認
-    const [lunch, dinner] = await Promise.all([
-      getMealPlan(selectedDate, MealType.LUNCH),
-      getMealPlan(selectedDate, MealType.DINNER),
+    const dateText = formatDateText(date);
+
+    // 選択日の昼食と夕食の予定を取得
+    const [lunch, dinner, users] = await Promise.all([
+      getMealPlan(date, MealType.LUNCH),
+      getMealPlan(date, MealType.DINNER),
+      getAllUsers(),
     ]);
 
-    // 日付選択後のメッセージを表示
-    await sendTextMessage(
-      user.lineId,
-      `${formatDateJP(selectedDate)}が選択されました。\n` +
-        `昼食: ${lunch ? "予定あり" : "予定なし"}\n` +
-        `夕食: ${dinner ? "予定あり" : "予定なし"}`,
+    // Flexメッセージ用のデータを準備
+    const lunchData = lunch
+      ? prepareMealPlanData(lunch, users)
+      : { participants: [], preparationType: "UNDECIDED" };
+
+    const dinnerData = dinner
+      ? prepareMealPlanData(dinner, users)
+      : { participants: [], preparationType: "UNDECIDED" };
+
+    // 編集ボタン付きのFlexメッセージを作成して送信
+    const flexMessage = createMealPlanFlexMessage(
+      `【${dateText}の食事予定】`,
+      lunchData,
+      dinnerData,
+      dateString, // 編集用の日付文字列を渡す
     );
 
-    // 日付選択後のオプションを表示
-    const template: TemplateContent = {
-      type: "buttons",
-      title: `${formatDateJP(selectedDate)}の予定`,
-      text: "操作を選択してください",
-      actions: [
-        {
-          type: "postback",
-          label: "昼食を登録",
-          data: `register_date_lunch?date=${dateString}`,
-          displayText: `${formatDateJP(selectedDate)}の昼食を登録`,
-        },
-        {
-          type: "postback",
-          label: "夕食を登録",
-          data: `register_date_dinner?date=${dateString}`,
-          displayText: `${formatDateJP(selectedDate)}の夕食を登録`,
-        },
-        {
-          type: "postback",
-          label: "予定を確認",
-          data: `check_date?date=${dateString}`,
-          displayText: `${formatDateJP(selectedDate)}の予定を確認`,
-        },
-        {
-          type: "message",
-          label: "メインメニューへ",
-          text: "メインメニュー",
-        },
-      ],
-    };
-
-    await sendTemplateMessage(
-      user.lineId,
-      template,
-      `${formatDateJP(selectedDate)}の予定`,
-    );
+    await sendFlexMessage(user.lineId, flexMessage, `${dateText}の食事予定`);
   } catch (error) {
-    logger.error("日付選択処理エラー:", error);
+    logger.error("日付選択処理エラー", error);
     await sendTextMessage(user.lineId, MESSAGES.ERRORS.PROCESSING_ERROR);
-    await sendTemplateMessage(
-      user.lineId,
-      createMainMenuTemplate(),
-      "メインメニュー",
-    );
   }
 };

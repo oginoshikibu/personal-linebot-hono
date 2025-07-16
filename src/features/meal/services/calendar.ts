@@ -4,6 +4,7 @@ import type {
   FlexComponent,
   MessageAPIResponseBase,
 } from "@line/bot-sdk";
+import { formatDateForPostback } from "../../../utils/date";
 import { AppError } from "../../../utils/error";
 import { logger } from "../../../utils/logger";
 import { replyFlexMessage, sendFlexMessage } from "../../line/client";
@@ -89,10 +90,7 @@ export const createCalendarFlexMessage = (
           : "#555555",
       action: {
         type: "postback" as const,
-        data: `action=select_date&date=${year}-${String(month + 1).padStart(
-          2,
-          "0",
-        )}-${String(dayCount).padStart(2, "0")}`,
+        data: `action=select_date&date=${formatDateForPostback(new Date(year, month, dayCount))}`,
         displayText: `${year}年${month + 1}月${dayCount}日を選択しました`,
         label: String(dayCount),
       },
@@ -186,6 +184,7 @@ export const create7DayCalendarFlexMessage = (
     const dayOfWeek = currentDate.getDay();
     const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
 
+    // 各日付のボックスを簡素化
     days.push({
       type: "box" as const,
       layout: "vertical" as const,
@@ -204,31 +203,27 @@ export const create7DayCalendarFlexMessage = (
         {
           type: "text" as const,
           text: String(currentDate.getDate()),
-          size: "md",
+          size: "sm", // mdからsmに変更して小さくする
           align: "center",
           weight: isToday ? "bold" : "regular",
-          color: isToday
-            ? "#FFFFFF"
-            : isWeekend
-              ? dayOfWeek === 0
-                ? "#FF0000"
-                : "#0000FF"
-              : "#333333",
+          color: isToday ? "#FFFFFF" : "#333333", // 色を単純化
         },
       ],
-      backgroundColor: isToday ? "#1DB446" : "transparent",
-      cornerRadius: "md",
-      paddingAll: "sm",
+      ...(isToday && { backgroundColor: "#1DB446" }),
       action: {
         type: "postback" as const,
-        data: `action=select_date&date=${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, "0")}-${String(currentDate.getDate()).padStart(2, "0")}`,
-        displayText: `${currentDate.getFullYear()}年${currentDate.getMonth() + 1}月${currentDate.getDate()}日を選択しました`,
         label: `${currentDate.getMonth() + 1}/${currentDate.getDate()}`,
+        data: `date_${formatDateForPostback(currentDate)}`,
+        displayText: `${currentDate.getMonth() + 1}/${currentDate.getDate()}を選択`,
       },
     });
   }
 
-  // Flexメッセージを作成
+  // 7日間を2行に分割
+  const firstRow = days.slice(0, 4);
+  const secondRow = days.slice(4, 7);
+
+  // Flexメッセージを作成 - 2行レイアウト
   return {
     type: "bubble",
     header: {
@@ -237,34 +232,32 @@ export const create7DayCalendarFlexMessage = (
       contents: [
         {
           type: "text",
-          text: "今後7日間の予定",
+          text: "今後7日間",
           weight: "bold",
           color: "#1DB446",
-          size: "lg",
+          size: "md",
           align: "center",
-        },
-        {
-          type: "text",
-          text: "日付をタップして詳細を確認",
-          size: "xs",
-          align: "center",
-          color: "#666666",
-          margin: "sm",
         },
       ],
-      paddingAll: "md",
     },
     body: {
       type: "box",
-      layout: "horizontal",
-      contents: days,
-      spacing: "xs",
-      paddingAll: "md",
-    },
-    styles: {
-      footer: {
-        separator: true,
-      },
+      layout: "vertical",
+      contents: [
+        {
+          type: "box",
+          layout: "horizontal",
+          contents: firstRow,
+          spacing: "xs",
+        },
+        {
+          type: "box",
+          layout: "horizontal",
+          contents: secondRow,
+          spacing: "xs",
+          margin: "sm",
+        },
+      ],
     },
   };
 };
