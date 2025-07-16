@@ -1,7 +1,7 @@
 import { schedule } from "node-cron";
 import { config } from "../../config";
+import { logger } from "../../lib/logger";
 import { AppError } from "../../utils/error";
-import { logger } from "../../utils/logger";
 import { sendEveningNotification } from "./services/evening";
 import { sendMorningNotification } from "./services/morning";
 import { sendWeeklyPlanReminder } from "./services/weekly";

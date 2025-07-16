@@ -1,8 +1,8 @@
 import type { Context, Next } from "hono";
 import { HTTPException } from "hono/http-exception";
+import { logger } from "../lib/logger";
 import type { ApiResponse } from "../types";
 import { AppError } from "../utils/error";
-import { logger } from "../utils/logger";
 
 /**
  * グローバルエラーハンドリングミドルウェア

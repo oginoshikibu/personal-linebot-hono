@@ -14,7 +14,7 @@ vi.mock("../../../src/config", () => ({
 }));
 
 // loggerのモック
-vi.mock("../../../src/utils/logger", () => ({
+vi.mock("../../../src/lib/logger", () => ({
   logger: {
     error: vi.fn(),
     warn: vi.fn(),

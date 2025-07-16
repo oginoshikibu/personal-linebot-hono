@@ -1,8 +1,8 @@
 import type { WebhookEvent } from "@line/bot-sdk";
 import type { Context } from "hono";
+import { logger } from "../../lib/logger";
 import { lineSignatureMiddleware } from "../../utils/auth";
 import { asyncHandler } from "../../utils/error";
-import { logger } from "../../utils/logger";
 import { handleFollowEvent } from "./handlers/follow";
 import { handleMessageEvent } from "./handlers/message";
 import { handlePostbackEvent } from "./handlers/postback";

@@ -2,9 +2,9 @@ import type { TextEventMessage, WebhookEvent } from "@line/bot-sdk";
 import type { User } from "@prisma/client";
 import { MealType } from "@prisma/client";
 import { COMMAND_PREFIX, MESSAGES } from "../../../constants";
+import { logger } from "../../../lib/logger";
 import { formatDate } from "../../../utils/date";
 import { formatDateText } from "../../../utils/formatter";
-import { logger } from "../../../utils/logger";
 import {
   handleCalendarCommand,
   handleCheckCommand,

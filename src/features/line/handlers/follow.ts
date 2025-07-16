@@ -1,5 +1,5 @@
 import type { WebhookEvent } from "@line/bot-sdk";
-import { logger } from "../../../utils/logger";
+import { logger } from "../../../lib/logger";
 import { getUserByLineId } from "../../meal/services/user";
 import { sendTextMessage } from "../client";
 

@@ -1,5 +1,5 @@
 import type { User } from "@prisma/client";
-import { logger } from "../../../utils/logger";
+import { logger } from "../../../lib/logger";
 import { sendTextMessage } from "../../line/client";
 
 /**

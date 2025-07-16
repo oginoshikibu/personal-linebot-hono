@@ -2,8 +2,8 @@ import crypto from "node:crypto";
 import type { Context, Next } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { config } from "../config";
+import { logger } from "../lib/logger";
 import { prisma } from "../lib/prisma";
-import { logger } from "./logger";
 
 /**
  * LINE署名を検証する
