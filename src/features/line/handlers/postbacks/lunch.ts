@@ -1,7 +1,13 @@
 import type { User } from "@prisma/client";
+import { MealType } from "@prisma/client";
 import { parseDate } from "../../../../utils/date";
 import { formatDateText } from "../../../../utils/formatter";
 import { logger } from "../../../../utils/logger";
+import {
+  getOrCreateMealPlan,
+  updateMealParticipation,
+  updateMealPreparation,
+} from "../../../meal/services/meal";
 import { replyTemplateMessage, replyTextMessage } from "../../client";
 import { createDinnerOptionsTemplate } from "../../messages/templates";
 
@@ -46,9 +52,25 @@ export const handleLunchPostback = async (
     const action = data.substring("action=".length).split("&")[0];
     const attendance = action.replace("lunch_", "");
 
-    // TODO: 昼食の予定をデータベースに保存する処理を追加
+    // 昼食の食事予定を取得または作成
+    const mealPlan = await getOrCreateMealPlan(date, MealType.LUNCH);
+
+    // 参加状況を更新
+    const isAttending = attendance === "attend" || attendance === "cook";
+    await updateMealParticipation(mealPlan.id, user.id, isAttending);
+
+    // 調理担当の場合は準備方法を更新
+    if (attendance === "cook") {
+      await updateMealPreparation(mealPlan.id, "COOK_BY_SELF", user.id);
+    } else if (attendance === "attend") {
+      await updateMealPreparation(mealPlan.id, "BUY_TOGETHER", undefined);
+    } else if (attendance === "absent") {
+      await updateMealPreparation(mealPlan.id, "INDIVIDUAL", undefined);
+    }
+
     logger.info(`昼食の予定を保存: ${dateStr}, ${attendance}`, {
       userId: user.lineId,
+      mealPlanId: mealPlan.id,
     });
 
     // 昼食の予定を保存した旨のメッセージを送信

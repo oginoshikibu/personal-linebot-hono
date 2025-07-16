@@ -1,8 +1,19 @@
 import type { User } from "@prisma/client";
+import { MealType } from "@prisma/client";
 import { parseDate } from "../../../../utils/date";
 import { formatDateText } from "../../../../utils/formatter";
 import { logger } from "../../../../utils/logger";
-import { replyTemplateMessage, replyTextMessage } from "../../client";
+import {
+  getOrCreateMealPlan,
+  updateMealParticipation,
+  updateMealPreparation,
+} from "../../../meal/services/meal";
+import { getAllUsers } from "../../../meal/services/user";
+import {
+  replyTemplateMessage,
+  replyTextMessage,
+  sendTextMessage,
+} from "../../client";
 import { createMainMenuTemplate } from "../../messages/templates";
 
 /**
@@ -57,10 +68,29 @@ export const handleDinnerPostback = async (
         date.getTime() === today.getTime() ||
         date.getTime() === tomorrow.getTime()
       ) {
-        // TODO: 他のユーザーに通知する処理を追加
-        logger.info(`他のユーザーに通知: ${dateStr}, 昼食のみ`, {
-          userId: user.lineId,
-        });
+        // 他のユーザーに通知（昼食のみ）
+        const allUsers = await getAllUsers();
+        const otherUsers = allUsers.filter((u) => u.id !== user.id);
+
+        const dateLabel = date.getTime() === today.getTime() ? "今日" : "明日";
+        const notificationMessage = `${user.name}さんが${dateLabel}(${dateText})の食事予定を更新しました。\n夕食の予定入力をキャンセルしました。`;
+
+        // 他のユーザーに通知を送信
+        for (const otherUser of otherUsers) {
+          try {
+            await sendTextMessage(otherUser.lineId, notificationMessage);
+            logger.info(`他ユーザーに通知送信完了: ${otherUser.lineId}`, {
+              fromUser: user.lineId,
+              date: dateStr,
+              action: "dinner_cancel",
+            });
+          } catch (error) {
+            logger.error(
+              `他ユーザーへの通知送信失敗: ${otherUser.lineId}`,
+              error,
+            );
+          }
+        }
       }
 
       // メインメニューを表示（キャンセルメッセージと共に）
@@ -75,9 +105,25 @@ export const handleDinnerPostback = async (
     // 夕食の予定を保存
     const attendance = action.replace("dinner_", "");
 
-    // TODO: 夕食の予定をデータベースに保存する処理を追加
+    // 夕食の食事予定を取得または作成
+    const mealPlan = await getOrCreateMealPlan(date, MealType.DINNER);
+
+    // 参加状況を更新
+    const isAttending = attendance === "attend" || attendance === "cook";
+    await updateMealParticipation(mealPlan.id, user.id, isAttending);
+
+    // 調理担当の場合は準備方法を更新
+    if (attendance === "cook") {
+      await updateMealPreparation(mealPlan.id, "COOK_BY_SELF", user.id);
+    } else if (attendance === "attend") {
+      await updateMealPreparation(mealPlan.id, "BUY_TOGETHER", undefined);
+    } else if (attendance === "absent") {
+      await updateMealPreparation(mealPlan.id, "INDIVIDUAL", undefined);
+    }
+
     logger.info(`夕食の予定を保存: ${dateStr}, ${attendance}`, {
       userId: user.lineId,
+      mealPlanId: mealPlan.id,
     });
 
     // 今日または明日の場合は他のユーザーに通知
@@ -90,10 +136,29 @@ export const handleDinnerPostback = async (
       date.getTime() === today.getTime() ||
       date.getTime() === tomorrow.getTime()
     ) {
-      // TODO: 他のユーザーに通知する処理を追加
-      logger.info(`他のユーザーに通知: ${dateStr}, 昼食と夕食`, {
-        userId: user.lineId,
-      });
+      // 他のユーザーに通知
+      const allUsers = await getAllUsers();
+      const otherUsers = allUsers.filter((u) => u.id !== user.id);
+
+      const dateLabel = date.getTime() === today.getTime() ? "今日" : "明日";
+      const notificationMessage = `${user.name}さんが${dateLabel}(${dateText})の食事予定を更新しました。\n夕食: ${getAttendanceText(attendance)}`;
+
+      // 他のユーザーに通知を送信
+      for (const otherUser of otherUsers) {
+        try {
+          await sendTextMessage(otherUser.lineId, notificationMessage);
+          logger.info(`他ユーザーに通知送信完了: ${otherUser.lineId}`, {
+            fromUser: user.lineId,
+            date: dateStr,
+            attendance,
+          });
+        } catch (error) {
+          logger.error(
+            `他ユーザーへの通知送信失敗: ${otherUser.lineId}`,
+            error,
+          );
+        }
+      }
     }
 
     // メインメニューを表示（登録完了メッセージと共に）

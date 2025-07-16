@@ -1,8 +1,17 @@
 import type { User } from "@prisma/client";
+import { MealType } from "@prisma/client";
 import { parseDate } from "../../../../utils/date";
 import { formatDateText } from "../../../../utils/formatter";
 import { logger } from "../../../../utils/logger";
-import { replyTemplateMessage, replyTextMessage } from "../../client";
+import { getMealPlan } from "../../../meal/services/meal";
+import { getAllUsers } from "../../../meal/services/user";
+import { prepareMealPlanData } from "../../../notification/templates/mealPlan";
+import {
+  replyFlexMessage,
+  replyTemplateMessage,
+  replyTextMessage,
+} from "../../client";
+import { createMealPlanFlexMessage } from "../../messages/flex";
 import { createDateSelectionOptionsTemplate } from "../../messages/templates";
 
 /**
@@ -31,9 +40,43 @@ export const handleDateSelection = async (
 
     const dateText = formatDateText(date);
 
-    // 選択された日付の予定表示と編集オプションを表示
-    const template = createDateSelectionOptionsTemplate(dateText, dateString);
-    await replyTemplateMessage(replyToken, template, `${dateText}の予定`);
+    // 選択日の昼食と夕食の予定を取得
+    const [lunch, dinner, users] = await Promise.all([
+      getMealPlan(date, MealType.LUNCH),
+      getMealPlan(date, MealType.DINNER),
+      getAllUsers(),
+    ]);
+
+    // 予定がない場合のメッセージ
+    if (!lunch && !dinner) {
+      // テンプレートメッセージを作成して送信
+      const template = createDateSelectionOptionsTemplate(dateText, dateString);
+      await replyTemplateMessage(
+        replyToken,
+        template,
+        `${dateText}の予定はまだ登録されていません`,
+      );
+      return;
+    }
+
+    // Flexメッセージ用のデータを準備
+    const lunchData = lunch
+      ? prepareMealPlanData(lunch, users)
+      : { participants: [], preparationType: "UNDECIDED" };
+
+    const dinnerData = dinner
+      ? prepareMealPlanData(dinner, users)
+      : { participants: [], preparationType: "UNDECIDED" };
+
+    // 編集ボタン付きのFlexメッセージを作成して送信
+    const flexMessage = createMealPlanFlexMessage(
+      `【${dateText}の食事予定】`,
+      lunchData,
+      dinnerData,
+      dateString, // 編集用の日付文字列を渡す
+    );
+
+    await replyFlexMessage(replyToken, flexMessage, `${dateText}の食事予定`);
   } catch (error) {
     logger.error("日付選択処理エラー", error);
     await replyTextMessage(

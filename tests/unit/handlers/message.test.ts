@@ -57,15 +57,15 @@ describe("メッセージハンドラー", () => {
   });
 
   it("「今週の予定」メッセージを処理できること", async () => {
-    const replyTemplateMessageMock = vi.spyOn(lineService, "replyTemplateMessage");
-    const replyFlexMessageMock = vi.spyOn(lineService, "replyFlexMessage");
+    const send7DayCalendarMessageMock = vi.spyOn(calendarService, "send7DayCalendarMessage");
     const mockUser = { lineId: "test-user-id", name: "Test User", id: 1 };
     const mockReplyToken = "test-reply-token";
     await handleTextMessage({ type: "text", text: "今週の予定", id: "test-message-id", quoteToken: "test-quote-token" }, mockUser, mockReplyToken);
-    // どちらかが呼ばれていればOK
-    expect(
-      replyTemplateMessageMock.mock.calls.length > 0 || replyFlexMessageMock.mock.calls.length > 0
-    ).toBe(true);
+    expect(send7DayCalendarMessageMock).toHaveBeenCalledWith(
+      mockUser.lineId,
+      mockReplyToken,
+      expect.any(Date)
+    );
   });
 
   it("「今後の予定」メッセージを処理できること", async () => {

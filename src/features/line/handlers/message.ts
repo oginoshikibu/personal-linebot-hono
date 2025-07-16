@@ -11,7 +11,10 @@ import {
   handleHelpCommand,
   handleRegisterCommand,
 } from "../../meal/commands";
-import { sendCalendarMessage } from "../../meal/services/calendar";
+import {
+  send7DayCalendarMessage,
+  sendCalendarMessage,
+} from "../../meal/services/calendar";
 import { getMealPlan } from "../../meal/services/meal";
 import { getAllUsers, getUserByLineId } from "../../meal/services/user";
 import { prepareMealPlanData } from "../../notification/templates/mealPlan";
@@ -306,51 +309,16 @@ const handleTomorrowMenu = async (
  * @param replyToken 応答トークン
  */
 const handleThisWeekMenu = async (
-  _user: User,
+  user: User,
   replyToken: string,
 ): Promise<void> => {
   try {
-    // 一時的にテンプレートメッセージで対応
+    // 今週の7日間カレンダーを表示
     const today = new Date();
-    const dateText = formatDateText(today);
-    const dateStr = formatDate(today);
+    today.setHours(0, 0, 0, 0);
 
-    // 今日の予定を表示
-    const [lunch, dinner, users] = await Promise.all([
-      getMealPlan(today, MealType.LUNCH),
-      getMealPlan(today, MealType.DINNER),
-      getAllUsers(),
-    ]);
-
-    // 予定がない場合のメッセージ
-    if (!lunch && !dinner) {
-      const template = createEditOptionsTemplate(dateText, dateStr);
-      await replyTemplateMessage(
-        replyToken,
-        template,
-        `${dateText}の予定はまだ登録されていません`,
-      );
-      return;
-    }
-
-    // Flexメッセージ用のデータを準備
-    const lunchData = lunch
-      ? prepareMealPlanData(lunch, users)
-      : { participants: [], preparationType: "UNDECIDED" };
-
-    const dinnerData = dinner
-      ? prepareMealPlanData(dinner, users)
-      : { participants: [], preparationType: "UNDECIDED" };
-
-    // 編集ボタン付きのFlexメッセージを作成して送信
-    const flexMessage = createMealPlanFlexMessage(
-      `【${dateText}の食事予定】`,
-      lunchData,
-      dinnerData,
-      dateStr, // 編集用の日付文字列を渡す
-    );
-
-    await replyFlexMessage(replyToken, flexMessage, `${dateText}の食事予定`);
+    // 7日間カレンダーを送信（返信メッセージとして）
+    await send7DayCalendarMessage(user.lineId, replyToken, today);
   } catch (error) {
     logger.error("今週の予定表示エラー:", error);
     await replyTextMessage(replyToken, MESSAGES.ERRORS.PROCESSING_ERROR);
