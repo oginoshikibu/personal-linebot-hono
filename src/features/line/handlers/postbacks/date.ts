@@ -12,7 +12,7 @@ import {
   replyTextMessage,
 } from "../../client";
 import { createMealPlanFlexMessage } from "../../messages/flex";
-import { createDateSelectionOptionsTemplate } from "../../messages/templates";
+import { createEditOptionsTemplate } from "../../messages/templates";
 
 /**
  * 日付選択のポストバックを処理
@@ -50,7 +50,7 @@ export const handleDateSelection = async (
     // 予定がない場合のメッセージ
     if (!lunch && !dinner) {
       // テンプレートメッセージを作成して送信
-      const template = createDateSelectionOptionsTemplate(dateText, dateString);
+      const template = createEditOptionsTemplate(dateText, dateString);
       await replyTemplateMessage(
         replyToken,
         template,

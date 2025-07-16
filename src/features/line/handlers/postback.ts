@@ -52,6 +52,18 @@ export const handlePostbackEvent = async (
       return;
     }
 
+    // 月間カレンダーの日付選択のポストバック
+    if (data.startsWith("action=select_date")) {
+      const urlParams = new URLSearchParams(data.split("&").slice(1).join("&"));
+      const dateString = urlParams.get("date");
+      if (dateString) {
+        await handleDateSelection(dateString, user, event.replyToken);
+      } else {
+        await replyTextMessage(event.replyToken, "日付の選択に失敗しました。");
+      }
+      return;
+    }
+
     // 編集のポストバック
     if (data.startsWith("action=edit")) {
       await handleEditPostback(data, user, event.replyToken);
