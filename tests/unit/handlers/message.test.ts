@@ -33,26 +33,26 @@ describe("メッセージハンドラー", () => {
   });
 
   it("「今日の予定」メッセージを処理できること", async () => {
-    const replyTemplateMessageMock = vi.spyOn(lineService, "replyTemplateMessage");
+    const replyFlexMessageMock = vi.spyOn(lineService, "replyFlexMessage");
     const mockUser = { lineId: "test-user-id", name: "Test User", id: 1 };
     const mockReplyToken = "test-reply-token";
     await handleTextMessage({ type: "text", text: "今日の予定", id: "test-message-id", quoteToken: "test-quote-token" }, mockUser, mockReplyToken);
-    expect(replyTemplateMessageMock).toHaveBeenCalledWith(
+    expect(replyFlexMessageMock).toHaveBeenCalledWith(
       mockReplyToken,
       expect.anything(),
-      expect.stringContaining("予定はまだ登録されていません")
+      expect.stringContaining("食事予定")
     );
   });
 
   it("「明日の予定」メッセージを処理できること", async () => {
-    const replyTemplateMessageMock = vi.spyOn(lineService, "replyTemplateMessage");
+    const replyFlexMessageMock = vi.spyOn(lineService, "replyFlexMessage");
     const mockUser = { lineId: "test-user-id", name: "Test User", id: 1 };
     const mockReplyToken = "test-reply-token";
     await handleTextMessage({ type: "text", text: "明日の予定", id: "test-message-id", quoteToken: "test-quote-token" }, mockUser, mockReplyToken);
-    expect(replyTemplateMessageMock).toHaveBeenCalledWith(
+    expect(replyFlexMessageMock).toHaveBeenCalledWith(
       mockReplyToken,
       expect.anything(),
-      expect.stringContaining("予定はまだ登録されていません")
+      expect.stringContaining("食事予定")
     );
   });
 

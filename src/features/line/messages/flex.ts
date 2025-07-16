@@ -33,6 +33,18 @@ export const createMealPlanFlexMessage = (
   const createParticipantComponents = (
     participants: { name: string; attending: boolean }[],
   ): FlexComponent[] => {
+    if (participants.length === 0) {
+      return [
+        {
+          type: "text" as const,
+          text: "未回答",
+          size: "sm",
+          color: "#aaaaaa",
+          align: "center",
+        },
+      ];
+    }
+
     return participants.map((participant) => ({
       type: "box" as const,
       layout: "baseline" as const,

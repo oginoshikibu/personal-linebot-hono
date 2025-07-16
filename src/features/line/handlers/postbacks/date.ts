@@ -6,13 +6,8 @@ import { logger } from "../../../../utils/logger";
 import { getMealPlan } from "../../../meal/services/meal";
 import { getAllUsers } from "../../../meal/services/user";
 import { prepareMealPlanData } from "../../../notification/templates/mealPlan";
-import {
-  replyFlexMessage,
-  replyTemplateMessage,
-  replyTextMessage,
-} from "../../client";
+import { replyFlexMessage, replyTextMessage } from "../../client";
 import { createMealPlanFlexMessage } from "../../messages/flex";
-import { createEditOptionsTemplate } from "../../messages/templates";
 
 /**
  * 日付選択のポストバックを処理
@@ -46,18 +41,6 @@ export const handleDateSelection = async (
       getMealPlan(date, MealType.DINNER),
       getAllUsers(),
     ]);
-
-    // 予定がない場合のメッセージ
-    if (!lunch && !dinner) {
-      // テンプレートメッセージを作成して送信
-      const template = createEditOptionsTemplate(dateText, dateString);
-      await replyTemplateMessage(
-        replyToken,
-        template,
-        `${dateText}の予定はまだ登録されていません`,
-      );
-      return;
-    }
 
     // Flexメッセージ用のデータを準備
     const lunchData = lunch
