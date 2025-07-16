@@ -51,6 +51,9 @@ const getNextMonday = (): Date => {
   const currentDay = today.getDay(); // 0: 日曜日, 1: 月曜日, ..., 6: 土曜日
 
   // 来週の月曜日までの日数を計算
+  // 今日が日曜日(0)の場合は1日後が月曜日
+  // それ以外の場合は8から現在の曜日を引いた日数で次の月曜日
+  // 例: 今日が月曜日(1)なら8-1=7日後、火曜日(2)なら8-2=6日後
   const daysUntilNextMonday = currentDay === 0 ? 1 : 8 - currentDay;
 
   const nextMonday = new Date(today);

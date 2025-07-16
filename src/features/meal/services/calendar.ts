@@ -4,6 +4,7 @@ import type {
   FlexComponent,
   MessageAPIResponseBase,
 } from "@line/bot-sdk";
+import { formatDateForPostback } from "../../../utils/date";
 import { AppError } from "../../../utils/error";
 import { logger } from "../../../utils/logger";
 import { replyFlexMessage, sendFlexMessage } from "../../line/client";
@@ -89,10 +90,7 @@ export const createCalendarFlexMessage = (
           : "#555555",
       action: {
         type: "postback" as const,
-        data: `action=select_date&date=${year}-${String(month + 1).padStart(
-          2,
-          "0",
-        )}-${String(dayCount).padStart(2, "0")}`,
+        data: `action=select_date&date=${formatDateForPostback(new Date(year, month, dayCount))}`,
         displayText: `${year}年${month + 1}月${dayCount}日を選択しました`,
         label: String(dayCount),
       },
@@ -214,9 +212,8 @@ export const create7DayCalendarFlexMessage = (
       ...(isToday && { backgroundColor: "#1DB446" }),
       action: {
         type: "postback" as const,
-        // labelプロパティは必須
         label: `${currentDate.getMonth() + 1}/${currentDate.getDate()}`,
-        data: `date_${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, "0")}-${String(currentDate.getDate()).padStart(2, "0")}`,
+        data: `date_${formatDateForPostback(currentDate)}`,
         displayText: `${currentDate.getMonth() + 1}/${currentDate.getDate()}を選択`,
       },
     });
