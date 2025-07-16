@@ -29,6 +29,18 @@ export const handlePostbackData = async (
       return;
     }
 
+    // 月間カレンダーの日付選択のポストバック
+    if (data.startsWith("action=select_date")) {
+      const urlParams = new URLSearchParams(data.split("&").slice(1).join("&"));
+      const dateString = urlParams.get("date");
+      if (dateString) {
+        await handleDateSelection(dateString, user);
+      } else {
+        await sendTextMessage(user.lineId, "日付の選択に失敗しました。");
+      }
+      return;
+    }
+
     // 特定日付の予定登録のポストバック
     if (data.startsWith("register_date_")) {
       await handleRegisterPostback(data, user);

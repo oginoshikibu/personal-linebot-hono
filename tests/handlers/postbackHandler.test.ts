@@ -2,7 +2,10 @@ import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import { handlePostbackData } from "../../src/handlers/postbackHandler";
 import * as lineService from "../../src/services/line";
 import * as mealService from "../../src/services/meal";
+import * as newMealService from "../../src/features/meal/services/meal";
 import * as notificationService from "../../src/services/notification";
+import * as userService from "../../src/features/meal/services/user";
+import * as mealPlanService from "../../src/features/notification/templates/mealPlan";
 import { MealType, PreparationType, User } from "@prisma/client";
 import type { MessageAPIResponseBase } from "@line/bot-sdk";
 
@@ -11,6 +14,9 @@ vi.mock("../../src/services/line");
 vi.mock("../../src/services/meal");
 vi.mock("../../src/services/notification");
 vi.mock("../../src/utils/logger");
+vi.mock("../../src/features/meal/services/user");
+vi.mock("../../src/features/meal/services/meal");
+vi.mock("../../src/features/notification/templates/mealPlan");
 
 describe("postbackHandler", () => {
   // テスト用ユーザー
@@ -28,8 +34,13 @@ describe("postbackHandler", () => {
     // モック関数の戻り値を設定
     vi.mocked(lineService.sendTextMessage).mockResolvedValue({} as MessageAPIResponseBase);
     vi.mocked(lineService.sendTemplateMessage).mockResolvedValue({} as MessageAPIResponseBase);
-    vi.mocked(lineService.sendRegistrationOptions).mockResolvedValue({} as MessageAPIResponseBase);
     vi.mocked(lineService.sendFlexMessage).mockResolvedValue({} as MessageAPIResponseBase);
+    vi.mocked(lineService.sendRegistrationOptions).mockResolvedValue({} as MessageAPIResponseBase);
+    vi.mocked(userService.getAllUsers).mockResolvedValue([]);
+    vi.mocked(mealPlanService.prepareMealPlanData).mockReturnValue({
+      participants: [],
+      preparationType: "UNDECIDED"
+    });
   });
 
   afterEach(() => {
@@ -108,9 +119,8 @@ describe("postbackHandler", () => {
 
     it("should handle date selection postback correctly", async () => {
       // モック設定
-      const sendTextMessageMock = vi.spyOn(lineService, "sendTextMessage");
-      const sendTemplateMessageMock = vi.spyOn(lineService, "sendTemplateMessage");
-      const getMealPlanMock = vi.spyOn(mealService, "getMealPlan").mockResolvedValue(null);
+      const sendFlexMessageMock = vi.spyOn(lineService, "sendFlexMessage");
+      const getMealPlanMock = vi.spyOn(newMealService, "getMealPlan").mockResolvedValue(null);
       
       // テスト実行
       const today = new Date().toISOString().split("T")[0];
@@ -118,8 +128,7 @@ describe("postbackHandler", () => {
       
       // 検証
       expect(getMealPlanMock).toHaveBeenCalledTimes(2);
-      expect(sendTextMessageMock).toHaveBeenCalledTimes(1);
-      expect(sendTemplateMessageMock).toHaveBeenCalledTimes(1);
+      expect(sendFlexMessageMock).toHaveBeenCalledTimes(1);
     });
 
     it("should handle register_date_lunch postback correctly", async () => {
