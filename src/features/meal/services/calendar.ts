@@ -211,7 +211,7 @@ export const create7DayCalendarFlexMessage = (
           color: isToday ? "#FFFFFF" : "#333333", // 色を単純化
         },
       ],
-      backgroundColor: isToday ? "#1DB446" : "transparent",
+      ...(isToday && { backgroundColor: "#1DB446" }),
       action: {
         type: "postback" as const,
         // labelプロパティは必須
@@ -222,7 +222,11 @@ export const create7DayCalendarFlexMessage = (
     });
   }
 
-  // Flexメッセージを作成 - さらに簡素化
+  // 7日間を2行に分割
+  const firstRow = days.slice(0, 4);
+  const secondRow = days.slice(4, 7);
+
+  // Flexメッセージを作成 - 2行レイアウト
   return {
     type: "bubble",
     header: {
@@ -234,16 +238,29 @@ export const create7DayCalendarFlexMessage = (
           text: "今後7日間",
           weight: "bold",
           color: "#1DB446",
-          size: "md", // lgからmdに変更して小さくする
+          size: "md",
           align: "center",
         },
       ],
     },
     body: {
       type: "box",
-      layout: "horizontal",
-      contents: days,
-      spacing: "xs",
+      layout: "vertical",
+      contents: [
+        {
+          type: "box",
+          layout: "horizontal",
+          contents: firstRow,
+          spacing: "xs",
+        },
+        {
+          type: "box",
+          layout: "horizontal",
+          contents: secondRow,
+          spacing: "xs",
+          margin: "sm",
+        },
+      ],
     },
   };
 };

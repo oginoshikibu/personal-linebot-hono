@@ -321,7 +321,15 @@ const handleThisWeekMenu = async (
     await send7DayCalendarMessage(user.lineId, replyToken, today);
   } catch (error) {
     logger.error("今週の予定表示エラー:", error);
-    await replyTextMessage(replyToken, MESSAGES.ERRORS.PROCESSING_ERROR);
+    // Flexメッセージが失敗した場合は、シンプルなテキストメッセージで対応
+    try {
+      await replyTextMessage(
+        replyToken,
+        "今週の予定機能で一時的な問題が発生しています。しばらく後にお試しください。\n\n代わりに「今日の予定」「明日の予定」「今後の予定」をお試しください。",
+      );
+    } catch (fallbackError) {
+      logger.error("フォールバックメッセージ送信エラー:", fallbackError);
+    }
   }
 };
 
