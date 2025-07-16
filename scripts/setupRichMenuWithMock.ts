@@ -1,5 +1,5 @@
 // Rich menu image generation functions moved inline
-import { logger } from "../src/utils/logger";
+import { logger } from "../src/lib/logger";
 import fs from "node:fs";
 import path from "node:path";
 

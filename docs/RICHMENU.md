@@ -139,26 +139,20 @@ Error: Request failed with status code 400
 ### リッチメニュー一覧の取得
 
 ```typescript
-import { getRichMenuList } from "../src/services/richmenu";
-
-const richMenuIds = await getRichMenuList();
-console.log(richMenuIds);
+// リッチメニュー管理は scripts/setupRichMenu.ts を使用してください
+// npm run setup-richmenu
 ```
 
 ### リッチメニューの削除
 
 ```typescript
-import { deleteRichMenu } from "../src/services/richmenu";
-
-await deleteRichMenu("richmenu-xxx-xxx-xxx");
+// リッチメニューの削除は LINE Developers Console で行ってください
 ```
 
 ### ユーザーへのリッチメニュー紐付け
 
 ```typescript
-import { linkRichMenuToUser } from "../src/services/richmenu";
-
-await linkRichMenuToUser("user-id", "richmenu-xxx-xxx-xxx");
+// ユーザーへの紐付けは自動的に行われます
 ```
 
 ## 参考リソース

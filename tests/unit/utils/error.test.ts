@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import { AppError, asyncHandler } from "../../../src/utils/error";
 
 // ロガーのモック
-vi.mock("../../../src/utils/logger", () => ({
+vi.mock("../../../src/lib/logger", () => ({
   logger: {
     error: vi.fn(),
   },

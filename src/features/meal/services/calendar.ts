@@ -4,9 +4,9 @@ import type {
   FlexComponent,
   MessageAPIResponseBase,
 } from "@line/bot-sdk";
+import { logger } from "../../../lib/logger";
 import { formatDateForPostback } from "../../../utils/date";
 import { AppError } from "../../../utils/error";
-import { logger } from "../../../utils/logger";
 import { replyFlexMessage, sendFlexMessage } from "../../line/client";
 
 /**

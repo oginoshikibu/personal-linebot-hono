@@ -1,7 +1,7 @@
 import { Client } from "@line/bot-sdk";
 import fs from "node:fs";
 import path from "node:path";
-import { logger } from "../src/utils/logger";
+import { logger } from "../src/lib/logger";
 import { config } from "../src/config";
 
 // LINE Client初期化（条件付き）

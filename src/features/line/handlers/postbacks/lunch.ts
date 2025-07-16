@@ -1,8 +1,8 @@
 import type { User } from "@prisma/client";
 import { MealType } from "@prisma/client";
+import { logger } from "../../../../lib/logger";
 import { parseDate } from "../../../../utils/date";
 import { formatDateText } from "../../../../utils/formatter";
-import { logger } from "../../../../utils/logger";
 import {
   getOrCreateMealPlan,
   updateMealParticipation,

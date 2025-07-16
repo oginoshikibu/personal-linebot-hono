@@ -8,10 +8,10 @@ import {
   type TextMessage,
 } from "@line/bot-sdk";
 import { config } from "../../config";
+import { logger } from "../../lib/logger";
 import { prisma } from "../../lib/prisma";
 import { isAllowedLineId } from "../../utils/auth";
 import { AppError } from "../../utils/error";
-import { logger } from "../../utils/logger";
 
 // LINE Client初期化
 const lineClient = new Client({

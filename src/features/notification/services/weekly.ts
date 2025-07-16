@@ -1,4 +1,4 @@
-import { logger } from "../../../utils/logger";
+import { logger } from "../../../lib/logger";
 import { send7DayCalendarMessage } from "../../meal/services/calendar";
 import { getAllUsers } from "../../meal/services/user";
 
