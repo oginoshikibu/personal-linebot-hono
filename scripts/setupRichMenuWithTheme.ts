@@ -393,7 +393,10 @@ const createRichMenu = async (): Promise<string> => {
     const client = getLineClient();
     const response = await client.createRichMenu(richMenuProperties);
     const richMenuId =
-      typeof response === "string" ? response : String(response);
+      typeof response === "string"
+        ? response
+        : // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+          (response as { richMenuId: string }).richMenuId;
     logger.info(`リッチメニューを作成しました: ${richMenuId}`);
     return richMenuId;
   } catch (error) {
