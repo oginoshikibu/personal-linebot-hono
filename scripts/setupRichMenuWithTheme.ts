@@ -209,11 +209,6 @@ const generateRichMenuImage = (content?: RichMenuContent): Buffer => {
     const canvas = createCanvas(width, height);
     const ctx = canvas.getContext("2d");
 
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    if (!ctx) {
-      throw new Error("Canvas 2D context の取得に失敗しました");
-    }
-
     // 背景色を設定
     ctx.fillStyle = theme.backgroundColor;
     ctx.fillRect(0, 0, width, height);
@@ -340,6 +335,7 @@ const adjustBrightness = (color: string, factor: number): string => {
     );
     return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, "0")}`;
   }
+  logger.warn(`Unsupported color format: ${color}. Only HEX colors are supported for brightness adjustment.`);
   return color; // RGB形式の場合はそのまま返す
 };
 

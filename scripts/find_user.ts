@@ -15,20 +15,15 @@ async function findUser(searchTerm: string): Promise<void> {
 
     // 見つからなかった場合は名前で検索（ケースインセンシティブ）
     if (!user) {
-      // 生のSQLクエリを使用してケースインセンシティブ検索を実行
-      const users = await prisma.$queryRaw<
-        Array<{
-          id: string;
-          lineId: string;
-          name: string;
-          createdAt: Date;
-          updatedAt: Date;
-        }>
-      >`
-        SELECT id, "lineId", name, "createdAt", "updatedAt"
-        FROM "User"
-        WHERE LOWER(name) LIKE LOWER(${`%${searchTerm}%`})
-      `;
+      // Prismaの組み込み検索を使用してケースインセンシティブ検索を実行
+      const users = await prisma.user.findMany({
+        where: {
+          name: {
+            contains: searchTerm,
+            mode: 'insensitive',
+          },
+        },
+      });
 
       if (users.length === 0) {
         console.log(`ユーザーが見つかりません: ${searchTerm}`);
