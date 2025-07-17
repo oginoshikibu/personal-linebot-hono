@@ -13,13 +13,14 @@ async function findUser(searchTerm: string): Promise<void> {
       where: { lineId: searchTerm },
     });
 
-    // 見つからなかった場合は名前で検索
+    // 見つからなかった場合は名前で検索（ケースインセンシティブ）
     if (!user) {
+      // Prismaの組み込み検索を使用してケースインセンシティブ検索を実行
       const users = await prisma.user.findMany({
         where: {
           name: {
             contains: searchTerm,
-            mode: "insensitive",
+            mode: 'insensitive',
           },
         },
       });
@@ -44,9 +45,6 @@ async function findUser(searchTerm: string): Promise<void> {
     console.log("=== ユーザー情報 ===");
     console.log(`名前: ${user.name}`);
     console.log(`LINE ID: ${user.lineId}`);
-    if (user.email) {
-      console.log(`Email: ${user.email}`);
-    }
     console.log(`登録日: ${user.createdAt.toLocaleDateString()}`);
     console.log(`更新日: ${user.updatedAt.toLocaleDateString()}`);
   } catch (error) {

@@ -21,9 +21,6 @@ async function listUsers(): Promise<void> {
     console.log("=== ユーザー一覧 ===");
     users.forEach((user, index) => {
       console.log(`${index + 1}. ${user.name} (${user.lineId})`);
-      if (user.email) {
-        console.log(`   Email: ${user.email}`);
-      }
       console.log(`   登録日: ${user.createdAt.toLocaleDateString()}`);
       console.log("");
     });
