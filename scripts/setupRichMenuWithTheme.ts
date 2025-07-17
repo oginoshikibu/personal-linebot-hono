@@ -96,6 +96,33 @@ const PREDEFINED_THEMES: Record<string, RichMenuTheme> = {
 };
 
 /**
+ * Canvas描画用定数
+ */
+const CANVAS_CONSTANTS = {
+  // フォント設定
+  MAIN_TEXT_FONT: 'bold 60px "Noto Sans CJK JP", "Hiragino Sans", sans-serif',
+  SUBTEXT_FONT: '32px "Noto Sans CJK JP", "Hiragino Sans", sans-serif',
+
+  // 垂直配置
+  SUBTEXT_VERTICAL_OFFSET: 30,
+  SUBTEXT_VERTICAL_SPACING: 60,
+
+  // アクセントインジケーター
+  ACCENT_INDICATOR_OFFSET_X: 10,
+  ACCENT_INDICATOR_OFFSET_Y: 10,
+  ACCENT_INDICATOR_WIDTH: 8,
+  ACCENT_INDICATOR_HEIGHT_ADJUSTMENT: 20,
+
+  // 背景の明度調整
+  BACKGROUND_BRIGHTNESS_ADJUSTMENT: -0.05,
+  SUBTEXT_BRIGHTNESS_ADJUSTMENT: 0.3,
+
+  // ボーダー
+  BORDER_WIDTH: 2,
+  BORDER_PADDING: 2,
+} as const;
+
+/**
  * デフォルトのリッチメニュープロパティ
  */
 const getDefaultRichMenuProperties = () => {
@@ -174,16 +201,19 @@ const generateRichMenuImage = (content?: RichMenuContent): Buffer => {
       theme: theme.backgroundColor,
     });
 
+    // リッチメニューのサイズを取得
+    const richMenuProperties = getDefaultRichMenuProperties();
+    const { width, height } = richMenuProperties.size;
+
     // Canvasを作成
-    const canvas = createCanvas(2500, 1686);
+    const canvas = createCanvas(width, height);
     const ctx = canvas.getContext("2d");
 
     // 背景色を設定
     ctx.fillStyle = theme.backgroundColor;
-    ctx.fillRect(0, 0, 2500, 1686);
+    ctx.fillRect(0, 0, width, height);
 
     // リッチメニューのactionプロパティと一致させる
-    const richMenuProperties = getDefaultRichMenuProperties();
     const areas = richMenuProperties.areas.map((area, index) => ({
       x: area.bounds.x,
       y: area.bounds.y,
@@ -229,34 +259,56 @@ const drawButtonArea = (
 
   // ボタンの境界線を描画
   ctx.strokeStyle = theme.borderColor;
-  ctx.lineWidth = 2;
+  ctx.lineWidth = CANVAS_CONSTANTS.BORDER_WIDTH;
   ctx.strokeRect(x, y, width, height);
 
   // ボタンの背景（少し濃い色）
-  ctx.fillStyle = adjustBrightness(theme.backgroundColor, -0.05);
-  ctx.fillRect(x + 2, y + 2, width - 4, height - 4);
+  ctx.fillStyle = adjustBrightness(
+    theme.backgroundColor,
+    CANVAS_CONSTANTS.BACKGROUND_BRIGHTNESS_ADJUSTMENT,
+  );
+  ctx.fillRect(
+    x + CANVAS_CONSTANTS.BORDER_PADDING,
+    y + CANVAS_CONSTANTS.BORDER_PADDING,
+    width - CANVAS_CONSTANTS.BORDER_PADDING * 2,
+    height - CANVAS_CONSTANTS.BORDER_PADDING * 2,
+  );
 
   // メインテキストを描画
   ctx.fillStyle = theme.textColor;
-  ctx.font = 'bold 60px "Noto Sans CJK JP", "Hiragino Sans", sans-serif';
+  ctx.font = CANVAS_CONSTANTS.MAIN_TEXT_FONT;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
 
   const centerX = x + width / 2;
-  const centerY = subtext ? y + height / 2 - 30 : y + height / 2;
+  const centerY = subtext
+    ? y + height / 2 - CANVAS_CONSTANTS.SUBTEXT_VERTICAL_OFFSET
+    : y + height / 2;
 
   ctx.fillText(text, centerX, centerY);
 
   // サブテキストを描画（ある場合）
   if (subtext) {
-    ctx.fillStyle = adjustBrightness(theme.textColor, 0.3);
-    ctx.font = '32px "Noto Sans CJK JP", "Hiragino Sans", sans-serif';
-    ctx.fillText(subtext, centerX, centerY + 60);
+    ctx.fillStyle = adjustBrightness(
+      theme.textColor,
+      CANVAS_CONSTANTS.SUBTEXT_BRIGHTNESS_ADJUSTMENT,
+    );
+    ctx.font = CANVAS_CONSTANTS.SUBTEXT_FONT;
+    ctx.fillText(
+      subtext,
+      centerX,
+      centerY + CANVAS_CONSTANTS.SUBTEXT_VERTICAL_SPACING,
+    );
   }
 
   // アクセントカラーの小さなインジケーター
   ctx.fillStyle = theme.accentColor;
-  ctx.fillRect(x + 10, y + 10, 8, height - 20);
+  ctx.fillRect(
+    x + CANVAS_CONSTANTS.ACCENT_INDICATOR_OFFSET_X,
+    y + CANVAS_CONSTANTS.ACCENT_INDICATOR_OFFSET_Y,
+    CANVAS_CONSTANTS.ACCENT_INDICATOR_WIDTH,
+    height - CANVAS_CONSTANTS.ACCENT_INDICATOR_HEIGHT_ADJUSTMENT,
+  );
 };
 
 /**
