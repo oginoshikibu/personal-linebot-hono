@@ -318,6 +318,8 @@ const drawButtonArea = (
 
 /**
  * 色の明度を調整するヘルパー関数
+ * Note: Currently handles simple HEX color adjustments only.
+ * For more robust color manipulation, consider using a dedicated library like 'color' or 'chroma-js'.
  */
 const adjustBrightness = (color: string, factor: number): string => {
   // 簡単なHEXカラーの明度調整
@@ -528,7 +530,11 @@ const setupRichMenu = async (imageBuffer: Buffer): Promise<string> => {
 /**
  * コマンドライン引数を解析する
  */
-function parseArguments() {
+function parseArguments(): {
+  theme: string;
+  save: boolean;
+  mock: boolean;
+} {
   const args = process.argv.slice(2);
   const options: {
     theme: string;
