@@ -19,7 +19,6 @@ async function findUser(searchTerm: string): Promise<void> {
         where: {
           name: {
             contains: searchTerm,
-            mode: "insensitive",
           },
         },
       });
@@ -44,9 +43,6 @@ async function findUser(searchTerm: string): Promise<void> {
     console.log("=== ユーザー情報 ===");
     console.log(`名前: ${user.name}`);
     console.log(`LINE ID: ${user.lineId}`);
-    if (user.email) {
-      console.log(`Email: ${user.email}`);
-    }
     console.log(`登録日: ${user.createdAt.toLocaleDateString()}`);
     console.log(`更新日: ${user.updatedAt.toLocaleDateString()}`);
   } catch (error) {
