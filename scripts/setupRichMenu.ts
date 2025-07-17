@@ -1,8 +1,8 @@
-import { Client } from "@line/bot-sdk";
 import fs from "node:fs";
 import path from "node:path";
-import { logger } from "../src/lib/logger";
+import { Client } from "@line/bot-sdk";
 import { config } from "../src/config";
+import { logger } from "../src/lib/logger";
 
 // LINE Client初期化
 const lineClient = new Client({
@@ -13,7 +13,16 @@ const lineClient = new Client({
 /**
  * デフォルトのリッチメニュープロパティ
  */
-export const getDefaultRichMenuProperties = () => {
+export const getDefaultRichMenuProperties = (): {
+  size: { width: number; height: number };
+  selected: boolean;
+  name: string;
+  chatBarText: string;
+  areas: Array<{
+    bounds: { x: number; y: number; width: number; height: number };
+    action: { type: "message"; text: string };
+  }>;
+} => {
   return {
     size: {
       width: 2500,
@@ -53,14 +62,13 @@ export const getDefaultRichMenuProperties = () => {
 const loadExistingRichMenuImage = (): Buffer => {
   try {
     const imagePath = path.resolve(process.cwd(), "assets/images/richmenu.png");
-    
+
     if (fs.existsSync(imagePath)) {
       logger.info("既存のリッチメニュー画像を読み込みました");
       return fs.readFileSync(imagePath);
-    } else {
-      logger.warn("リッチメニュー画像が見つかりません。透明画像を生成します");
-      return generateTransparentImage();
     }
+    logger.warn("リッチメニュー画像が見つかりません。透明画像を生成します");
+    return generateTransparentImage();
   } catch (error) {
     logger.error("リッチメニュー画像の読み込みに失敗しました", error);
     return generateTransparentImage();
@@ -72,8 +80,9 @@ const loadExistingRichMenuImage = (): Buffer => {
  */
 const generateTransparentImage = (): Buffer => {
   // 1x1の透明PNG画像のBase64エンコードデータ
-  const transparentPngBase64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";
-  return Buffer.from(transparentPngBase64, 'base64');
+  const transparentPngBase64 =
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";
+  return Buffer.from(transparentPngBase64, "base64");
 };
 
 /**
@@ -121,11 +130,11 @@ const deleteRichMenu = async (richMenuId: string): Promise<void> => {
 const deleteAllRichMenus = async (): Promise<void> => {
   try {
     const richMenuIds = await getRichMenuList();
-    
+
     for (const richMenuId of richMenuIds) {
       await deleteRichMenu(richMenuId);
     }
-    
+
     logger.info(`${richMenuIds.length}個のリッチメニューを削除しました`);
   } catch (error) {
     logger.error("リッチメニュー全削除エラー", error);
@@ -140,7 +149,8 @@ const createRichMenu = async (): Promise<string> => {
   try {
     const richMenuProperties = getDefaultRichMenuProperties();
     const response = await lineClient.createRichMenu(richMenuProperties);
-    const richMenuId = typeof response === 'string' ? response : (response as any).richMenuId;
+    const richMenuId =
+      typeof response === "string" ? response : String(response);
     logger.info(`リッチメニューを作成しました: ${richMenuId}`);
     return richMenuId;
   } catch (error) {
@@ -155,14 +165,16 @@ const createRichMenu = async (): Promise<string> => {
 const uploadRichMenuImage = async (
   richMenuId: string,
   imageBuffer: Buffer,
-  contentType: string = 'image/png'
+  contentType = "image/png",
 ): Promise<void> => {
   try {
     await lineClient.setRichMenuImage(richMenuId, imageBuffer, contentType);
     logger.info(`リッチメニュー画像をアップロードしました: ${richMenuId}`);
   } catch (error) {
     logger.error(`リッチメニュー画像アップロードエラー: ${richMenuId}`, error);
-    throw new Error(`リッチメニュー画像のアップロードに失敗しました: ${richMenuId}`);
+    throw new Error(
+      `リッチメニュー画像のアップロードに失敗しました: ${richMenuId}`,
+    );
   }
 };
 
@@ -175,7 +187,9 @@ const setDefaultRichMenu = async (richMenuId: string): Promise<void> => {
     logger.info(`デフォルトリッチメニューを設定しました: ${richMenuId}`);
   } catch (error) {
     logger.error(`デフォルトリッチメニュー設定エラー: ${richMenuId}`, error);
-    throw new Error(`デフォルトリッチメニューの設定に失敗しました: ${richMenuId}`);
+    throw new Error(
+      `デフォルトリッチメニューの設定に失敗しました: ${richMenuId}`,
+    );
   }
 };
 
@@ -235,4 +249,4 @@ async function main() {
 main().catch((error) => {
   logger.error("スクリプト実行エラー:", error);
   process.exit(1);
-}); 
+});

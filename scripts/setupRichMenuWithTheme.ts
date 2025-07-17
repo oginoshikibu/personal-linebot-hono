@@ -1,8 +1,9 @@
-import { Client } from "@line/bot-sdk";
 import fs from "node:fs";
 import path from "node:path";
-import { logger } from "../src/lib/logger";
+import { Client } from "@line/bot-sdk";
+import { type CanvasRenderingContext2D, createCanvas } from "canvas";
 import { config } from "../src/config";
+import { logger } from "../src/lib/logger";
 
 // LINE Client初期化（条件付き）
 let lineClient: Client | null = null;
@@ -10,7 +11,9 @@ let lineClient: Client | null = null;
 const getLineClient = (): Client => {
   if (!lineClient) {
     if (!config.line.channelSecret || !config.line.channelAccessToken) {
-      throw new Error("LINE APIの設定が不足しています。環境変数を確認してください。");
+      throw new Error(
+        "LINE APIの設定が不足しています。環境変数を確認してください。",
+      );
     }
     lineClient = new Client({
       channelSecret: config.line.channelSecret,
@@ -58,11 +61,11 @@ const DEFAULT_THEME: RichMenuTheme = {
 const DEFAULT_CONTENT: RichMenuContent = {
   title: "食事予定管理",
   buttons: [
-    { text: "今日の予定", subtext: "今日の食事予定" },
-    { text: "明日の予定", subtext: "明日の食事予定" },
-    { text: "今週の予定", subtext: "週間カレンダー" },
-    { text: "今後の予定", subtext: "カレンダー表示" },
-    { text: "ヘルプ", subtext: "使い方を確認" },
+    { text: "今日の予定", subtext: "今日の食事予定を確認" },
+    { text: "明日の予定", subtext: "明日の食事予定を確認" },
+    { text: "今週の予定", subtext: "今週の食事予定を確認" },
+    { text: "今後の予定", subtext: "今後の食事予定を確認" },
+    { text: "ヘルプ", subtext: "使い方とコマンド一覧" },
   ],
   theme: DEFAULT_THEME,
 };
@@ -135,14 +138,13 @@ const getDefaultRichMenuProperties = () => {
 const loadExistingRichMenuImage = (): Buffer => {
   try {
     const imagePath = path.resolve(process.cwd(), "assets/images/richmenu.png");
-    
+
     if (fs.existsSync(imagePath)) {
       logger.info("既存のリッチメニュー画像を読み込みました");
       return fs.readFileSync(imagePath);
-    } else {
-      logger.warn("リッチメニュー画像が見つかりません。透明画像を生成します");
-      return generateTransparentImage();
     }
+    logger.warn("リッチメニュー画像が見つかりません。透明画像を生成します");
+    return generateTransparentImage();
   } catch (error) {
     logger.error("リッチメニュー画像の読み込みに失敗しました", error);
     return generateTransparentImage();
@@ -154,26 +156,132 @@ const loadExistingRichMenuImage = (): Buffer => {
  */
 const generateTransparentImage = (): Buffer => {
   // 1x1の透明PNG画像のBase64エンコードデータ
-  const transparentPngBase64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";
-  return Buffer.from(transparentPngBase64, 'base64');
+  const transparentPngBase64 =
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";
+  return Buffer.from(transparentPngBase64, "base64");
 };
 
 /**
- * リッチメニュー画像を生成
+ * Canvas APIを使用してリッチメニュー画像を動的に生成
  */
 const generateRichMenuImage = (content?: RichMenuContent): Buffer => {
   try {
+    const finalContent = content || DEFAULT_CONTENT;
+    const theme = finalContent.theme || DEFAULT_THEME;
+
     logger.info("リッチメニュー画像を生成します", {
-      content: content?.title || "デフォルト",
+      content: finalContent.title,
+      theme: theme.backgroundColor,
     });
-    
-    // 現在は既存の画像を返す
-    // TODO: contentに基づいて動的に画像を生成する
-    return loadExistingRichMenuImage();
+
+    // Canvasを作成
+    const canvas = createCanvas(2500, 1686);
+    const ctx = canvas.getContext("2d");
+
+    // 背景色を設定
+    ctx.fillStyle = theme.backgroundColor;
+    ctx.fillRect(0, 0, 2500, 1686);
+
+    // リッチメニューのactionプロパティと一致させる
+    const richMenuProperties = getDefaultRichMenuProperties();
+    const areas = richMenuProperties.areas.map((area, index) => ({
+      x: area.bounds.x,
+      y: area.bounds.y,
+      width: area.bounds.width,
+      height: area.bounds.height,
+      text: area.action.text,
+      subtext: finalContent.buttons[index]?.subtext,
+    }));
+
+    areas.forEach((area) => {
+      drawButtonArea(ctx, area, theme);
+    });
+
+    // Bufferとして返す
+    return canvas.toBuffer("image/png");
   } catch (error) {
     logger.error("リッチメニュー画像の生成に失敗しました", error);
-    return generateTransparentImage();
+    // フォールバック: 既存画像または透明画像
+    try {
+      return loadExistingRichMenuImage();
+    } catch {
+      return generateTransparentImage();
+    }
   }
+};
+
+/**
+ * ボタンエリアを描画
+ */
+const drawButtonArea = (
+  ctx: CanvasRenderingContext2D,
+  area: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    text: string;
+    subtext?: string;
+  },
+  theme: RichMenuTheme,
+): void => {
+  const { x, y, width, height, text, subtext } = area;
+
+  // ボタンの境界線を描画
+  ctx.strokeStyle = theme.borderColor;
+  ctx.lineWidth = 2;
+  ctx.strokeRect(x, y, width, height);
+
+  // ボタンの背景（少し濃い色）
+  ctx.fillStyle = adjustBrightness(theme.backgroundColor, -0.05);
+  ctx.fillRect(x + 2, y + 2, width - 4, height - 4);
+
+  // メインテキストを描画
+  ctx.fillStyle = theme.textColor;
+  ctx.font = 'bold 60px "Noto Sans CJK JP", "Hiragino Sans", sans-serif';
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+
+  const centerX = x + width / 2;
+  const centerY = subtext ? y + height / 2 - 30 : y + height / 2;
+
+  ctx.fillText(text, centerX, centerY);
+
+  // サブテキストを描画（ある場合）
+  if (subtext) {
+    ctx.fillStyle = adjustBrightness(theme.textColor, 0.3);
+    ctx.font = '32px "Noto Sans CJK JP", "Hiragino Sans", sans-serif';
+    ctx.fillText(subtext, centerX, centerY + 60);
+  }
+
+  // アクセントカラーの小さなインジケーター
+  ctx.fillStyle = theme.accentColor;
+  ctx.fillRect(x + 10, y + 10, 8, height - 20);
+};
+
+/**
+ * 色の明度を調整するヘルパー関数
+ */
+const adjustBrightness = (color: string, factor: number): string => {
+  // 簡単なHEXカラーの明度調整
+  if (color.startsWith("#")) {
+    const hex = color.slice(1);
+    const num = Number.parseInt(hex, 16);
+    const r = Math.max(
+      0,
+      Math.min(255, Math.floor((num >> 16) + 255 * factor)),
+    );
+    const g = Math.max(
+      0,
+      Math.min(255, Math.floor(((num >> 8) & 0x00ff) + 255 * factor)),
+    );
+    const b = Math.max(
+      0,
+      Math.min(255, Math.floor((num & 0x0000ff) + 255 * factor)),
+    );
+    return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, "0")}`;
+  }
+  return color; // RGB形式の場合はそのまま返す
 };
 
 /**
@@ -184,8 +292,8 @@ const generateThemedRichMenuImage = (
   customContent?: Partial<RichMenuContent>,
 ): Buffer => {
   try {
-    const theme = Object.prototype.hasOwnProperty.call(PREDEFINED_THEMES, themeName) 
-      ? PREDEFINED_THEMES[themeName] 
+    const theme = Object.hasOwn(PREDEFINED_THEMES, themeName)
+      ? PREDEFINED_THEMES[themeName]
       : DEFAULT_THEME;
     const content: RichMenuContent = {
       ...DEFAULT_CONTENT,
@@ -213,15 +321,15 @@ const saveRichMenuImageToTemp = (
 ): string => {
   try {
     const tempDir = path.resolve(process.cwd(), "temp");
-    
+
     // tempディレクトリが存在しない場合は作成
     if (!fs.existsSync(tempDir)) {
       fs.mkdirSync(tempDir, { recursive: true });
     }
-    
+
     const filePath = path.join(tempDir, filename);
     fs.writeFileSync(filePath, imageBuffer);
-    
+
     logger.info(`リッチメニュー画像を保存しました: ${filePath}`);
     return filePath;
   } catch (error) {
@@ -264,11 +372,11 @@ const deleteRichMenu = async (richMenuId: string): Promise<void> => {
 const deleteAllRichMenus = async (): Promise<void> => {
   try {
     const richMenuIds = await getRichMenuList();
-    
+
     for (const richMenuId of richMenuIds) {
       await deleteRichMenu(richMenuId);
     }
-    
+
     logger.info(`${richMenuIds.length}個のリッチメニューを削除しました`);
   } catch (error) {
     logger.error("リッチメニュー全削除エラー", error);
@@ -284,7 +392,8 @@ const createRichMenu = async (): Promise<string> => {
     const richMenuProperties = getDefaultRichMenuProperties();
     const client = getLineClient();
     const response = await client.createRichMenu(richMenuProperties);
-    const richMenuId = typeof response === 'string' ? response : (response as any).richMenuId;
+    const richMenuId =
+      typeof response === "string" ? response : String(response);
     logger.info(`リッチメニューを作成しました: ${richMenuId}`);
     return richMenuId;
   } catch (error) {
@@ -299,7 +408,7 @@ const createRichMenu = async (): Promise<string> => {
 const uploadRichMenuImage = async (
   richMenuId: string,
   imageBuffer: Buffer,
-  contentType: string = 'image/png'
+  contentType = "image/png",
 ): Promise<void> => {
   try {
     const client = getLineClient();
@@ -307,7 +416,9 @@ const uploadRichMenuImage = async (
     logger.info(`リッチメニュー画像をアップロードしました: ${richMenuId}`);
   } catch (error) {
     logger.error(`リッチメニュー画像アップロードエラー: ${richMenuId}`, error);
-    throw new Error(`リッチメニュー画像のアップロードに失敗しました: ${richMenuId}`);
+    throw new Error(
+      `リッチメニュー画像のアップロードに失敗しました: ${richMenuId}`,
+    );
   }
 };
 
@@ -321,7 +432,9 @@ const setDefaultRichMenu = async (richMenuId: string): Promise<void> => {
     logger.info(`デフォルトリッチメニューを設定しました: ${richMenuId}`);
   } catch (error) {
     logger.error(`デフォルトリッチメニュー設定エラー: ${richMenuId}`, error);
-    throw new Error(`デフォルトリッチメニューの設定に失敗しました: ${richMenuId}`);
+    throw new Error(
+      `デフォルトリッチメニューの設定に失敗しました: ${richMenuId}`,
+    );
   }
 };
 
@@ -357,11 +470,16 @@ const setupRichMenu = async (imageBuffer: Buffer): Promise<string> => {
  */
 function parseArguments() {
   const args = process.argv.slice(2);
-  const options = {
+  const options: {
+    theme: string;
+    save: boolean;
+    mock: boolean;
+    content: RichMenuContent | undefined;
+  } = {
     theme: "default",
     save: false,
     mock: false,
-    content: undefined as RichMenuContent | undefined,
+    content: undefined,
   };
 
   for (let i = 0; i < args.length; i++) {
@@ -408,73 +526,15 @@ function showHelp() {
   -h, --help            このヘルプを表示
 
 利用可能なテーマ:
-  ${Object.keys(PREDEFINED_THEMES).map(theme => `- ${theme}`).join('\n  ')}
+  ${Object.keys(PREDEFINED_THEMES)
+    .map((theme) => `- ${theme}`)
+    .join("\n  ")}
 
 例:
   npm run setup-richmenu:theme -- --theme dark --save
   npm run setup-richmenu:theme -- --theme blue --mock
   npm run setup-richmenu:theme -- --help
 `);
-}
-
-/**
- * 季節やイベントに基づいたカスタムコンテンツを生成
- */
-function getSeasonalContent(): Partial<RichMenuContent> {
-  const now = new Date();
-  const month = now.getMonth() + 1; // 1-12
-  const day = now.getDate();
-
-  // 季節に基づいたコンテンツ
-  if (month === 12 && day >= 20 || month === 1 || month === 2) {
-    // 冬
-    return {
-      title: "冬の食事予定管理",
-      buttons: [
-        { text: "温かい料理", subtext: "鍋・スープなど" },
-        { text: "予定変更", subtext: "既存の予定を変更" },
-        { text: "予定確認", subtext: "今後の予定を確認" },
-        { text: "今後の予定", subtext: "カレンダー表示" },
-        { text: "冬のレシピ", subtext: "季節の料理提案" },
-      ],
-    };
-  } else if (month >= 3 && month <= 5) {
-    // 春
-    return {
-      title: "春の食事予定管理",
-      buttons: [
-        { text: "春野菜料理", subtext: "旬の食材を使用" },
-        { text: "予定変更", subtext: "既存の予定を変更" },
-        { text: "予定確認", subtext: "今後の予定を確認" },
-        { text: "今後の予定", subtext: "カレンダー表示" },
-        { text: "お花見弁当", subtext: "外食プラン" },
-      ],
-    };
-  } else if (month >= 6 && month <= 8) {
-    // 夏
-    return {
-      title: "夏の食事予定管理",
-      buttons: [
-        { text: "さっぱり料理", subtext: "冷やし中華・そうめん" },
-        { text: "予定変更", subtext: "既存の予定を変更" },
-        { text: "予定確認", subtext: "今後の予定を確認" },
-        { text: "今後の予定", subtext: "カレンダー表示" },
-        { text: "夏祭りグルメ", subtext: "外食プラン" },
-      ],
-    };
-  } else {
-    // 秋
-    return {
-      title: "秋の食事予定管理",
-      buttons: [
-        { text: "秋の味覚", subtext: "きのこ・栗など" },
-        { text: "予定変更", subtext: "既存の予定を変更" },
-        { text: "予定確認", subtext: "今後の予定を確認" },
-        { text: "今後の予定", subtext: "カレンダー表示" },
-        { text: "秋のレシピ", subtext: "季節の料理提案" },
-      ],
-    };
-  }
 }
 
 /**
@@ -491,28 +551,24 @@ async function main() {
     });
 
     // テーマの検証
-    if (!Object.prototype.hasOwnProperty.call(PREDEFINED_THEMES, options.theme)) {
+    if (!Object.hasOwn(PREDEFINED_THEMES, options.theme)) {
       logger.error(`無効なテーマです: ${options.theme}`);
-      logger.info(`利用可能なテーマ: ${Object.keys(PREDEFINED_THEMES).join(", ")}`);
+      logger.info(
+        `利用可能なテーマ: ${Object.keys(PREDEFINED_THEMES).join(", ")}`,
+      );
       process.exit(1);
     }
 
-    // 季節に基づいたコンテンツを取得
-    const seasonalContent = getSeasonalContent();
-    logger.info("季節に基づいたコンテンツを適用しました", { 
-      title: seasonalContent.title 
-    });
-
     // テーマに基づいてリッチメニュー画像を生成
-    const imageBuffer = generateThemedRichMenuImage(options.theme, seasonalContent);
+    const imageBuffer = generateThemedRichMenuImage(options.theme);
     logger.info(`テーマ「${options.theme}」でリッチメニュー画像を生成しました`);
 
     // 一時ファイルとして保存（オプション）
     let tempFilePath: string | undefined;
     if (options.save) {
       tempFilePath = saveRichMenuImageToTemp(
-        imageBuffer, 
-        `richmenu-${options.theme}-${Date.now()}.png`
+        imageBuffer,
+        `richmenu-${options.theme}-${Date.now()}.png`,
       );
       logger.info(`画像を一時ファイルとして保存しました: ${tempFilePath}`);
     }
@@ -523,22 +579,22 @@ async function main() {
       // モックモードの場合
       logger.info("モックモードでセットアップを実行します");
       richMenuId = `mock-richmenu-${options.theme}-${Date.now()}`;
-      
+
       // モック版では画像の保存のみ行う
       if (!tempFilePath) {
         tempFilePath = saveRichMenuImageToTemp(
-          imageBuffer, 
-          `richmenu-mock-${options.theme}-${Date.now()}.png`
+          imageBuffer,
+          `richmenu-mock-${options.theme}-${Date.now()}.png`,
         );
       }
-      
+
       logger.info(`モック: リッチメニューID = ${richMenuId}`);
     } else {
       // 実際のLINE APIを使用
       richMenuId = await setupRichMenu(imageBuffer);
     }
 
-    logger.info(`リッチメニューのセットアップが完了しました`, {
+    logger.info("リッチメニューのセットアップが完了しました", {
       richMenuId,
       theme: options.theme,
       tempFilePath,
@@ -550,7 +606,6 @@ async function main() {
 
 リッチメニューID: ${richMenuId}
 使用テーマ: ${options.theme}
-季節コンテンツ: ${seasonalContent.title}
 ${tempFilePath ? `保存先: ${tempFilePath}` : ""}
 ${options.mock ? "※ モックモードで実行されました" : ""}
 `);
@@ -558,7 +613,9 @@ ${options.mock ? "※ モックモードで実行されました" : ""}
     return richMenuId;
   } catch (error) {
     logger.error("リッチメニューのセットアップに失敗しました", error);
-    console.error(`❌ エラー: ${error instanceof Error ? error.message : "不明なエラー"}`);
+    console.error(
+      `❌ エラー: ${error instanceof Error ? error.message : "不明なエラー"}`,
+    );
     throw error;
   } finally {
     // プロセスを終了
