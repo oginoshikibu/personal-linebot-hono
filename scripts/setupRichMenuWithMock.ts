@@ -104,7 +104,7 @@ const mockLineClient = {
     );
 
     // 画像のバッファを検証
-    if (imageBuffer.length === 0) {
+    if (!imageBuffer || imageBuffer.length === 0) {
       throw new Error("画像バッファが無効です");
     }
 
