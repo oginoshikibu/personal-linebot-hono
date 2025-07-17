@@ -209,6 +209,11 @@ const generateRichMenuImage = (content?: RichMenuContent): Buffer => {
     const canvas = createCanvas(width, height);
     const ctx = canvas.getContext("2d");
 
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    if (!ctx) {
+      throw new Error("Canvas 2D context の取得に失敗しました");
+    }
+
     // 背景色を設定
     ctx.fillStyle = theme.backgroundColor;
     ctx.fillRect(0, 0, width, height);
@@ -529,12 +534,10 @@ function parseArguments() {
     theme: string;
     save: boolean;
     mock: boolean;
-    content: RichMenuContent | undefined;
   } = {
     theme: "default",
     save: false,
     mock: false,
-    content: undefined,
   };
 
   for (let i = 0; i < args.length; i++) {
