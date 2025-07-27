@@ -96,7 +96,7 @@ const mockLineClient = {
   },
   setRichMenuImage: async (
     richMenuId: string,
-    imageBuffer: Buffer,
+    imageBuffer: Buffer | null | undefined,
     contentType: string,
   ) => {
     logger.info(
@@ -104,7 +104,7 @@ const mockLineClient = {
     );
 
     // 画像のバッファを検証
-    if (imageBuffer.length === 0) {
+    if (!imageBuffer || imageBuffer.length === 0) {
       throw new Error("画像バッファが無効です");
     }
 
