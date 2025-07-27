@@ -161,12 +161,9 @@ class MealPlan {
       throw new Error("夕食では担当者の指定が必要です");
     }
     
-    const aliceParticipation = preparationRole === PreparationRole.ALICE 
-      ? ParticipationStatus.WILL_PARTICIPATE 
-      : ParticipationStatus.WILL_PARTICIPATE;
-    const bobParticipation = preparationRole === PreparationRole.BOB 
-      ? ParticipationStatus.WILL_PARTICIPATE 
-      : ParticipationStatus.WILL_PARTICIPATE;
+    // 初期状態では両者とも参加（状態1または状態3）
+    const aliceParticipation = ParticipationStatus.WILL_PARTICIPATE;
+    const bobParticipation = ParticipationStatus.WILL_PARTICIPATE;
     
     return new MealPlan({
       date,

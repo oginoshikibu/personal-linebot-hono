@@ -142,16 +142,20 @@ export class MealPlan {
 
   static createDinnerPlan(date: Date, preparationRole: PreparationRole): Result<MealPlan> {
     if (preparationRole === PreparationRole.NONE) {
-      return Result.failure("Dinner plan requires a designated preparer");
+      return Result.failure("Dinner plan requires a designated preparer.");
     }
+
+    // 担当者は必ず参加、非担当者は参加で初期化（状態テーブルに基づく）
+    const aliceParticipation = ParticipationStatus.WILL_PARTICIPATE;
+    const bobParticipation = ParticipationStatus.WILL_PARTICIPATE;
 
     const mealPlan = new MealPlan(
       crypto.randomUUID(),
       date,
       MealType.DINNER,
       preparationRole,
-      ParticipationStatus.WILL_PARTICIPATE,
-      ParticipationStatus.WILL_PARTICIPATE,
+      aliceParticipation,
+      bobParticipation,
       preparationRole === PreparationRole.ALICE ? 3 : 1,
       new Date(),
       new Date()
@@ -163,7 +167,7 @@ export class MealPlan {
   // ビジネスロジック
   preparerQuits(): Result<void> {
     if (this._preparationRole === PreparationRole.NONE) {
-      return Result.failure("No preparer is currently assigned");
+      return Result.failure("No preparer is currently assigned.");
     }
 
     this._preparationRole = PreparationRole.NONE;
@@ -179,7 +183,7 @@ export class MealPlan {
     // 担当者は参加必須
     if (this._preparationRole === PreparationRole.ALICE && 
         status === ParticipationStatus.WILL_NOT_PARTICIPATE) {
-      return Result.failure("Preparer must participate in the meal");
+      return Result.failure("Preparer must participate in the meal.");
     }
 
     this._aliceParticipation = status;
@@ -192,7 +196,7 @@ export class MealPlan {
     // 担当者は参加必須
     if (this._preparationRole === PreparationRole.BOB && 
         status === ParticipationStatus.WILL_NOT_PARTICIPATE) {
-      return Result.failure("Preparer must participate in the meal");
+      return Result.failure("Preparer must participate in the meal.");
     }
 
     this._bobParticipation = status;
@@ -267,14 +271,14 @@ export class Result<T> {
 
   get value(): T {
     if (!this._isSuccess) {
-      throw new Error("Attempted to retrieve the success value from a failed result");
+      throw new Error("Attempted to retrieve the success value from a failed result.");
     }
     return this._value!;
   }
 
   get error(): string {
     if (this._isSuccess) {
-      throw new Error("Attempted to retrieve the error from a successful result");
+      throw new Error("Attempted to retrieve the error from a successful result.");
     }
     return this._error!;
   }
@@ -443,7 +447,7 @@ export class MealPlanService {
         plan = MealPlan.createLunchPlan(date);
       } else {
         if (!preparationRole) {
-          throw new Error("Dinner plan creation requires preparer designation");
+          throw new Error("Dinner plan creation requires preparer designation.");
         }
         const result = MealPlan.createDinnerPlan(date, preparationRole);
         if (result.isFailure) {
@@ -466,7 +470,7 @@ export class MealPlanService {
   ): Promise<Result<MealPlan>> {
     const plan = await this.repository.findByDateAndType(date, mealType);
     if (!plan) {
-      return Result.failure("Meal plan not found");
+      return Result.failure("Meal plan not found.");
     }
 
     const result = person === 'Alice' 
@@ -484,7 +488,7 @@ export class MealPlanService {
   async preparerQuits(date: Date, mealType: MealType): Promise<Result<MealPlan>> {
     const plan = await this.repository.findByDateAndType(date, mealType);
     if (!plan) {
-      return Result.failure("Meal plan not found");
+      return Result.failure("Meal plan not found.");
     }
 
     const result = plan.preparerQuits();
