@@ -23,7 +23,7 @@
 ### 前提条件
 
 - Node.js 18以上
-- npm 8以上
+- pnpm 8以上
 
 ### セットアップ
 
@@ -33,7 +33,7 @@ git clone https://github.com/yourusername/personal-linebot-hono.git
 cd personal-linebot-hono
 
 # 依存関係をインストール
-npm install
+pnpm install
 
 # 環境変数ファイルを作成
 cp .env.example .env
@@ -44,7 +44,7 @@ npx prisma generate
 npx prisma migrate dev
 
 # 開発サーバーを起動
-npm run dev
+pnpm run dev
 ```
 
 ### 環境変数
@@ -80,13 +80,13 @@ EVENING_NOTIFICATION_MINUTE=0
 
 ```bash
 # 実際のLINE APIを使用
-npm run setup-richmenu
+pnpm run setup-richmenu
 
 # テーマ対応セットアップ
-npm run setup-richmenu:theme
+pnpm run setup-richmenu:theme
 
 # モックモードでテスト
-npm run setup-richmenu:mock
+pnpm run setup-richmenu:mock
 ```
 
 ## ユーザー管理
@@ -95,16 +95,16 @@ npm run setup-richmenu:mock
 
 ```bash
 # ユーザーを追加
-npm run add-user
+pnpm run add-user
 
 # ユーザーを削除
-npm run delete-user
+pnpm run delete-user
 
 # ユーザー一覧を表示
-npm run list-users
+pnpm run list-users
 
 # ユーザーを検索
-npm run find-user
+pnpm run find-user
 ```
 
 ## 開発
@@ -113,32 +113,32 @@ npm run find-user
 
 ```bash
 # Biomeによるリント・フォーマット
-npm run check
+pnpm run check
 
 # Prismaスキーマの確認
-npm run prisma:format
+pnpm run prisma:format
 
 # テストの実行
-npm run test
+pnpm run test
 
 # テスト（ウォッチモード）
-npm run test:watch
+pnpm run test:watch
 
 # テストカバレッジ確認
-npm run test:coverage
+pnpm run test:coverage
 ```
 
 ### データベース管理
 
 ```bash
 # Prismaクライアント生成
-npm run prisma:generate
+pnpm run prisma:generate
 
 # マイグレーション実行
-npm run prisma:migrate
+pnpm run prisma:migrate
 
 # Prisma Studio（データベースGUI）
-npm run prisma:studio
+pnpm run prisma:studio
 ```
 
 ## デプロイ

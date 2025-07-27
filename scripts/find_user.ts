@@ -20,7 +20,6 @@ async function findUser(searchTerm: string): Promise<void> {
         where: {
           name: {
             contains: searchTerm,
-            mode: 'insensitive',
           },
         },
       });
