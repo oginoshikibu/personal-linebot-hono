@@ -335,7 +335,9 @@ const adjustBrightness = (color: string, factor: number): string => {
     );
     return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, "0")}`;
   }
-  logger.warn(`Unsupported color format: ${color}. Only HEX colors are supported for brightness adjustment.`);
+  logger.warn(
+    `Unsupported color format: ${color}. Only HEX colors are supported for brightness adjustment.`,
+  );
   return color; // RGB形式の場合はそのまま返す
 };
 
