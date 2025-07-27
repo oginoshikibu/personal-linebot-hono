@@ -13,7 +13,7 @@
 #### 基本的なセットアップ（実際のLINE APIを使用）
 
 ```bash
-npm run setup-richmenu
+pnpm run setup-richmenu
 ```
 
 このコマンドは `scripts/setupRichMenu.ts` を実行し、以下の処理を行います：
@@ -28,19 +28,19 @@ npm run setup-richmenu
 
 ```bash
 # デフォルトテーマでセットアップ
-npm run setup-richmenu:theme
+pnpm run setup-richmenu:theme
 
 # 特定のテーマを指定してセットアップ
-npm run setup-richmenu:theme -- --theme dark
+pnpm run setup-richmenu:theme -- --theme dark
 
 # 画像を一時ファイルとして保存
-npm run setup-richmenu:theme -- --theme blue --save
+pnpm run setup-richmenu:theme -- --theme blue --save
 
 # モックモードで実行（テスト用）
-npm run setup-richmenu:theme -- --theme warm --mock
+pnpm run setup-richmenu:theme -- --theme warm --mock
 
 # ヘルプを表示
-npm run setup-richmenu:theme -- --help
+pnpm run setup-richmenu:theme -- --help
 ```
 
 **利用可能なテーマ：**
@@ -59,7 +59,7 @@ npm run setup-richmenu:theme -- --help
 #### モックモードでのテスト
 
 ```bash
-npm run setup-richmenu:mock
+pnpm run setup-richmenu:mock
 ```
 
 このコマンドは `scripts/setupRichMenuWithMock.ts` を実行し、LINE APIをモック化してリッチメニューのセットアップをシミュレートします。モック版を実行すると、`temp/` ディレクトリにリッチメニュー画像が保存されます。
@@ -92,7 +92,7 @@ npm run setup-richmenu:mock
 **完全な動的画像生成を有効にするには：**
 
 ```bash
-npm install canvas @types/canvas
+pnpm install canvas @types/canvas
 ```
 
 その後、`src/utils/richMenuImage.ts` の `generateDynamicRichMenuImage` 関数のコメントアウトされた部分を実装してください。これにより以下が可能になります：
@@ -140,7 +140,7 @@ Error: Request failed with status code 400
 
 ```typescript
 // リッチメニュー管理は scripts/setupRichMenu.ts を使用してください
-// npm run setup-richmenu
+// pnpm run setup-richmenu
 ```
 
 ### リッチメニューの削除

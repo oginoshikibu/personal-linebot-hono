@@ -109,7 +109,7 @@ sudo apt upgrade -y
 
 # 各ソフトウェアのバージョン確認
 node -v
-npm -v
+pnpm -v
 mysql --version
 pm2 -v
 
@@ -161,7 +161,7 @@ cd /var/www/linebot
 git clone https://github.com/yourusername/personal-linebot-hono.git .
 
 # 依存関係のインストール
-npm install
+pnpm install
 
 # 環境変数ファイルの作成
 cat > .env << EOF
@@ -190,7 +190,7 @@ npx prisma generate
 npx prisma migrate deploy
 
 # アプリケーションのビルド
-npm run build
+pnpm run build
 ```
 
 ### 5.2 PM2でアプリケーションを実行
@@ -287,10 +287,10 @@ jobs:
         run: |
           ssh ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "cd ${{ secrets.APP_DIR }} && \
           git pull && \
-          npm install && \
+          pnpm install && \
           npx prisma generate && \
           npx prisma migrate deploy && \
-          npm run build && \
+          pnpm run build && \
           pm2 restart linebot"
 ```
 
@@ -374,7 +374,7 @@ sudo apt upgrade -y
 ### 12.2 Node.jsの更新
 
 ```bash
-sudo npm install -g n
+sudo pnpm install -g n
 sudo n stable
 hash -r
 ```
@@ -384,10 +384,10 @@ hash -r
 ```bash
 cd /var/www/linebot
 git pull
-npm install
+pnpm install
 npx prisma generate
 npx prisma migrate deploy
-npm run build
+pnpm run build
 pm2 restart linebot
 ```
 
