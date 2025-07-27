@@ -102,18 +102,28 @@ export enum ParticipationStatus {
   UNDECIDED = 'UNDECIDED'
 }
 
+// ドメイン定数
+export const DEFAULT_LUNCH_PREPARER = PreparationRole.BOB;
+
 export class MealPlan {
   constructor(
     public readonly id: string,
     public readonly date: Date,
     public readonly mealType: MealType,
-    public preparationRole: PreparationRole,
-    public aliceParticipation: ParticipationStatus,
-    public bobParticipation: ParticipationStatus,
-    public currentState: number,
+    private _preparationRole: PreparationRole,
+    private _aliceParticipation: ParticipationStatus,
+    private _bobParticipation: ParticipationStatus,
+    private _currentState: number,
     public readonly createdAt: Date,
-    public updatedAt: Date
+    private _updatedAt: Date
   ) {}
+
+  // getters
+  get preparationRole(): PreparationRole { return this._preparationRole; }
+  get aliceParticipation(): ParticipationStatus { return this._aliceParticipation; }
+  get bobParticipation(): ParticipationStatus { return this._bobParticipation; }
+  get currentState(): number { return this._currentState; }
+  get updatedAt(): Date { return this._updatedAt; }
 
   // ファクトリーメソッド
   static createLunchPlan(date: Date): MealPlan {
@@ -121,7 +131,7 @@ export class MealPlan {
       crypto.randomUUID(),
       date,
       MealType.LUNCH,
-      PreparationRole.BOB, // Bob固定
+      DEFAULT_LUNCH_PREPARER, // 昼食固定担当者
       ParticipationStatus.WILL_PARTICIPATE,
       ParticipationStatus.WILL_PARTICIPATE,
       1, // 初期状態: Bob担当・両者参加
@@ -132,7 +142,7 @@ export class MealPlan {
 
   static createDinnerPlan(date: Date, preparationRole: PreparationRole): Result<MealPlan> {
     if (preparationRole === PreparationRole.NONE) {
-      return Result.failure("夕食では担当者の指定が必要です");
+      return Result.failure("Dinner plan requires a designated preparer");
     }
 
     const mealPlan = new MealPlan(
@@ -152,76 +162,76 @@ export class MealPlan {
 
   // ビジネスロジック
   preparerQuits(): Result<void> {
-    if (this.preparationRole === PreparationRole.NONE) {
-      return Result.failure("担当者が設定されていません");
+    if (this._preparationRole === PreparationRole.NONE) {
+      return Result.failure("No preparer is currently assigned");
     }
 
-    this.preparationRole = PreparationRole.NONE;
-    this.aliceParticipation = ParticipationStatus.WILL_NOT_PARTICIPATE;
-    this.bobParticipation = ParticipationStatus.WILL_NOT_PARTICIPATE;
+    this._preparationRole = PreparationRole.NONE;
+    this._aliceParticipation = ParticipationStatus.WILL_NOT_PARTICIPATE;
+    this._bobParticipation = ParticipationStatus.WILL_NOT_PARTICIPATE;
     this.updateCurrentState();
-    this.updatedAt = new Date();
+    this._updatedAt = new Date();
 
     return Result.success();
   }
 
   changeAliceParticipation(status: ParticipationStatus): Result<void> {
     // 担当者は参加必須
-    if (this.preparationRole === PreparationRole.ALICE && 
+    if (this._preparationRole === PreparationRole.ALICE && 
         status === ParticipationStatus.WILL_NOT_PARTICIPATE) {
-      return Result.failure("担当者は参加必須です");
+      return Result.failure("Preparer must participate in the meal");
     }
 
-    this.aliceParticipation = status;
+    this._aliceParticipation = status;
     this.updateCurrentState();
-    this.updatedAt = new Date();
+    this._updatedAt = new Date();
     return Result.success();
   }
 
   changeBobParticipation(status: ParticipationStatus): Result<void> {
     // 担当者は参加必須
-    if (this.preparationRole === PreparationRole.BOB && 
+    if (this._preparationRole === PreparationRole.BOB && 
         status === ParticipationStatus.WILL_NOT_PARTICIPATE) {
-      return Result.failure("担当者は参加必須です");
+      return Result.failure("Preparer must participate in the meal");
     }
 
-    this.bobParticipation = status;
+    this._bobParticipation = status;
     this.updateCurrentState();
-    this.updatedAt = new Date();
+    this._updatedAt = new Date();
     return Result.success();
   }
 
   private updateCurrentState(): void {
     // 状態計算ロジック（meal.mdの状態テーブルに基づく）
     if (this.mealType === MealType.LUNCH) {
-      if (this.preparationRole === PreparationRole.BOB) {
-        if (this.aliceParticipation === ParticipationStatus.WILL_PARTICIPATE) {
-          this.currentState = 1; // Bob担当・両者参加
+      if (this._preparationRole === PreparationRole.BOB) {
+        if (this._aliceParticipation === ParticipationStatus.WILL_PARTICIPATE) {
+          this._currentState = 1; // Bob担当・両者参加
         } else {
-          this.currentState = 2; // Bob担当・Bobのみ
+          this._currentState = 2; // Bob担当・Bobのみ
         }
       } else {
-        if (this.bobParticipation === ParticipationStatus.UNDECIDED) {
-          this.currentState = 4; // 担当なし・Bob未定
+        if (this._bobParticipation === ParticipationStatus.UNDECIDED) {
+          this._currentState = 4; // 担当なし・Bob未定
         } else {
-          this.currentState = 3; // 担当なし・両者不参加
+          this._currentState = 3; // 担当なし・両者不参加
         }
       }
     } else { // DINNER
-      if (this.preparationRole === PreparationRole.BOB) {
-        if (this.aliceParticipation === ParticipationStatus.WILL_PARTICIPATE) {
-          this.currentState = 1; // Bob担当・両者参加
+      if (this._preparationRole === PreparationRole.BOB) {
+        if (this._aliceParticipation === ParticipationStatus.WILL_PARTICIPATE) {
+          this._currentState = 1; // Bob担当・両者参加
         } else {
-          this.currentState = 2; // Bob担当・Bobのみ
+          this._currentState = 2; // Bob担当・Bobのみ
         }
-      } else if (this.preparationRole === PreparationRole.ALICE) {
-        if (this.bobParticipation === ParticipationStatus.WILL_PARTICIPATE) {
-          this.currentState = 3; // Alice担当・両者参加
+      } else if (this._preparationRole === PreparationRole.ALICE) {
+        if (this._bobParticipation === ParticipationStatus.WILL_PARTICIPATE) {
+          this._currentState = 3; // Alice担当・両者参加
         } else {
-          this.currentState = 4; // Alice担当・Aliceのみ
+          this._currentState = 4; // Alice担当・Aliceのみ
         }
       } else {
-        this.currentState = 5; // 担当なし・両者不参加
+        this._currentState = 5; // 担当なし・両者不参加
       }
     }
   }
@@ -257,14 +267,14 @@ export class Result<T> {
 
   get value(): T {
     if (!this._isSuccess) {
-      throw new Error("Success値を失敗した結果から取得しようとしました");
+      throw new Error("Attempted to retrieve the success value from a failed result");
     }
     return this._value!;
   }
 
   get error(): string {
     if (this._isSuccess) {
-      throw new Error("エラーを成功した結果から取得しようとしました");
+      throw new Error("Attempted to retrieve the error from a successful result");
     }
     return this._error!;
   }
@@ -433,7 +443,7 @@ export class MealPlanService {
         plan = MealPlan.createLunchPlan(date);
       } else {
         if (!preparationRole) {
-          throw new Error("夕食計画作成時は担当者の指定が必要です");
+          throw new Error("Dinner plan creation requires preparer designation");
         }
         const result = MealPlan.createDinnerPlan(date, preparationRole);
         if (result.isFailure) {
@@ -456,7 +466,7 @@ export class MealPlanService {
   ): Promise<Result<MealPlan>> {
     const plan = await this.repository.findByDateAndType(date, mealType);
     if (!plan) {
-      return Result.failure("食事計画が見つかりません");
+      return Result.failure("Meal plan not found");
     }
 
     const result = person === 'Alice' 
@@ -474,7 +484,7 @@ export class MealPlanService {
   async preparerQuits(date: Date, mealType: MealType): Promise<Result<MealPlan>> {
     const plan = await this.repository.findByDateAndType(date, mealType);
     if (!plan) {
-      return Result.failure("食事計画が見つかりません");
+      return Result.failure("Meal plan not found");
     }
 
     const result = plan.preparerQuits();
