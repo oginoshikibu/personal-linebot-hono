@@ -15,14 +15,11 @@ async function findUser(searchTerm: string): Promise<void> {
 
     // 見つからなかった場合は名前で検索（ケースインセンシティブ）
     if (!user) {
-      // Prismaの組み込み検索を使用してケースインセンシティブ検索を実行
-      const users = await prisma.user.findMany({
-        where: {
-          name: {
-            contains: searchTerm,
-          },
-        },
-      });
+      // MySQLでケースインセンシティブ検索を実行（rawクエリを使用）
+      const users = await prisma.$queryRaw<Array<{ id: string; lineId: string; name: string; createdAt: Date; updatedAt: Date }>>`
+        SELECT * FROM users 
+        WHERE name COLLATE utf8mb4_unicode_ci LIKE ${`%${searchTerm}%`}
+      `;
 
       if (users.length === 0) {
         console.log(`ユーザーが見つかりません: ${searchTerm}`);
