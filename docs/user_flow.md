@@ -2,7 +2,13 @@
 
 ## 概要
 
-家庭用食事管理LINEボットの操作フローを図解したものです。ユーザーがリッチメニューから食事予定の確認・編集を行う一連の流れを示しています。
+AliceとBobの食事管理LINEボットの操作フローを図解したものです。統一された食事ドメインでの昼食・夕食計画の確認・編集フローを示しています。
+
+### 重要な制約
+- 昼食: Bob固定担当、担当者変更不可
+- 夕食: 初回のみBobが担当者選択（Alice or Bob）、決定後変更不可
+- 担当者は必ず参加状態
+- 担当者辞退時は全員自動不参加
 
 ## ユーザー操作フロー
 
@@ -36,12 +42,12 @@ flowchart TD
     EditChoice -->|はい| LunchQ[昼食の予定質問]
     EditChoice -->|いいえ| End([終了])
     
-    %% 編集フロー（時間軸選択なし）
-    LunchQ --> LunchChoice{選択肢}
-    LunchChoice -->|参加する| LunchAttend[参加]
-    LunchChoice -->|参加しない| LunchAbsent[不参加]
-    LunchChoice -->|自分が作る| LunchCook[自炊]
-    LunchChoice -->|未定| LunchUndecided[未定]
+    %% 昼食編集フロー（Bob固定担当）
+    LunchQ --> LunchChoice{昼食の選択肢}
+    LunchChoice -->|参加する| LunchAttend[Alice参加]
+    LunchChoice -->|参加しない| LunchAbsent[Alice不参加]
+    LunchChoice -->|辞退する| LunchQuit[Bob辞退（全員不参加）]
+    LunchChoice -->|未定| LunchUndecided[Bob未定]
     LunchChoice -->|キャンセル| Cancel1[キャンセル]
     
     Cancel1 --> End
@@ -49,19 +55,36 @@ flowchart TD
     LunchAttend --> DinnerQ[夕食の予定質問]
     LunchAbsent --> DinnerQ
     LunchCook --> DinnerQ
+    LunchQuit --> DinnerQ
     LunchUndecided --> DinnerQ
     
-    DinnerQ --> DinnerChoice{選択肢}
-    DinnerChoice -->|参加する| DinnerAttend[参加]
-    DinnerChoice -->|参加しない| DinnerAbsent[不参加]
-    DinnerChoice -->|自分が作る| DinnerCook[自炊]
-    DinnerChoice -->|未定| DinnerUndecided[未定]
-    DinnerChoice -->|キャンセル| SaveLunchOnly[昼食のみ保存]
+    DinnerQ --> DinnerRoleCheck{担当者確認}
+    DinnerRoleCheck -->|未設定| DinnerRoleSelect[Bob担当者選択]
+    DinnerRoleCheck -->|Alice担当| DinnerAliceOptions{Alice選択肢}
+    DinnerRoleCheck -->|Bob担当| DinnerBobOptions{Bob選択肢}
     
-    DinnerAttend --> Complete[登録完了]
-    DinnerAbsent --> Complete
-    DinnerCook --> Complete
-    DinnerUndecided --> Complete
+    DinnerRoleSelect --> SelectAlice[Alice担当設定]
+    DinnerRoleSelect --> SelectBob[Bob担当設定]
+    SelectAlice --> DinnerAliceOptions
+    SelectBob --> DinnerBobOptions
+    
+    DinnerAliceOptions -->|参加（固定）| DinnerAliceAttend[Alice参加]
+    DinnerAliceOptions -->|辞退する| DinnerAliceQuit[Alice辞退（全員不参加）]
+    DinnerBobOptions -->|参加状況変更| DinnerBobChange[Bob参加変更]
+    
+    DinnerBobOptions -->|参加（固定）| DinnerBobAttend[Bob参加]
+    DinnerBobOptions -->|辞退する| DinnerBobQuit[Bob辞退（全員不参加）]
+    DinnerAliceOptions -->|参加状況変更| DinnerAliceChange[Alice参加変更]
+    
+    DinnerAliceAttend --> Complete
+    DinnerAliceQuit --> Complete
+    DinnerBobAttend --> Complete
+    DinnerBobQuit --> Complete
+    DinnerAliceChange --> Complete
+    DinnerBobChange --> Complete
+    
+    DinnerRoleCheck -->|キャンセル| SaveLunchOnly[昼食のみ保存]
+    
     
     SaveLunchOnly --> Notify2[昼食予定登録完了]
     Notify2 --> CheckToday2{今日/明日?}
@@ -95,14 +118,22 @@ flowchart TD
 
 3. **編集フロー**
    - 予定表示後に編集オプションを表示
-   - 編集する場合は昼食→夕食の順に質問
+   - 昼食→夕食の順に質問（統一ドメインモデル）
+   - 昼食: Bob固定担当での参加状況変更または辞退
+   - 夕食: 初回は担当者選択、設定後は参加状況変更または辞退
    - 各ステップでキャンセル可能
    - 夕食でキャンセルした場合は昼食のみ保存
 
 4. **通知システム**
    - 今日/明日の予定変更時は他のユーザーに通知
+   - 担当者辞退時の自動状態変更も通知対象
    - 日曜夜に来週の予定入力リマインダー（未実装）
 
-5. **週間予定入力（未実装）**
+5. **状態遷移の自動処理**
+   - 担当者辞退時の全員不参加遷移
+   - ビジネスルール違反時のエラー表示
+   - 状態整合性の自動維持
+
+6. **週間予定入力（未実装）**
    - 日曜夜のリマインダーから来週の予定を曜日ごとに入力
    - 途中でキャンセルした場合は入力済みの分だけ保存 
