@@ -16,69 +16,45 @@ enum MealType {
   DINNER
 }
 
-// 準備タイプの列挙型
-enum PreparationType {
-  COOK_BY_SELF
-  INDIVIDUAL
-  BUY_TOGETHER
+// 準備担当者の列挙型（既存のPreparationTypeと置き換え）
+enum PreparationRole {
+  ALICE
+  BOB  
+  NONE
 }
 
-// ユーザーモデル
-model User {
-  id        String   @id @default(uuid())
-  lineId    String   @unique @map("line_id")
-  name      String
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  // リレーション
-  mealParticipations MealParticipation[]
-  preparedMeals      MealPlan[]
-
-  @@map("users")
+// 参加状況の列挙型（新規追加）
+enum ParticipationStatus {
+  WILL_PARTICIPATE
+  WILL_NOT_PARTICIPATE
+  UNDECIDED
 }
 
-// 食事予定モデル
+// 食事予定モデル（統一化）
 model MealPlan {
-  id              String          @id @default(uuid())
-  date            DateTime        // 日付
-  mealType        MealType        @map("meal_type")
-  preparationType PreparationType @map("preparation_type")
-  cookerId        String?         @map("cooker_id") // 自炊の場合の調理担当者
-  createdAt       DateTime        @default(now()) @map("created_at")
-  updatedAt       DateTime        @updatedAt @map("updated_at")
+  id                  String              @id @default(uuid())
+  date                DateTime            // 日付
+  mealType            MealType            @map("meal_type")
+  preparationRole     PreparationRole     @map("preparation_role")
+  aliceParticipation  ParticipationStatus @map("alice_participation")
+  bobParticipation    ParticipationStatus @map("bob_participation")
+  currentState        Int                 @map("current_state")
+  createdAt           DateTime            @default(now()) @map("created_at")
+  updatedAt           DateTime            @updatedAt @map("updated_at")
 
-  // リレーション
-  cooker         User?               @relation(fields: [cookerId], references: [id])
-  participations MealParticipation[]
-
-  @@unique([date, mealType]) // 同じ日の同じ食事タイプは一つだけ
+  @@unique([date, mealType])
   @@map("meal_plans")
 }
 
-// 食事参加モデル
-model MealParticipation {
-  id          String   @id @default(uuid())
-  mealPlanId  String   @map("meal_plan_id")
-  userId      String   @map("user_id")
-  isAttending Boolean  @map("is_attending") // 参加するかどうか
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
-
-  // リレーション
-  mealPlan MealPlan @relation(fields: [mealPlanId], references: [id])
-  user     User     @relation(fields: [userId], references: [id])
-
-  @@unique([mealPlanId, userId]) // 一つの食事に対して、一人のユーザーは一つの参加状態のみ
-  @@map("meal_participations")
-}
-
-// 通知ログモデル（オプション：履歴追跡用）
 model NotificationLog {
-  id      String   @id @default(uuid())
-  type    String // 通知タイプ（朝の通知、夜の通知など）
-  content String // 送信した内容
-  sentAt  DateTime @default(now()) @map("sent_at")
+  id                String   @id @default(uuid())
+  type              String   // MORNING_REMINDER, EVENING_REMINDER, PARTICIPATION_CHANGE, PREPARER_QUIT
+  content           String
+  targetUser        String   @map("target_user") // Alice, Bob, ALL
+  relatedMealPlanId String?  @map("related_meal_plan_id")
+  status            String   @default("PENDING") // PENDING, SENT, FAILED
+  sentAt            DateTime? @map("sent_at")
+  createdAt         DateTime @default(now()) @map("created_at")
 
   @@map("notification_logs")
 }
