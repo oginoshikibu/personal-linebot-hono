@@ -1,325 +1,96 @@
-import type {
-  MealParticipation,
+import {
   MealPlan,
   MealType,
-  PreparationType,
-  User,
-} from "@prisma/client";
-import { logger } from "../../../lib/logger";
-import { prisma } from "../../../lib/prisma";
-import { AppError } from "../../../utils/error";
+  type ParticipationStatus,
+  type PreparationRole,
+} from "../../../domain/entities/MealPlan";
+import type { MealPlanRepository } from "../../../domain/repositories/MealPlanRepository";
+import { Result } from "../../../domain/types/Result";
 
-/**
- * 当日の食事予定を取得または作成
- * @returns 昼食と夕食の予定
- */
-export const getOrCreateTodayMealPlans = async (): Promise<{
-  lunch: MealPlan & {
-    participations: (MealParticipation & { user: User })[];
-    cooker: User | null;
-  };
-  dinner: MealPlan & {
-    participations: (MealParticipation & { user: User })[];
-    cooker: User | null;
-  };
-}> => {
-  try {
+export class MealPlanService {
+  constructor(private readonly repository: MealPlanRepository) {}
+
+  async getOrCreateTodayMealPlans(): Promise<{
+    lunch: MealPlan;
+    dinner: MealPlan;
+  }> {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // 昼食の予定を取得または作成
-    const lunch = await getOrCreateMealPlan(today, "LUNCH");
-
-    // 夕食の予定を取得または作成
-    const dinner = await getOrCreateMealPlan(today, "DINNER");
+    const lunch = await this.getOrCreateMealPlan(today, MealType.LUNCH);
+    const dinner = await this.getOrCreateMealPlan(today, MealType.DINNER);
 
     return { lunch, dinner };
-  } catch (error) {
-    logger.error("当日の食事予定取得エラー", error);
-    throw new AppError("当日の食事予定の取得に失敗しました", 500);
   }
-};
 
-/**
- * 翌日の食事予定を取得または作成
- * @returns 昼食と夕食の予定
- */
-export const getOrCreateNextDayMealPlans = async (): Promise<{
-  lunch: MealPlan & {
-    participations: (MealParticipation & { user: User })[];
-    cooker: User | null;
-  };
-  dinner: MealPlan & {
-    participations: (MealParticipation & { user: User })[];
-    cooker: User | null;
-  };
-}> => {
-  try {
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    tomorrow.setHours(0, 0, 0, 0);
+  async getOrCreateMealPlan(
+    date: Date,
+    mealType: MealType,
+    preparationRole?: PreparationRole,
+  ): Promise<MealPlan> {
+    let plan = await this.repository.findByDateAndType(date, mealType);
 
-    // 昼食の予定を取得または作成
-    const lunch = await getOrCreateMealPlan(tomorrow, "LUNCH");
+    if (!plan) {
+      if (mealType === MealType.LUNCH) {
+        plan = MealPlan.createLunchPlan(date);
+      } else {
+        if (!preparationRole) {
+          throw new Error(
+            "Dinner plan creation requires preparer designation.",
+          );
+        }
+        const result = MealPlan.createDinnerPlan(date, preparationRole);
+        if (result.isFailure) {
+          throw new Error(result.error);
+        }
+        plan = result.value;
+      }
 
-    // 夕食の予定を取得または作成
-    const dinner = await getOrCreateMealPlan(tomorrow, "DINNER");
-
-    return { lunch, dinner };
-  } catch (error) {
-    logger.error("翌日の食事予定取得エラー", error);
-    throw new AppError("翌日の食事予定の取得に失敗しました", 500);
-  }
-};
-
-/**
- * 指定日の食事予定を取得または作成
- * @param date 日付
- * @param mealType 食事タイプ
- * @returns 食事予定
- */
-export const getOrCreateMealPlan = async (
-  date: Date,
-  mealType: MealType,
-): Promise<
-  MealPlan & {
-    participations: (MealParticipation & { user: User })[];
-    cooker: User | null;
-  }
-> => {
-  try {
-    // 既存の食事予定を検索
-    let mealPlan = await prisma.mealPlan.findUnique({
-      where: {
-        date_mealType: {
-          date,
-          mealType,
-        },
-      },
-      include: {
-        participations: {
-          include: {
-            user: true,
-          },
-        },
-        cooker: true,
-      },
-    });
-
-    // 存在しない場合は新規作成
-    if (!mealPlan) {
-      mealPlan = await prisma.mealPlan.create({
-        data: {
-          date,
-          mealType,
-          preparationType: "INDIVIDUAL", // デフォルトは各自自由
-        },
-        include: {
-          participations: {
-            include: {
-              user: true,
-            },
-          },
-          cooker: true,
-        },
-      });
-
-      logger.info(
-        `食事予定を新規作成しました: ${date.toISOString()}, ${mealType}`,
-      );
+      plan = await this.repository.save(plan);
     }
 
-    return mealPlan;
-  } catch (error) {
-    logger.error(
-      `食事予定取得/作成エラー: ${date.toISOString()}, ${mealType}`,
-      error,
-    );
-    throw new AppError("食事予定の取得/作成に失敗しました", 500);
+    return plan;
   }
-};
 
-/**
- * 食事予定の参加状況を更新
- * @param mealPlanId 食事予定ID
- * @param userId ユーザーID
- * @param isAttending 参加するかどうか
- * @returns 更新された参加情報
- */
-export const updateMealParticipation = async (
-  mealPlanId: string,
-  userId: string,
-  isAttending: boolean,
-): Promise<MealParticipation> => {
-  try {
-    // 既存の参加情報を検索
-    const existingParticipation = await prisma.mealParticipation.findUnique({
-      where: {
-        mealPlanId_userId: {
-          mealPlanId,
-          userId,
-        },
-      },
-    });
-
-    // 存在する場合は更新、存在しない場合は作成
-    if (existingParticipation) {
-      return await prisma.mealParticipation.update({
-        where: {
-          id: existingParticipation.id,
-        },
-        data: {
-          isAttending,
-        },
-      });
+  async updateParticipation(
+    date: Date,
+    mealType: MealType,
+    person: "Alice" | "Bob",
+    status: ParticipationStatus,
+  ): Promise<Result<MealPlan>> {
+    const plan = await this.repository.findByDateAndType(date, mealType);
+    if (!plan) {
+      return Result.failure("Meal plan not found.");
     }
 
-    return await prisma.mealParticipation.create({
-      data: {
-        mealPlanId,
-        userId,
-        isAttending,
-      },
-    });
-  } catch (error) {
-    logger.error(
-      `食事参加状況更新エラー: ${mealPlanId}, ${userId}, ${isAttending}`,
-      error,
-    );
-    throw new AppError("食事参加状況の更新に失敗しました", 500);
+    const result =
+      person === "Alice"
+        ? plan.changeAliceParticipation(status)
+        : plan.changeBobParticipation(status);
+
+    if (result.isFailure) {
+      return Result.failure(result.error);
+    }
+
+    const savedPlan = await this.repository.save(plan);
+    return Result.success(savedPlan);
   }
-};
 
-/**
- * 食事予定の準備方法を更新
- * @param mealPlanId 食事予定ID
- * @param preparationType 準備タイプ
- * @param cookerId 調理担当者ID（自炊の場合のみ）
- * @returns 更新された食事予定
- */
-export const updateMealPreparation = async (
-  mealPlanId: string,
-  preparationType: PreparationType,
-  cookerId?: string,
-): Promise<MealPlan> => {
-  try {
-    return await prisma.mealPlan.update({
-      where: {
-        id: mealPlanId,
-      },
-      data: {
-        preparationType,
-        cookerId: preparationType === "COOK_BY_SELF" ? cookerId : null,
-      },
-    });
-  } catch (error) {
-    logger.error(
-      `食事準備方法更新エラー: ${mealPlanId}, ${preparationType}, ${cookerId}`,
-      error,
-    );
-    throw new AppError("食事準備方法の更新に失敗しました", 500);
+  async preparerQuits(
+    date: Date,
+    mealType: MealType,
+  ): Promise<Result<MealPlan>> {
+    const plan = await this.repository.findByDateAndType(date, mealType);
+    if (!plan) {
+      return Result.failure("Meal plan not found.");
+    }
+
+    const result = plan.preparerQuits();
+    if (result.isFailure) {
+      return Result.failure(result.error);
+    }
+
+    const savedPlan = await this.repository.save(plan);
+    return Result.success(savedPlan);
   }
-};
-
-/**
- * 指定日の食事予定を取得
- * @param date 日付
- * @param mealType 食事タイプ
- * @returns 食事予定（存在しない場合はnull）
- */
-export const getMealPlan = async (
-  date: Date,
-  mealType: MealType,
-): Promise<
-  | (MealPlan & {
-      participations: (MealParticipation & { user: User })[];
-      cooker: User | null;
-    })
-  | null
-> => {
-  try {
-    return await prisma.mealPlan.findUnique({
-      where: {
-        date_mealType: {
-          date,
-          mealType,
-        },
-      },
-      include: {
-        participations: {
-          include: {
-            user: true,
-          },
-        },
-        cooker: true,
-      },
-    });
-  } catch (error) {
-    logger.error(
-      `食事予定取得エラー: ${date.toISOString()}, ${mealType}`,
-      error,
-    );
-    return null;
-  }
-};
-
-/**
- * 指定期間の食事予定を取得
- * @param startDate 開始日
- * @param endDate 終了日
- * @returns 食事予定の配列
- */
-export const getMealPlans = async (
-  startDate: Date,
-  endDate: Date,
-): Promise<
-  Array<MealPlan & { userId: string; userName: string; attendance: string }>
-> => {
-  try {
-    logger.info(
-      `期間の食事予定を取得: ${startDate.toISOString()} - ${endDate.toISOString()}`,
-    );
-
-    const mealPlans = await prisma.mealPlan.findMany({
-      where: {
-        date: {
-          gte: startDate,
-          lt: endDate,
-        },
-      },
-      include: {
-        participations: {
-          include: {
-            user: true,
-          },
-        },
-        cooker: true,
-      },
-      orderBy: {
-        date: "asc",
-      },
-    });
-
-    // 参加情報をフラット化して返す
-    return mealPlans.flatMap((plan) =>
-      plan.participations.map((participation) => ({
-        id: plan.id,
-        date: plan.date,
-        mealType: plan.mealType,
-        preparationType: plan.preparationType,
-        cookerId: plan.cookerId,
-        createdAt: plan.createdAt,
-        updatedAt: plan.updatedAt,
-        userId: participation.userId,
-        userName: participation.user.name,
-        attendance: participation.isAttending ? "ATTEND" : "ABSENT",
-      })),
-    );
-  } catch (error) {
-    logger.error(
-      `期間の食事予定取得エラー: ${startDate.toISOString()} - ${endDate.toISOString()}`,
-      error,
-    );
-    throw new AppError("期間の食事予定の取得に失敗しました", 500);
-  }
-};
+}
