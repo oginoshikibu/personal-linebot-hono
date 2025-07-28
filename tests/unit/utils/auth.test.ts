@@ -8,7 +8,6 @@ vi.mock("../../../src/config", () => ({
   config: {
     line: {
       channelSecret: "testSecret",
-      allowedLineIds: ["user1", "user2", "user3"],
     },
   },
 }));
@@ -23,24 +22,20 @@ vi.mock("../../../src/lib/logger", () => ({
   },
 }));
 
-// prismaのモック
-vi.mock("../../../src/lib/prisma", () => ({
-  prisma: {
-    user: {
-      findUnique: vi.fn().mockImplementation(({ where }) => {
-        // テスト用のユーザーデータ
-        const testUsers = {
-          user1: { id: "1", lineId: "user1", name: "User 1" },
-          user2: { id: "2", lineId: "user2", name: "User 2" },
-          user3: { id: "3", lineId: "user3", name: "User 3" },
-        };
-        
-        // lineIdに一致するユーザーを返す
-        return Promise.resolve(testUsers[where.lineId] || null);
-      }),
-    },
-  },
-}));
+// 環境変数のモック（Alice/Bob固定システム用）
+const originalEnv = process.env;
+beforeEach(() => {
+  vi.resetModules();
+  process.env = {
+    ...originalEnv,
+    ALICE_LINE_ID: "alice_test_id",
+    BOB_LINE_ID: "bob_test_id",
+  };
+});
+
+afterEach(() => {
+  process.env = originalEnv;
+});
 
 // auth関数をインポート - モック設定の後にインポートする
 import { verifyLineSignature, isAllowedLineId, lineSignatureMiddleware } from "../../../src/utils/auth";
@@ -75,7 +70,6 @@ describe("認証ユーティリティ", () => {
         config: {
           line: {
             channelSecret: "",
-            allowedLineIds: [],
           },
         },
       }));
@@ -96,7 +90,6 @@ describe("認証ユーティリティ", () => {
         config: {
           line: {
             channelSecret: "testSecret",
-            allowedLineIds: ["user1", "user2", "user3"],
           },
         },
       }));
@@ -107,8 +100,13 @@ describe("認証ユーティリティ", () => {
   });
 
   describe("isAllowedLineId関数", () => {
-    it("許可されたLINE IDの場合にtrueを返すこと", async () => {
-      const result = await isAllowedLineId("user1");
+    it("Alice LINE IDの場合にtrueを返すこと", async () => {
+      const result = await isAllowedLineId("alice_test_id");
+      expect(result).toBe(true);
+    });
+
+    it("Bob LINE IDの場合にtrueを返すこと", async () => {
+      const result = await isAllowedLineId("bob_test_id");
       expect(result).toBe(true);
     });
 
