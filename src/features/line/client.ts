@@ -9,7 +9,6 @@ import {
 } from "@line/bot-sdk";
 import { config } from "../../config";
 import { logger } from "../../lib/logger";
-import { prisma } from "../../lib/prisma";
 import { isAllowedLineId } from "../../utils/auth";
 import { AppError } from "../../utils/error";
 
@@ -279,12 +278,15 @@ export class LineClientService {
       const results: MessageAPIResponseBase[] = [];
       const errors: Error[] = [];
 
-      // データベースから全ユーザーを取得
-      const users = await prisma.user.findMany();
+      // Alice/Bobの固定LINE ID（環境変数から取得）
+      const ALICE_LINE_ID = process.env.ALICE_LINE_ID || "alice_line_id";
+      const BOB_LINE_ID = process.env.BOB_LINE_ID || "bob_line_id";
 
-      for (const user of users) {
+      const allowedLineIds = [ALICE_LINE_ID, BOB_LINE_ID];
+
+      for (const lineId of allowedLineIds) {
         try {
-          const result = await this.sendTextMessage(user.lineId, text);
+          const result = await this.sendTextMessage(lineId, text);
           results.push(result);
         } catch (error) {
           if (error instanceof Error) {

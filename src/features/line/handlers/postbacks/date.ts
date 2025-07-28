@@ -1,27 +1,23 @@
-import type { User } from "@prisma/client";
-import { MealType } from "@prisma/client";
+import { DIContainer } from "../../../../di/container";
+import { MealType } from "../../../../domain/entities/MealPlan";
 import { logger } from "../../../../lib/logger";
 import { parseDate } from "../../../../utils/date";
-import { formatDateText } from "../../../../utils/formatter";
-import { getMealPlan } from "../../../meal/services/meal";
-import { getAllUsers } from "../../../meal/services/user";
-import { prepareMealPlanData } from "../../../notification/templates/mealPlan";
 import { replyFlexMessage, replyTextMessage } from "../../client";
 import { createMealPlanFlexMessage } from "../../messages/flex";
 
 /**
  * 日付選択のポストバックを処理
  * @param dateString 日付文字列 (YYYY-MM-DD)
- * @param user ユーザー
+ * @param userName ユーザー名
  * @param replyToken 応答トークン
  */
 export const handleDateSelection = async (
   dateString: string,
-  user: User,
+  userName: string,
   replyToken: string,
 ): Promise<void> => {
   try {
-    logger.info(`日付選択処理: ${dateString}`, { userId: user.lineId });
+    logger.info(`日付選択処理: ${dateString}`, { userName });
 
     const date = parseDate(dateString);
     if (!date) {
@@ -33,33 +29,22 @@ export const handleDateSelection = async (
       return;
     }
 
-    const dateText = formatDateText(date);
+    // DIコンテナからサービスを取得
+    const container = DIContainer.getInstance();
+    const mealService = container.mealPlanService;
 
     // 選択日の昼食と夕食の予定を取得
-    const [lunch, dinner, users] = await Promise.all([
-      getMealPlan(date, MealType.LUNCH),
-      getMealPlan(date, MealType.DINNER),
-      getAllUsers(),
-    ]);
+    const lunch = await mealService.getOrCreateMealPlan(date, MealType.LUNCH);
+    const dinner = await mealService.getOrCreateMealPlan(date, MealType.DINNER);
 
-    // Flexメッセージ用のデータを準備
-    const lunchData = lunch
-      ? prepareMealPlanData(lunch, users)
-      : { participants: [], preparationType: "UNDECIDED" };
+    // Flexメッセージを作成して送信
+    const flexMessage = createMealPlanFlexMessage(date, lunch, dinner);
 
-    const dinnerData = dinner
-      ? prepareMealPlanData(dinner, users)
-      : { participants: [], preparationType: "UNDECIDED" };
-
-    // 編集ボタン付きのFlexメッセージを作成して送信
-    const flexMessage = createMealPlanFlexMessage(
-      `【${dateText}の食事予定】`,
-      lunchData,
-      dinnerData,
-      dateString, // 編集用の日付文字列を渡す
+    await replyFlexMessage(
+      replyToken,
+      flexMessage.contents,
+      flexMessage.altText,
     );
-
-    await replyFlexMessage(replyToken, flexMessage, `${dateText}の食事予定`);
   } catch (error) {
     logger.error("日付選択処理エラー", error);
     await replyTextMessage(

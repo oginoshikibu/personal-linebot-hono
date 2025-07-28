@@ -1,10 +1,8 @@
 import type { TextEventMessage, WebhookEvent } from "@line/bot-sdk";
-import type { User } from "@prisma/client";
-import { MealType } from "@prisma/client";
 import { COMMAND_PREFIX, MESSAGES } from "../../../constants";
+import { DIContainer } from "../../../di/container";
+import { MealType } from "../../../domain/entities/MealPlan";
 import { logger } from "../../../lib/logger";
-import { formatDate } from "../../../utils/date";
-import { formatDateText } from "../../../utils/formatter";
 import {
   handleCalendarCommand,
   handleCheckCommand,
@@ -15,11 +13,12 @@ import {
   send7DayCalendarMessage,
   sendCalendarMessage,
 } from "../../meal/services/calendar";
-import { getMealPlan } from "../../meal/services/meal";
-import { getAllUsers, getUserByLineId } from "../../meal/services/user";
-import { prepareMealPlanData } from "../../notification/templates/mealPlan";
 import { replyFlexMessage, replyTextMessage } from "../client";
 import { createMealPlanFlexMessage } from "../messages/flex";
+
+// Alice/Bobの固定LINE ID（環境変数から取得）
+const ALICE_LINE_ID = process.env.ALICE_LINE_ID || "alice_line_id";
+const BOB_LINE_ID = process.env.BOB_LINE_ID || "bob_line_id";
 
 /**
  * メッセージイベントを処理
@@ -40,45 +39,41 @@ export const handleMessageEvent = async (
   });
 
   try {
-    const user = await getUserByLineId(userId);
-    logger.debug(`ユーザー情報取得: ${userId}`, {
-      found: !!user,
-      userName: user?.name,
-    });
-
-    // ユーザーが登録されていない場合
-    if (!user) {
-      logger.warn(`ユーザーがデータベースに登録されていません: ${userId}`);
+    // Alice/Bobの固定ユーザーのみ処理
+    if (userId !== ALICE_LINE_ID && userId !== BOB_LINE_ID) {
+      logger.warn(`未登録ユーザーからのメッセージ: ${userId}`);
       await replyTextMessage(
         event.replyToken,
         "申し訳ありませんが、システムに登録されていません。管理者に連絡してください。",
       );
-      logger.info(`未登録ユーザーへの通知送信完了: ${userId}`);
       return;
     }
+
+    const userName = userId === ALICE_LINE_ID ? "Alice" : "Bob";
+    logger.debug(`ユーザー情報: ${userName} (${userId})`);
 
     // メッセージタイプに応じて処理
     switch (event.message.type) {
       case "text": {
         const textMessage = event.message;
-        logger.info(`テキストメッセージ処理: ${userId}`, {
+        logger.info(`テキストメッセージ処理: ${userName}`, {
           text:
             textMessage.text.substring(0, 20) +
             (textMessage.text.length > 20 ? "..." : ""),
         });
-        await handleTextMessage(textMessage, user, event.replyToken);
-        logger.info(`テキストメッセージ処理完了: ${userId}`);
+        await handleTextMessage(textMessage, userName, event.replyToken);
+        logger.info(`テキストメッセージ処理完了: ${userName}`);
         break;
       }
       default:
         logger.info(`未対応のメッセージタイプ: ${event.message.type}`, {
-          userId,
+          userId: userName,
         });
         await replyTextMessage(
           event.replyToken,
           "テキストメッセージのみ対応しています。",
         );
-        logger.info(`未対応メッセージタイプの通知送信完了: ${userId}`);
+        logger.info(`未対応メッセージタイプの通知送信完了: ${userName}`);
         break;
     }
   } catch (error) {
@@ -104,12 +99,12 @@ export const handleMessageEvent = async (
 /**
  * テキストメッセージを処理
  * @param message テキストメッセージイベント
- * @param user ユーザー
+ * @param userName ユーザー名（AliceまたはBob）
  * @param replyToken 応答トークン
  */
 export const handleTextMessage = async (
   message: TextEventMessage,
-  user: User,
+  userName: string,
   replyToken: string,
 ): Promise<void> => {
   const text = message.text.trim();
@@ -123,19 +118,19 @@ export const handleTextMessage = async (
       switch (action.toLowerCase()) {
         case "register":
         case "登録":
-          await handleRegisterCommand(args, user, replyToken);
+          await handleRegisterCommand(args, userName, replyToken);
           break;
         case "check":
         case "確認":
-          await handleCheckCommand(args, user, replyToken);
+          await handleCheckCommand(args, userName, replyToken);
           break;
         case "calendar":
         case "カレンダー":
-          await handleCalendarCommand([], user, replyToken);
+          await handleCalendarCommand([], userName, replyToken);
           break;
         case "help":
         case "ヘルプ":
-          await handleHelpCommand([], user, replyToken);
+          await handleHelpCommand([], userName, replyToken);
           break;
         default:
           await replyTextMessage(
@@ -155,16 +150,16 @@ export const handleTextMessage = async (
   try {
     switch (text) {
       case "今日の予定":
-        await handleTodayMenu(user, replyToken);
+        await handleTodayMenu(userName, replyToken);
         break;
       case "明日の予定":
-        await handleTomorrowMenu(user, replyToken);
+        await handleTomorrowMenu(userName, replyToken);
         break;
       case "今週の予定":
-        await handleThisWeekMenu(user, replyToken);
+        await handleThisWeekMenu(userName, replyToken);
         break;
       case "今後の予定":
-        await handleFutureMenu(user, replyToken);
+        await handleFutureMenu(userName, replyToken);
         break;
       default:
         await replyTextMessage(
@@ -180,46 +175,32 @@ export const handleTextMessage = async (
 
 /**
  * 今日の予定メニューを処理
- * @param user ユーザー
+ * @param userName ユーザー名
  * @param replyToken 応答トークン
  */
 const handleTodayMenu = async (
-  _user: User,
+  _userName: string,
   replyToken: string,
 ): Promise<void> => {
   try {
-    // 今日の0時
+    // DIコンテナからサービスを取得
+    const container = DIContainer.getInstance();
+    const mealService = container.mealPlanService;
+
+    // 今日の食事予定を取得
+    const { lunch, dinner } = await mealService.getOrCreateTodayMealPlans();
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // 昼食と夕食の予定を取得
-    const [lunch, dinner, users] = await Promise.all([
-      getMealPlan(today, MealType.LUNCH),
-      getMealPlan(today, MealType.DINNER),
-      getAllUsers(),
-    ]);
+    // Flexメッセージを作成して送信
+    const flexMessage = createMealPlanFlexMessage(today, lunch, dinner);
 
-    const dateText = formatDateText(today);
-    const dateStr = formatDate(today);
-
-    // Flexメッセージ用のデータを準備
-    const lunchData = lunch
-      ? prepareMealPlanData(lunch, users)
-      : { participants: [], preparationType: "UNDECIDED" };
-
-    const dinnerData = dinner
-      ? prepareMealPlanData(dinner, users)
-      : { participants: [], preparationType: "UNDECIDED" };
-
-    // 編集ボタン付きのFlexメッセージを作成して送信
-    const flexMessage = createMealPlanFlexMessage(
-      `【${dateText}の食事予定】`,
-      lunchData,
-      dinnerData,
-      dateStr, // 編集用の日付文字列を渡す
+    await replyFlexMessage(
+      replyToken,
+      flexMessage.contents,
+      flexMessage.altText,
     );
-
-    await replyFlexMessage(replyToken, flexMessage, `${dateText}の食事予定`);
   } catch (error) {
     logger.error("今日の予定表示エラー:", error);
     await replyTextMessage(replyToken, MESSAGES.ERRORS.PROCESSING_ERROR);
@@ -228,46 +209,40 @@ const handleTodayMenu = async (
 
 /**
  * 明日の予定メニューを処理
- * @param user ユーザー
+ * @param userName ユーザー名
  * @param replyToken 応答トークン
  */
 const handleTomorrowMenu = async (
-  _user: User,
+  _userName: string,
   replyToken: string,
 ): Promise<void> => {
   try {
+    // DIコンテナからサービスを取得
+    const container = DIContainer.getInstance();
+    const mealService = container.mealPlanService;
+
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     tomorrow.setHours(0, 0, 0, 0);
 
-    // 昼食と夕食の予定を取得
-    const [lunch, dinner, users] = await Promise.all([
-      getMealPlan(tomorrow, MealType.LUNCH),
-      getMealPlan(tomorrow, MealType.DINNER),
-      getAllUsers(),
-    ]);
-
-    const dateText = formatDateText(tomorrow);
-    const dateStr = formatDate(tomorrow);
-
-    // Flexメッセージ用のデータを準備
-    const lunchData = lunch
-      ? prepareMealPlanData(lunch, users)
-      : { participants: [], preparationType: "UNDECIDED" };
-
-    const dinnerData = dinner
-      ? prepareMealPlanData(dinner, users)
-      : { participants: [], preparationType: "UNDECIDED" };
-
-    // 編集ボタン付きのFlexメッセージを作成して送信
-    const flexMessage = createMealPlanFlexMessage(
-      `【${dateText}の食事予定】`,
-      lunchData,
-      dinnerData,
-      dateStr, // 編集用の日付文字列を渡す
+    // 明日の食事予定を取得または作成
+    const lunch = await mealService.getOrCreateMealPlan(
+      tomorrow,
+      MealType.LUNCH,
+    );
+    const dinner = await mealService.getOrCreateMealPlan(
+      tomorrow,
+      MealType.DINNER,
     );
 
-    await replyFlexMessage(replyToken, flexMessage, `${dateText}の食事予定`);
+    // Flexメッセージを作成して送信
+    const flexMessage = createMealPlanFlexMessage(tomorrow, lunch, dinner);
+
+    await replyFlexMessage(
+      replyToken,
+      flexMessage.contents,
+      flexMessage.altText,
+    );
   } catch (error) {
     logger.error("明日の予定表示エラー:", error);
     await replyTextMessage(replyToken, MESSAGES.ERRORS.PROCESSING_ERROR);
@@ -276,11 +251,11 @@ const handleTomorrowMenu = async (
 
 /**
  * 今週の予定メニューを処理
- * @param user ユーザー
+ * @param userName ユーザー名
  * @param replyToken 応答トークン
  */
 const handleThisWeekMenu = async (
-  user: User,
+  userName: string,
   replyToken: string,
 ): Promise<void> => {
   try {
@@ -289,7 +264,8 @@ const handleThisWeekMenu = async (
     today.setHours(0, 0, 0, 0);
 
     // 7日間カレンダーを送信（返信メッセージとして）
-    await send7DayCalendarMessage(user.lineId, replyToken, today);
+    const lineId = userName === "Alice" ? ALICE_LINE_ID : BOB_LINE_ID;
+    await send7DayCalendarMessage(lineId, replyToken, today);
   } catch (error) {
     logger.error("今週の予定表示エラー:", error);
     // Flexメッセージが失敗した場合は、シンプルなテキストメッセージで対応
@@ -306,11 +282,11 @@ const handleThisWeekMenu = async (
 
 /**
  * 今後の予定メニューを処理
- * @param user ユーザー
+ * @param userName ユーザー名
  * @param replyToken 応答トークン
  */
 const handleFutureMenu = async (
-  _user: User,
+  userName: string,
   replyToken: string,
 ): Promise<void> => {
   try {
@@ -319,7 +295,8 @@ const handleFutureMenu = async (
     today.setHours(0, 0, 0, 0);
 
     // 月間カレンダーを送信（返信メッセージとして）
-    await sendCalendarMessage(_user.lineId, replyToken, today);
+    const lineId = userName === "Alice" ? ALICE_LINE_ID : BOB_LINE_ID;
+    await sendCalendarMessage(lineId, replyToken, today);
   } catch (error) {
     logger.error("今後の予定表示エラー:", error);
     await replyTextMessage(replyToken, MESSAGES.ERRORS.PROCESSING_ERROR);

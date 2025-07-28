@@ -1,113 +1,66 @@
-import type { User } from "@prisma/client";
-import { MealType } from "@prisma/client";
-import { logger } from "../../../../lib/logger";
-import { parseDate } from "../../../../utils/date";
-import { formatDateText } from "../../../../utils/formatter";
+import type { PostbackEvent } from "@line/bot-sdk";
 import {
-  getOrCreateMealPlan,
-  updateMealParticipation,
-  updateMealPreparation,
-} from "../../../meal/services/meal";
-import { replyTemplateMessage, replyTextMessage } from "../../client";
-import { createDinnerOptionsTemplate } from "../../messages/templates";
+  MealType,
+  ParticipationStatus,
+} from "../../../../domain/entities/MealPlan";
+import { parseDate } from "../../../../utils/date";
+import { getUserName } from "../../../../utils/user";
+import type { MealPlanService } from "../../../meal/services/meal";
 
-/**
- * 昼食の予定質問のポストバックを処理
- * @param data ポストバックデータ
- * @param user ユーザー
- * @param replyToken 応答トークン
- */
 export const handleLunchPostback = async (
-  data: string,
-  user: User,
-  replyToken: string,
+  event: PostbackEvent,
+  mealService: MealPlanService,
 ): Promise<void> => {
-  try {
-    logger.info(`昼食ポストバック処理: ${data}`, { userId: user.lineId });
+  const data = new URLSearchParams(event.postback.data);
+  const action = data.get("action");
+  const dateStr = data.get("date");
 
-    // URLSearchParamsを使用してデータをパース
-    const params = new URLSearchParams(data);
-    const dateStr = params.get("date");
-
-    if (!dateStr) {
-      logger.warn("日付が指定されていません", { data });
-      await replyTextMessage(
-        replyToken,
-        "日付が指定されていません。もう一度お試しください。",
-      );
-      return;
-    }
-
-    const date = parseDate(dateStr);
-    if (!date) {
-      logger.warn("無効な日付形式です", { dateStr });
-      await replyTextMessage(
-        replyToken,
-        "無効な日付形式です。もう一度お試しください。",
-      );
-      return;
-    }
-
-    // 昼食の予定を保存
-    const action = data.substring("action=".length).split("&")[0];
-    const attendance = action.replace("lunch_", "");
-
-    // 昼食の食事予定を取得または作成
-    const mealPlan = await getOrCreateMealPlan(date, MealType.LUNCH);
-
-    // 参加状況を更新
-    const isAttending = attendance === "attend" || attendance === "cook";
-    await updateMealParticipation(mealPlan.id, user.id, isAttending);
-
-    // 調理担当の場合は準備方法を更新
-    if (attendance === "cook") {
-      await updateMealPreparation(mealPlan.id, "COOK_BY_SELF", user.id);
-    } else if (attendance === "attend") {
-      await updateMealPreparation(mealPlan.id, "BUY_TOGETHER", undefined);
-    } else if (attendance === "absent") {
-      await updateMealPreparation(mealPlan.id, "INDIVIDUAL", undefined);
-    }
-
-    logger.info(`昼食の予定を保存: ${dateStr}, ${attendance}`, {
-      userId: user.lineId,
-      mealPlanId: mealPlan.id,
-    });
-
-    // 昼食の予定を保存した旨のメッセージを送信
-    const dateText = formatDateText(date);
-
-    // 夕食の予定質問を表示（昼食の予定も含めて返信）
-    const dinnerTemplate = createDinnerOptionsTemplate(dateStr);
-    await replyTemplateMessage(
-      replyToken,
-      dinnerTemplate,
-      `${dateText}の昼食: ${getAttendanceText(attendance)} - 夕食の予定を選択してください`,
-    );
-  } catch (error) {
-    logger.error("昼食ポストバック処理エラー", error);
-    await replyTextMessage(
-      replyToken,
-      "処理中にエラーが発生しました。もう一度お試しください。",
-    );
+  if (!dateStr) {
+    throw new Error("日付が指定されていません");
   }
-};
 
-/**
- * 参加状態のテキストを取得
- * @param attendance 参加状態
- * @returns 参加状態のテキスト
- */
-const getAttendanceText = (attendance: string): string => {
-  switch (attendance) {
-    case "attend":
-      return "参加";
-    case "absent":
-      return "不参加";
-    case "cook":
-      return "自分が作る";
+  const date = parseDate(dateStr);
+  if (!date) {
+    throw new Error("日付の解析に失敗しました");
+  }
+  const userId = event.source.userId;
+  if (!userId) {
+    throw new Error("ユーザーIDが取得できません");
+  }
+  const person = await getUserName(userId);
+
+  switch (action) {
+    case "participate":
+      await mealService.updateParticipation(
+        date,
+        MealType.LUNCH,
+        person,
+        ParticipationStatus.WILL_PARTICIPATE,
+      );
+      break;
+    case "not_participate":
+      await mealService.updateParticipation(
+        date,
+        MealType.LUNCH,
+        person,
+        ParticipationStatus.WILL_NOT_PARTICIPATE,
+      );
+      break;
     case "undecided":
-      return "未定";
-    default:
-      return "不明";
+      if (person === "Bob") {
+        await mealService.updateParticipation(
+          date,
+          MealType.LUNCH,
+          person,
+          ParticipationStatus.UNDECIDED,
+        );
+      }
+      break;
+    case "quit_preparation":
+      await mealService.preparerQuits(date, MealType.LUNCH);
+      break;
   }
+
+  // 更新後の状態を取得（今後の実装で使用予定）
+  await mealService.getOrCreateMealPlan(date, MealType.LUNCH);
 };
