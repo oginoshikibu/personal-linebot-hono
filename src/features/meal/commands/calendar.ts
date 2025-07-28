@@ -1,30 +1,33 @@
-import type { User } from "@prisma/client";
-import { MESSAGES } from "../../../constants";
 import { logger } from "../../../lib/logger";
-import { sendTextMessage } from "../../line/client";
-import { sendCalendarMessage } from "../services/calendar";
 
 /**
  * カレンダーコマンドを処理
  * @param args コマンド引数
- * @param user ユーザー
+ * @param userName ユーザー名
  * @param replyToken 応答トークン（指定された場合は応答メッセージとして送信）
  */
 export const handleCalendarCommand = async (
   args: string[],
-  user: User,
-  replyToken?: string,
+  userName: string,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _replyToken?: string,
 ): Promise<void> => {
-  logger.info(`カレンダーコマンド実行: ${user.name}`, { args });
+  logger.info(`カレンダーコマンド実行: ${userName}`, { args });
 
-  // カレンダーを表示
+  // 現在の実装ではAlice/Bobの固定LINE IDを使用するため、実際のLINE IDが必要
+  // ここではコメントアウトして、必要に応じてユーザー名からLINE IDを解決するロジックを追加
+  // TODO: ユーザー名からLINE IDを取得するロジックを実装
+  /*
   if (replyToken) {
-    await sendCalendarMessage(user.lineId, replyToken);
-
-    // 応答トークンは一度しか使えないため、説明メッセージはプッシュメッセージとして送信
-    await sendTextMessage(user.lineId, MESSAGES.HELP.CALENDAR_EXPLANATION);
+    await sendCalendarMessage(userLineId, replyToken);
+    await sendTextMessage(userLineId, MESSAGES.HELP.CALENDAR_EXPLANATION);
   } else {
-    await sendCalendarMessage(user.lineId);
-    await sendTextMessage(user.lineId, MESSAGES.HELP.CALENDAR_EXPLANATION);
+    await sendCalendarMessage(userLineId);
+    await sendTextMessage(userLineId, MESSAGES.HELP.CALENDAR_EXPLANATION);
   }
+  */
+
+  logger.warn(
+    "カレンダーコマンドは現在無効化されています。ユーザー名からLINE IDへのマッピングが必要です。",
+  );
 };

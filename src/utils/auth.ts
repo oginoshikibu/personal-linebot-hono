@@ -3,7 +3,6 @@ import type { Context, Next } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { config } from "../config";
 import { logger } from "../lib/logger";
-import { prisma } from "../lib/prisma";
 
 /**
  * LINE署名を検証する
@@ -34,18 +33,26 @@ export const verifyLineSignature = (
 
 /**
  * 許可されたLINE IDかどうかを確認する
+ * Alice/Bobの固定LINE IDと照合する
  * @param lineId LINE ID
  * @returns 許可されたIDの場合はtrue、そうでない場合はfalse
  */
 export const isAllowedLineId = async (lineId: string): Promise<boolean> => {
   try {
-    // データベースからユーザーを検索
-    const user = await prisma.user.findUnique({
-      where: { lineId },
-    });
+    // Alice/Bobの固定LINE ID（環境変数から取得）
+    const ALICE_LINE_ID = process.env.ALICE_LINE_ID || "alice_line_id";
+    const BOB_LINE_ID = process.env.BOB_LINE_ID || "bob_line_id";
 
-    // ユーザーが存在すればtrue、存在しなければfalse
-    return !!user;
+    const allowedLineIds = [ALICE_LINE_ID, BOB_LINE_ID];
+
+    // 許可されたLINE IDのリストに含まれているかチェック
+    const isAllowed = allowedLineIds.includes(lineId);
+
+    if (!isAllowed) {
+      logger.warn(`未許可のLINE IDからのアクセス: ${lineId}`);
+    }
+
+    return isAllowed;
   } catch (error) {
     logger.error(`LINE ID検証エラー: ${lineId}`, error);
     return false;

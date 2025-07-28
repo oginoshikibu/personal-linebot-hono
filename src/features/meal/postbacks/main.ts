@@ -1,20 +1,24 @@
-import type { User } from "@prisma/client";
 import { logger } from "../../../lib/logger";
-import { sendTextMessage } from "../../line/client";
 
 /**
  * ポストバックデータを処理
  * @param data ポストバックデータ
  * @param params ポストバックパラメータ
- * @param user ユーザー
+ * @param userName ユーザー名
  */
 export const handlePostbackData = async (
   data: string,
   _params: Record<string, string> | undefined,
-  user: User,
+  userName: string,
 ): Promise<void> => {
-  logger.info(`ポストバックデータ処理: ${user.lineId}`, { data });
+  logger.info(`ポストバックデータ処理: ${userName}`, { data });
 
+  // TODO: ユーザー名からLINE IDを取得するロジックを実装し、以下の処理を有効化
+  logger.warn(
+    "ポストバックハンドラーは現在無効化されています。ユーザー名からLINE IDへのマッピングが必要です。",
+  );
+
+  /*
   // シンプルな形式のポストバック
   if (
     [
@@ -24,17 +28,17 @@ export const handlePostbackData = async (
       "register_tomorrow_dinner",
     ].includes(data)
   ) {
-    logger.debug(`ポストバックデータ処理: ${data}, ユーザー: ${user.name} `);
+    logger.debug(`ポストバックデータ処理: ${data}, ユーザー: ${userName} `);
     // 実際の登録処理はここに実装
-    await sendTextMessage(user.lineId, `${data}の処理を実行しました。`);
+    await sendTextMessage(userLineId, `${data}の処理を実行しました。`);
     return;
   }
 
   // クエリパラメータ形式のポストバック
   if (data.startsWith("confirm_registration")) {
-    logger.debug(`ポストバックデータ処理: ${data}, ユーザー: ${user.name} `);
+    logger.debug(`ポストバックデータ処理: ${data}, ユーザー: ${userName} `);
     // 実際の確認処理はここに実装
-    await sendTextMessage(user.lineId, `${data}の処理を実行しました。`);
+    await sendTextMessage(userLineId, `${data}の処理を実行しました。`);
     return;
   }
 
@@ -45,13 +49,13 @@ export const handlePostbackData = async (
 
     if (action === "register_meal") {
       // 食事登録処理
-      await sendTextMessage(user.lineId, "食事予定を登録しました。");
+      await sendTextMessage(userLineId, "食事予定を登録しました。");
       return;
     }
 
     if (action === "check_meal") {
       // 食事確認処理
-      await sendTextMessage(user.lineId, "食事予定を確認しました。");
+      await sendTextMessage(userLineId, "食事予定を確認しました。");
       return;
     }
   } catch {
@@ -59,9 +63,10 @@ export const handlePostbackData = async (
   }
 
   // 未知のポストバックデータの場合
-  logger.warn(`未知のポストバックデータ: ${data}`, { userId: user.lineId });
+  logger.warn(`未知のポストバックデータ: ${data}`, { userName });
   await sendTextMessage(
-    user.lineId,
+    userLineId,
     "不明な操作が行われました。もう一度お試しください。",
   );
+  */
 };
