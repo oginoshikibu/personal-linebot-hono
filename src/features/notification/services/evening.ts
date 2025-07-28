@@ -1,12 +1,15 @@
+import { DIContainer } from "../../../di/container";
+import { MealType } from "../../../domain/entities/MealPlan";
 import { logger } from "../../../lib/logger";
 import { formatDateJP } from "../../../utils/date";
 import { AppError } from "../../../utils/error";
-import { sendFlexMessage } from "../../line/client";
-import { createMealPlanFlexMessage } from "../../line/messages/flex";
-import { getOrCreateNextDayMealPlans } from "../../meal/services/meal";
-import { getAllUsers } from "../../meal/services/user";
-import { prepareMealPlanData } from "../templates/mealPlan";
+import { sendTextMessage } from "../../line/client";
+import { generateEveningNotification } from "../templates/mealPlan";
 import { logNotification } from "./log";
+
+// Alice/Bobの固定LINE ID（環境変数から取得）
+const ALICE_LINE_ID = process.env.ALICE_LINE_ID || "alice_line_id";
+const BOB_LINE_ID = process.env.BOB_LINE_ID || "bob_line_id";
 
 /**
  * 夜の通知を送信
@@ -15,49 +18,38 @@ export const sendEveningNotification = async (): Promise<void> => {
   try {
     logger.info("夜の通知を送信します...");
 
+    // DIコンテナからサービスを取得
+    const container = DIContainer.getInstance();
+    const mealService = container.mealPlanService;
+
+    // 明日の日付を取得
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0);
+
     // 翌日の食事予定を取得または作成
-    const { lunch, dinner } = await getOrCreateNextDayMealPlans();
-
-    // 全ユーザーを取得
-    const users = await getAllUsers();
-
-    // 食事予定データを準備
-    const lunchData = prepareMealPlanData(
-      {
-        ...lunch,
-        participations: [],
-        cooker: null,
-      },
-      users,
+    const lunch = await mealService.getOrCreateMealPlan(
+      tomorrow,
+      MealType.LUNCH,
     );
-    const dinnerData = prepareMealPlanData(
-      {
-        ...dinner,
-        participations: [],
-        cooker: null,
-      },
-      users,
+    const dinner = await mealService.getOrCreateMealPlan(
+      tomorrow,
+      MealType.DINNER,
     );
 
-    // 明日の日付を日本語形式で取得
-    const tomorrow = formatDateJP(new Date(Date.now() + 24 * 60 * 60 * 1000));
+    // 通知メッセージを生成
+    const message = generateEveningNotification(lunch, dinner);
 
-    // Flexメッセージを作成
-    const flexMessage = createMealPlanFlexMessage(
-      `【明日の食事予定確認】${tomorrow}`,
-      lunchData,
-      dinnerData,
-    );
+    // Alice/Bobに通知を送信
+    const users = [
+      { lineId: ALICE_LINE_ID, name: "Alice" },
+      { lineId: BOB_LINE_ID, name: "Bob" },
+    ];
 
-    // 全ユーザーにFlexメッセージを送信
     let successCount = 0;
     for (const user of users) {
       try {
-        await sendFlexMessage(
-          user.lineId,
-          flexMessage,
-          `明日の食事予定（${tomorrow}）`,
-        );
+        await sendTextMessage(user.lineId, message);
         successCount++;
       } catch (error) {
         logger.error(`ユーザーへの夜の通知送信エラー: ${user.name}`, error);
@@ -65,10 +57,15 @@ export const sendEveningNotification = async (): Promise<void> => {
     }
 
     // 通知ログを記録
-    await logNotification("evening", `明日の食事予定通知（${tomorrow}）`);
+    const tomorrowStr = formatDateJP(tomorrow);
+    await logNotification(
+      "EVENING_REMINDER",
+      `明日の食事予定通知（${tomorrowStr}）`,
+      "ALL",
+    );
 
     logger.info(
-      `夜の通知を送信しました: ${tomorrow}, 成功: ${successCount}/${users.length}`,
+      `夜の通知を送信しました: ${tomorrowStr}, 成功: ${successCount}/${users.length}`,
     );
   } catch (error) {
     logger.error("夜の通知の送信に失敗しました", error);
