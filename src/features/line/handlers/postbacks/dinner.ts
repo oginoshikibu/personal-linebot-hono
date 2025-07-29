@@ -6,7 +6,7 @@ import {
 } from "../../../../domain/entities/MealPlan";
 import { parseDate } from "../../../../utils/date";
 import { getUserName } from "../../../../utils/user";
-import { replyFlexMessage } from "../../client";
+import { replyFlexMessage, replyTextMessage } from "../../client";
 import type { MealPlanService } from "../../../meal/services/meal";
 
 export const handleDinnerPostback = async (
@@ -115,23 +115,38 @@ export const handleDinnerPostback = async (
       );
       break;
     case "participate":
+      console.log(`[DinnerPostback] 参加状態更新: 参加する`);
       await mealService.updateParticipation(
         date,
         MealType.DINNER,
         person,
         ParticipationStatus.WILL_PARTICIPATE,
       );
+      await replyTextMessage(
+        event.replyToken,
+        `${dateStr} ディナーへの参加状態を「参加する」に変更しました。`,
+      );
       break;
     case "not_participate":
+      console.log(`[DinnerPostback] 参加状態更新: 参加しない`);
       await mealService.updateParticipation(
         date,
         MealType.DINNER,
         person,
         ParticipationStatus.WILL_NOT_PARTICIPATE,
       );
+      await replyTextMessage(
+        event.replyToken,
+        `${dateStr} ディナーへの参加状態を「参加しない」に変更しました。`,
+      );
       break;
     case "quit_preparation":
+      console.log(`[DinnerPostback] 準備担当が辞退`);
       await mealService.preparerQuits(date, MealType.DINNER);
+      await replyTextMessage(
+        event.replyToken,
+        `${dateStr} ディナーの準備担当を辞退しました。`,
+      );
       break;
   }
 };

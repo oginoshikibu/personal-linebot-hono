@@ -5,7 +5,7 @@ import {
 } from "../../../../domain/entities/MealPlan";
 import { parseDate } from "../../../../utils/date";
 import { getUserName } from "../../../../utils/user";
-import { replyFlexMessage } from "../../client";
+import { replyFlexMessage, replyTextMessage } from "../../client";
 import type { MealPlanService } from "../../../meal/services/meal";
 
 export const handleLunchPostback = async (
@@ -100,22 +100,33 @@ export const handleLunchPostback = async (
       console.log(`[LunchPostback] 編集メッセージ送信完了`);
       break;
     case "participate":
+      console.log(`[LunchPostback] 参加状態更新: 参加する`);
       await mealService.updateParticipation(
         date,
         MealType.LUNCH,
         person,
         ParticipationStatus.WILL_PARTICIPATE,
       );
+      await replyTextMessage(
+        event.replyToken,
+        `${dateStr} ランチへの参加状態を「参加する」に変更しました。`,
+      );
       break;
     case "not_participate":
+      console.log(`[LunchPostback] 参加状態更新: 参加しない`);
       await mealService.updateParticipation(
         date,
         MealType.LUNCH,
         person,
         ParticipationStatus.WILL_NOT_PARTICIPATE,
       );
+      await replyTextMessage(
+        event.replyToken,
+        `${dateStr} ランチへの参加状態を「参加しない」に変更しました。`,
+      );
       break;
     case "undecided":
+      console.log(`[LunchPostback] 参加状態更新: 未定`);
       if (person === "Bob") {
         await mealService.updateParticipation(
           date,
@@ -123,10 +134,19 @@ export const handleLunchPostback = async (
           person,
           ParticipationStatus.UNDECIDED,
         );
+        await replyTextMessage(
+          event.replyToken,
+          `${dateStr} ランチへの参加状態を「未定」に変更しました。`,
+        );
       }
       break;
     case "quit_preparation":
+      console.log(`[LunchPostback] 準備担当が辞退`);
       await mealService.preparerQuits(date, MealType.LUNCH);
+      await replyTextMessage(
+        event.replyToken,
+        `${dateStr} ランチの準備担当を辞退しました。`,
+      );
       break;
   }
 

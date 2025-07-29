@@ -59,8 +59,13 @@ export const handlePostbackEvent = async (
     });
 
     switch (action) {
-      case "edit_meal": {
+      case "edit_meal":
+      case "participate":
+      case "not_participate":
+      case "undecided":
+      case "quit_preparation": {
         const mealType = params.get("mealType");
+        console.log(`[PostbackHandler] 食事アクション処理: ${action}, mealType: ${mealType}`);
         if (mealType === "LUNCH") {
           await handleLunchPostback(event, mealService);
         } else {
