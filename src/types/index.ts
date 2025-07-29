@@ -1,4 +1,11 @@
-import type { MealType, PreparationType, User } from "@prisma/client";
+// 新しいドメインエンティティをエクスポート
+export {
+  MealPlan,
+  MealType,
+  ParticipationStatus,
+  PreparationRole,
+} from "../domain/entities/MealPlan";
+export { Result } from "../domain/types/Result";
 
 // LINE関連の型
 export interface LineMessage {
@@ -7,25 +14,10 @@ export interface LineMessage {
   [key: string]: unknown;
 }
 
-// 食事予定関連の型
-export interface MealPlanData {
-  participants: { name: string; attending: boolean }[];
-  preparationType: string;
-  cooker?: string;
-}
-
 // 通知関連の型
 export interface NotificationConfig {
   hour: number;
   minute: number;
-}
-
-// コマンド関連の型
-export interface CommandArgs {
-  date?: Date;
-  mealType?: MealType;
-  isAttending?: boolean;
-  preparationType?: PreparationType;
 }
 
 // API レスポンス型
@@ -34,6 +26,3 @@ export interface ApiResponse {
   message: string;
   data?: unknown;
 }
-
-// エクスポートする型
-export type { User };

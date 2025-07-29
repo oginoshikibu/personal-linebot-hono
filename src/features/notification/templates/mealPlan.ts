@@ -1,42 +1,92 @@
-import type { MealParticipation, MealPlan, User } from "@prisma/client";
-import type { MealPlanData } from "../../../types";
+import {
+  type MealPlan,
+  ParticipationStatus,
+  PreparationRole,
+} from "../../../domain/entities/MealPlan";
 
-/**
- * 食事予定データからFlexメッセージ用のデータを作成
- * @param mealPlan 食事予定
- * @param users 全ユーザー
- * @returns Flexメッセージ用のデータ
- */
-export const prepareMealPlanData = (
-  mealPlan: MealPlan & {
-    participations: (MealParticipation & { user: User })[];
-    cooker?: User | null;
-  },
-  users: User[],
-): MealPlanData => {
-  // 参加者データを準備
-  const participants = users.map((user) => {
-    const participation = mealPlan.participations.find(
-      (p) => p.userId === user.id,
-    );
-    return {
-      name: user.name,
-      attending: participation ? participation.isAttending : false,
-    };
-  });
+export const generateMorningNotification = (
+  lunch: MealPlan,
+  dinner: MealPlan,
+): string => {
+  return `【本日の食事予定】
+◆ 昼食
+Alice: ${getParticipationText(lunch.aliceParticipation)}
+Bob: ${getParticipationText(lunch.bobParticipation)}
+準備: ${getPreparationText(lunch.preparationRole)}
 
-  // 調理担当者の名前を取得
-  let cookerName: string | undefined;
-  if (mealPlan.cookerId) {
-    const cooker = users.find((u) => u.id === mealPlan.cookerId);
-    if (cooker) {
-      cookerName = cooker.name;
-    }
+◆ 夕食
+Alice: ${getParticipationText(dinner.aliceParticipation)}
+Bob: ${getParticipationText(dinner.bobParticipation)}
+準備: ${getPreparationText(dinner.preparationRole)}
+
+予定を変更する場合はメニューから「予定変更」を選択してください。`;
+};
+
+export const generateEveningNotification = (
+  lunch: MealPlan,
+  dinner: MealPlan,
+): string => {
+  return `【明日の食事予定確認】
+◆ 昼食
+Alice: ${getParticipationText(lunch.aliceParticipation)}
+Bob: ${getParticipationText(lunch.bobParticipation)}
+準備: ${getPreparationText(lunch.preparationRole)}
+
+◆ 夕食
+Alice: ${getParticipationText(dinner.aliceParticipation)}
+Bob: ${getParticipationText(dinner.bobParticipation)}
+準備: ${getPreparationText(dinner.preparationRole)}
+
+予定を変更する場合はメニューから「予定変更」を選択してください。`;
+};
+
+function getParticipationText(status: ParticipationStatus): string {
+  switch (status) {
+    case ParticipationStatus.WILL_PARTICIPATE:
+      return "参加";
+    case ParticipationStatus.WILL_NOT_PARTICIPATE:
+      return "不参加";
+    case ParticipationStatus.UNDECIDED:
+      return "未定";
+  }
+}
+
+function getPreparationText(role: PreparationRole): string {
+  switch (role) {
+    case PreparationRole.ALICE:
+      return "Aliceが作る";
+    case PreparationRole.BOB:
+      return "Bobが作る";
+    case PreparationRole.NONE:
+      return "なし";
+  }
+}
+
+export function prepareMealPlanData(mealPlan: MealPlan): {
+  participants: string[];
+  preparationType: string;
+} {
+  const participants: string[] = [];
+
+  if (mealPlan.aliceParticipation === ParticipationStatus.WILL_PARTICIPATE) {
+    participants.push("Alice");
+  }
+  if (mealPlan.bobParticipation === ParticipationStatus.WILL_PARTICIPATE) {
+    participants.push("Bob");
   }
 
-  return {
-    participants,
-    preparationType: mealPlan.preparationType,
-    cooker: cookerName,
-  };
-};
+  let preparationType = "UNDECIDED";
+  switch (mealPlan.preparationRole) {
+    case PreparationRole.ALICE:
+      preparationType = "ALICE";
+      break;
+    case PreparationRole.BOB:
+      preparationType = "BOB";
+      break;
+    case PreparationRole.NONE:
+      preparationType = "NONE";
+      break;
+  }
+
+  return { participants, preparationType };
+}

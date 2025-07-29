@@ -1,26 +1,20 @@
-import type { User } from "@prisma/client";
 import { MESSAGES } from "../../../constants";
 import { logger } from "../../../lib/logger";
-import {
-  replyTemplateMessage,
-  replyTextMessage,
-  sendTemplateMessage,
-  sendTextMessage,
-} from "../../line/client";
+import { replyTemplateMessage, replyTextMessage } from "../../line/client";
 import { createCheckMenuTemplate } from "../../line/messages/templates";
 
 /**
  * 確認コマンドを処理
  * @param args コマンド引数
- * @param user ユーザー
+ * @param userName ユーザー名
  * @param replyToken 応答トークン（指定された場合は応答メッセージとして送信）
  */
 export const handleCheckCommand = async (
   args: string[],
-  user: User,
+  userName: string,
   replyToken?: string,
 ): Promise<void> => {
-  logger.info(`確認コマンド実行: ${user.name}`, { args });
+  logger.info(`確認コマンド実行: ${userName}`, { args });
 
   // 引数がない場合は確認オプションを表示
   if (args.length === 0) {
@@ -29,7 +23,9 @@ export const handleCheckCommand = async (
     if (replyToken) {
       await replyTemplateMessage(replyToken, template, "予定確認");
     } else {
-      await sendTemplateMessage(user.lineId, template, "予定確認");
+      // TODO: ユーザー名からLINE IDを取得するロジックを実装
+      // await sendTemplateMessage(userLineId, template, "予定確認");
+      logger.warn("プッシュメッセージの送信は現在無効化されています。");
     }
     return;
   }
@@ -40,6 +36,8 @@ export const handleCheckCommand = async (
   if (replyToken) {
     await replyTextMessage(replyToken, message);
   } else {
-    await sendTextMessage(user.lineId, message);
+    // TODO: ユーザー名からLINE IDを取得するロジックを実装
+    // await sendTextMessage(userLineId, message);
+    logger.warn("プッシュメッセージの送信は現在無効化されています。");
   }
 };

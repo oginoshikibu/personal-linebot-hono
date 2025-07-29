@@ -22,6 +22,8 @@ describe("設定モジュール", () => {
     process.env.LINE_CHANNEL_SECRET = "test_secret";
     process.env.LINE_CHANNEL_ACCESS_TOKEN = "test_token";
     process.env.ALLOWED_LINE_IDS = "id1,id2,id3";
+    process.env.ALICE_LINE_ID = "alice_test_id";
+    process.env.BOB_LINE_ID = "bob_test_id";
     process.env.PORT = "8080";
     process.env.HOST = "127.0.0.1";
     process.env.MORNING_NOTIFICATION_HOUR = "8";
@@ -38,6 +40,8 @@ describe("設定モジュール", () => {
     expect(config.line.channelSecret).toBe("test_secret");
     expect(config.line.channelAccessToken).toBe("test_token");
     expect(config.line.allowedLineIds).toEqual(["id1", "id2", "id3"]);
+    expect(config.line.users.alice).toBe("alice_test_id");
+    expect(config.line.users.bob).toBe("bob_test_id");
     
     // サーバー設定
     expect(config.server.port).toBe(8080);
@@ -53,6 +57,8 @@ describe("設定モジュール", () => {
   it("ALLOWED_LINE_IDSが空の場合、空の配列になること", async () => {
     // 環境変数を設定
     process.env.ALLOWED_LINE_IDS = "";
+    process.env.ALICE_LINE_ID = "alice_test_id";
+    process.env.BOB_LINE_ID = "bob_test_id";
     
     // モジュールをインポート
     const { config } = await import("../../../src/config");
@@ -63,6 +69,8 @@ describe("設定モジュール", () => {
   
   it("通知時間の値が範囲外の場合、デフォルト値が使用されること", async () => {
     // 環境変数を設定（範囲外の値）
+    process.env.ALICE_LINE_ID = "alice_test_id";
+    process.env.BOB_LINE_ID = "bob_test_id";
     process.env.MORNING_NOTIFICATION_HOUR = "24"; // 0-23の範囲外
     process.env.MORNING_NOTIFICATION_MINUTE = "60"; // 0-59の範囲外
     

@@ -1,20 +1,19 @@
-import type { User } from "@prisma/client";
 import { MESSAGES } from "../../../constants";
 import { logger } from "../../../lib/logger";
-import { replyTextMessage, sendTextMessage } from "../../line/client";
+import { replyTextMessage } from "../../line/client";
 
 /**
  * ヘルプコマンドを処理
  * @param args コマンド引数
- * @param user ユーザー
+ * @param userName ユーザー名
  * @param replyToken 応答トークン（指定された場合は応答メッセージとして送信）
  */
 export const handleHelpCommand = async (
   args: string[],
-  user: User,
+  userName: string,
   replyToken?: string,
 ): Promise<void> => {
-  logger.info(`ヘルプコマンド実行: ${user.name}`, { args });
+  logger.info(`ヘルプコマンド実行: ${userName}`, { args });
 
   // 特定のコマンドのヘルプを表示
   if (args.length > 0) {
@@ -24,7 +23,9 @@ export const handleHelpCommand = async (
     if (replyToken) {
       await replyTextMessage(replyToken, message);
     } else {
-      await sendTextMessage(user.lineId, message);
+      // TODO: ユーザー名からLINE IDを取得するロジックを実装
+      // await sendTextMessage(userLineId, message);
+      logger.warn("プッシュメッセージの送信は現在無効化されています。");
     }
     return;
   }
@@ -33,7 +34,9 @@ export const handleHelpCommand = async (
   if (replyToken) {
     await replyTextMessage(replyToken, MESSAGES.HELP.GENERAL);
   } else {
-    await sendTextMessage(user.lineId, MESSAGES.HELP.GENERAL);
+    // TODO: ユーザー名からLINE IDを取得するロジックを実装
+    // await sendTextMessage(userLineId, MESSAGES.HELP.GENERAL);
+    logger.warn("プッシュメッセージの送信は現在無効化されています。");
   }
 };
 

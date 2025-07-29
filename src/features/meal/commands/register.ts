@@ -1,26 +1,20 @@
-import type { User } from "@prisma/client";
 import { MESSAGES } from "../../../constants";
 import { logger } from "../../../lib/logger";
-import {
-  replyTemplateMessage,
-  replyTextMessage,
-  sendTemplateMessage,
-  sendTextMessage,
-} from "../../line/client";
+import { replyTemplateMessage, replyTextMessage } from "../../line/client";
 import { createRegistrationOptionsTemplate } from "../../line/messages/templates";
 
 /**
  * 登録コマンドを処理
  * @param args コマンド引数
- * @param user ユーザー
+ * @param userName ユーザー名
  * @param replyToken 応答トークン（指定された場合は応答メッセージとして送信）
  */
 export const handleRegisterCommand = async (
   args: string[],
-  user: User,
+  userName: string,
   replyToken?: string,
 ): Promise<void> => {
-  logger.info(`登録コマンド実行: ${user.name}`, { args });
+  logger.info(`登録コマンド実行: ${userName}`, { args });
 
   // 引数がない場合は登録オプションを表示
   if (args.length === 0) {
@@ -36,7 +30,11 @@ export const handleRegisterCommand = async (
     if (replyToken) {
       await replyTemplateMessage(replyToken, template, "予定登録");
     } else {
-      await sendTemplateMessage(user.lineId, template, "予定登録");
+      // Push message functionality removed for Alice/Bob fixed user system
+      // Direct message sending is not needed as users interact via LINE webhook
+      logger.info(
+        "Registration template request - webhook interaction expected",
+      );
     }
     return;
   }
@@ -47,6 +45,8 @@ export const handleRegisterCommand = async (
   if (replyToken) {
     await replyTextMessage(replyToken, message);
   } else {
-    await sendTextMessage(user.lineId, message);
+    // Push message functionality removed for Alice/Bob fixed user system
+    // Direct message sending is not needed as users interact via LINE webhook
+    logger.info("Help message request - webhook interaction expected");
   }
 };
