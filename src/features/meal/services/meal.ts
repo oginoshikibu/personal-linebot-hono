@@ -3,7 +3,7 @@ import {
   MealPlan,
   MealType,
   type ParticipationStatus,
-  type PreparationRole,
+  PreparationRole,
 } from "../../../domain/entities/MealPlan";
 import type { MealPlanRepository } from "../../../domain/repositories/MealPlanRepository";
 import { Result } from "../../../domain/types/Result";
@@ -28,7 +28,7 @@ export class MealPlanService {
       console.log(`[MealPlanService] ランチプラン取得完了: ${lunch.id}`);
       
       console.log(`[MealPlanService] ディナープラン取得開始`);
-      const dinner = await this.getOrCreateMealPlan(today, MealType.DINNER);
+      const dinner = await this.getOrCreateMealPlan(today, MealType.DINNER, PreparationRole.BOB);
       console.log(`[MealPlanService] ディナープラン取得完了: ${dinner.id}`);
 
       return { lunch, dinner };
