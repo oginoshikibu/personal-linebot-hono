@@ -17,9 +17,12 @@ export enum ParticipationStatus {
   UNDECIDED = "UNDECIDED",
 }
 
-export const DEFAULT_LUNCH_PREPARER = PreparationRole.BOB;
+export interface IdGenerator {
+  generate(): string;
+}
 
 export class MealPlan {
+  static readonly DEFAULT_LUNCH_PREPARER = PreparationRole.BOB;
   constructor(
     public readonly id: string,
     public readonly date: Date,
@@ -48,12 +51,12 @@ export class MealPlan {
     return this._updatedAt;
   }
 
-  static createLunchPlan(date: Date): MealPlan {
+  static createLunchPlan(date: Date, idGenerator: IdGenerator): MealPlan {
     return new MealPlan(
-      crypto.randomUUID(),
+      idGenerator.generate(),
       date,
       MealType.LUNCH,
-      DEFAULT_LUNCH_PREPARER,
+      MealPlan.DEFAULT_LUNCH_PREPARER,
       ParticipationStatus.WILL_PARTICIPATE,
       ParticipationStatus.WILL_PARTICIPATE,
       1,
@@ -65,16 +68,19 @@ export class MealPlan {
   static createDinnerPlan(
     date: Date,
     preparationRole: PreparationRole,
+    idGenerator: IdGenerator,
   ): Result<MealPlan> {
     if (preparationRole === PreparationRole.NONE) {
-      return Result.failure("Dinner plan requires a designated preparer.");
+      return Result.failure(
+        "Dinner plan creation requires preparationRole parameter to be specified (ALICE or BOB).",
+      );
     }
 
     const aliceParticipation = ParticipationStatus.WILL_PARTICIPATE;
     const bobParticipation = ParticipationStatus.WILL_PARTICIPATE;
 
     const mealPlan = new MealPlan(
-      crypto.randomUUID(),
+      idGenerator.generate(),
       date,
       MealType.DINNER,
       preparationRole,

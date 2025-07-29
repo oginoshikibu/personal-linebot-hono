@@ -1,4 +1,5 @@
 import {
+  type IdGenerator,
   MealPlan,
   MealType,
   type ParticipationStatus,
@@ -8,7 +9,10 @@ import type { MealPlanRepository } from "../../../domain/repositories/MealPlanRe
 import { Result } from "../../../domain/types/Result";
 
 export class MealPlanService {
-  constructor(private readonly repository: MealPlanRepository) {}
+  constructor(
+    private readonly repository: MealPlanRepository,
+    private readonly idGenerator: IdGenerator,
+  ) {}
 
   async getOrCreateTodayMealPlans(): Promise<{
     lunch: MealPlan;
@@ -32,14 +36,18 @@ export class MealPlanService {
 
     if (!plan) {
       if (mealType === MealType.LUNCH) {
-        plan = MealPlan.createLunchPlan(date);
+        plan = MealPlan.createLunchPlan(date, this.idGenerator);
       } else {
         if (!preparationRole) {
           throw new Error(
-            "Dinner plan creation requires preparer designation.",
+            "Dinner plan creation requires preparationRole parameter to be specified (ALICE or BOB).",
           );
         }
-        const result = MealPlan.createDinnerPlan(date, preparationRole);
+        const result = MealPlan.createDinnerPlan(
+          date,
+          preparationRole,
+          this.idGenerator,
+        );
         if (result.isFailure) {
           throw new Error(result.error);
         }

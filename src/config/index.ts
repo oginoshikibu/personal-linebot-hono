@@ -14,6 +14,12 @@ const envSchema = z.object({
     .transform((val) => (val ? val.split(",").map((item) => item.trim()) : []))
     .default(""),
 
+  // 固定ユーザー（必須）
+  ALICE_LINE_ID: z
+    .string()
+    .min(1, "ALICE_LINE_ID is required and cannot be empty"),
+  BOB_LINE_ID: z.string().min(1, "BOB_LINE_ID is required and cannot be empty"),
+
   // サーバー
   PORT: z.coerce.number().int().positive().default(3000),
   HOST: z.string().default("0.0.0.0"),
@@ -47,6 +53,10 @@ export const config = {
     channelSecret: env.LINE_CHANNEL_SECRET,
     channelAccessToken: env.LINE_CHANNEL_ACCESS_TOKEN,
     allowedLineIds: env.ALLOWED_LINE_IDS,
+    users: {
+      alice: env.ALICE_LINE_ID,
+      bob: env.BOB_LINE_ID,
+    },
   },
   server: {
     port: env.PORT,

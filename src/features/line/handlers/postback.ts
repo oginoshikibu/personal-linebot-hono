@@ -2,6 +2,7 @@ import type { PostbackEvent } from "@line/bot-sdk";
 import { DIContainer } from "../../../di/container";
 import { logger } from "../../../lib/logger";
 import { isAllowedLineId } from "../../../utils/auth";
+import { getUserName } from "../../../utils/user";
 import { replyTextMessage } from "../client";
 import { handleDateSelection } from "./postbacks/date";
 import { handleDinnerPostback } from "./postbacks/dinner";
@@ -38,16 +39,8 @@ export const handlePostbackEvent = async (
       return;
     }
 
-    // Alice/Bobの場合はユーザー名を取得
-    const ALICE_LINE_ID = process.env.ALICE_LINE_ID || "alice_line_id";
-    const BOB_LINE_ID = process.env.BOB_LINE_ID || "bob_line_id";
-
-    const userName =
-      userId === ALICE_LINE_ID
-        ? "Alice"
-        : userId === BOB_LINE_ID
-          ? "Bob"
-          : "ユーザー";
+    // Alice/Bobの場合はユーザー名を取得（configから安全に取得）
+    const userName = await getUserName(userId);
 
     logger.debug(`ユーザー情報取得: ${userId}`, {
       allowed: isAllowed,

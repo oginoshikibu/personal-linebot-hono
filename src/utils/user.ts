@@ -1,11 +1,10 @@
-export const getUserName = async (userId: string): Promise<"Alice" | "Bob"> => {
-  const ALICE_USER_ID = process.env.ALICE_USER_ID || "alice_line_id";
-  const BOB_USER_ID = process.env.BOB_USER_ID || "bob_line_id";
+import { config } from "../config";
 
-  if (userId === ALICE_USER_ID) {
+export const getUserName = async (userId: string): Promise<"Alice" | "Bob"> => {
+  if (userId === config.line.users.alice) {
     return "Alice";
   }
-  if (userId === BOB_USER_ID) {
+  if (userId === config.line.users.bob) {
     return "Bob";
   }
 

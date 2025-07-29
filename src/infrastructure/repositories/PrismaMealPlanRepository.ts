@@ -1,9 +1,9 @@
 import type { PrismaClient } from "@prisma/client";
 import {
   MealPlan,
-  type MealType,
-  type ParticipationStatus,
-  type PreparationRole,
+  MealType,
+  ParticipationStatus,
+  PreparationRole,
 } from "../../domain/entities/MealPlan";
 import type { MealPlanRepository } from "../../domain/repositories/MealPlanRepository";
 
@@ -94,14 +94,14 @@ export class PrismaMealPlanRepository implements MealPlanRepository {
     createdAt: Date;
     updatedAt: Date;
   }): MealPlan {
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    const mealType = plan.mealType as MealType;
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    const preparationRole = plan.preparationRole as PreparationRole;
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    const aliceParticipation = plan.aliceParticipation as ParticipationStatus;
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    const bobParticipation = plan.bobParticipation as ParticipationStatus;
+    const mealType = this.parseMealType(plan.mealType);
+    const preparationRole = this.parsePreparationRole(plan.preparationRole);
+    const aliceParticipation = this.parseParticipationStatus(
+      plan.aliceParticipation,
+    );
+    const bobParticipation = this.parseParticipationStatus(
+      plan.bobParticipation,
+    );
 
     return new MealPlan(
       plan.id,
@@ -113,6 +113,41 @@ export class PrismaMealPlanRepository implements MealPlanRepository {
       plan.currentState,
       plan.createdAt,
       plan.updatedAt,
+    );
+  }
+
+  private parseMealType(value: string): MealType {
+    if (value === MealType.LUNCH || value === MealType.DINNER) {
+      return value;
+    }
+    throw new Error(
+      `Invalid MealType: ${value}. Valid values are: LUNCH, DINNER`,
+    );
+  }
+
+  private parsePreparationRole(value: string): PreparationRole {
+    if (
+      value === PreparationRole.ALICE ||
+      value === PreparationRole.BOB ||
+      value === PreparationRole.NONE
+    ) {
+      return value;
+    }
+    throw new Error(
+      `Invalid PreparationRole: ${value}. Valid values are: ALICE, BOB, NONE`,
+    );
+  }
+
+  private parseParticipationStatus(value: string): ParticipationStatus {
+    if (
+      value === ParticipationStatus.WILL_PARTICIPATE ||
+      value === ParticipationStatus.WILL_NOT_PARTICIPATE ||
+      value === ParticipationStatus.UNDECIDED
+    ) {
+      return value;
+    }
+    throw new Error(
+      `Invalid ParticipationStatus: ${value}. Valid values are: WILL_PARTICIPATE, WILL_NOT_PARTICIPATE, UNDECIDED`,
     );
   }
 
