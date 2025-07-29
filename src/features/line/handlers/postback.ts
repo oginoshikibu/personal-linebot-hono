@@ -21,6 +21,8 @@ export const handlePostbackEvent = async (
   logger.info(`ポストバックイベント処理開始: ${userId}`, {
     data: event.postback.data,
   });
+  
+  console.log(`[PostbackHandler] ポストバックデータ詳細: ${event.postback.data}`);
 
   try {
     const container = DIContainer.getInstance();
@@ -50,6 +52,11 @@ export const handlePostbackEvent = async (
     const data = event.postback.data;
     const params = new URLSearchParams(data);
     const action = params.get("action");
+    
+    console.log(`[PostbackHandler] パラメータ解析結果:`, {
+      action,
+      allParams: Object.fromEntries(params.entries()),
+    });
 
     switch (action) {
       case "edit_meal": {
@@ -74,19 +81,25 @@ export const handlePostbackEvent = async (
         break;
       }
       default:
+        console.log(`[PostbackHandler] default分岐でデータ解析: ${data}`);
         if (data.startsWith("date_")) {
+          console.log(`[PostbackHandler] 日付選択処理: ${data.substring(5)}`);
           await handleDateSelection(
             data.substring(5),
             userName,
             event.replyToken,
           );
         } else if (data.startsWith("action=edit")) {
+          console.log(`[PostbackHandler] 編集処理: ${data}`);
           await handleEditPostback(data, userName, event.replyToken);
         } else if (data.startsWith("action=lunch_")) {
+          console.log(`[PostbackHandler] ランチ処理: ${data}`);
           await handleLunchPostback(event, mealService);
         } else if (data.startsWith("action=dinner_")) {
+          console.log(`[PostbackHandler] ディナー処理: ${data}`);
           await handleDinnerPostback(event, mealService);
         } else {
+          console.log(`[PostbackHandler] 未対応データ: ${data}`);
           logger.warn(`未対応のポストバックデータ: ${data}`);
           await replyTextMessage(
             event.replyToken,
