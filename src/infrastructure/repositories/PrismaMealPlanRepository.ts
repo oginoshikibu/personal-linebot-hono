@@ -14,40 +14,74 @@ export class PrismaMealPlanRepository implements MealPlanRepository {
     date: Date,
     mealType: MealType,
   ): Promise<MealPlan | null> {
-    const startOfDay = new Date(date);
-    startOfDay.setHours(0, 0, 0, 0);
+    try {
+      const startOfDay = new Date(date);
+      startOfDay.setHours(0, 0, 0, 0);
 
-    const endOfDay = new Date(date);
-    endOfDay.setHours(23, 59, 59, 999);
+      const endOfDay = new Date(date);
+      endOfDay.setHours(23, 59, 59, 999);
 
-    const plan = await this.prisma.mealPlan.findFirst({
-      where: {
-        date: {
-          gte: startOfDay,
-          lte: endOfDay,
-        },
+      console.log(`[PrismaMealPlanRepository] findByDateAndType開始:`, {
         mealType,
-      },
-    });
+        startOfDay: startOfDay.toISOString(),
+        endOfDay: endOfDay.toISOString(),
+      });
 
-    return plan ? this.toDomain(plan) : null;
+      const plan = await this.prisma.mealPlan.findFirst({
+        where: {
+          date: {
+            gte: startOfDay,
+            lte: endOfDay,
+          },
+          mealType,
+        },
+      });
+
+      console.log(`[PrismaMealPlanRepository] findByDateAndType結果: ${plan ? `見つかった(${plan.id})` : '見つからない'}`);
+
+      return plan ? this.toDomain(plan) : null;
+    } catch (error) {
+      console.error(`[PrismaMealPlanRepository] findByDateAndTypeエラー:`, {
+        mealType,
+        date: date.toISOString(),
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
+      throw error;
+    }
   }
 
   async save(plan: MealPlan): Promise<MealPlan> {
-    const data = this.toPersistence(plan);
+    try {
+      console.log(`[PrismaMealPlanRepository] save開始: ${plan.id}, ${plan.mealType}`);
+      
+      const data = this.toPersistence(plan);
+      console.log(`[PrismaMealPlanRepository] 永続化データ変換完了`);
 
-    const saved = await this.prisma.mealPlan.upsert({
-      where: {
-        date_mealType: {
-          date: plan.date,
-          mealType: plan.mealType,
+      const saved = await this.prisma.mealPlan.upsert({
+        where: {
+          date_mealType: {
+            date: plan.date,
+            mealType: plan.mealType,
+          },
         },
-      },
-      update: data,
-      create: data,
-    });
+        update: data,
+        create: data,
+      });
 
-    return this.toDomain(saved);
+      console.log(`[PrismaMealPlanRepository] upsert完了: ${saved.id}`);
+
+      return this.toDomain(saved);
+    } catch (error) {
+      console.error(`[PrismaMealPlanRepository] saveエラー:`, {
+        planId: plan.id,
+        mealType: plan.mealType,
+        date: plan.date.toISOString(),
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
+      throw error;
+    }
   }
 
   async findByDateRange(from: Date, to: Date): Promise<MealPlan[]> {
