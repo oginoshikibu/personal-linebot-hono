@@ -140,7 +140,12 @@ export const handleTextMessage = async (
       }
       return;
     } catch (error) {
-      logger.error("コマンド処理エラー:", error);
+      logger.error("コマンド処理エラー:", {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        command: action,
+        args,
+      });
       await replyTextMessage(replyToken, MESSAGES.ERRORS.PROCESSING_ERROR);
       return;
     }
@@ -168,7 +173,11 @@ export const handleTextMessage = async (
         );
     }
   } catch (error) {
-    logger.error("テキスト処理エラー:", error);
+    logger.error("テキスト処理エラー:", {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      text: text.substring(0, 50),
+    });
     await replyTextMessage(replyToken, MESSAGES.ERRORS.PROCESSING_ERROR);
   }
 };
@@ -184,17 +193,31 @@ const handleTodayMenu = async (
 ): Promise<void> => {
   try {
     // DIコンテナからサービスを取得
+    logger.info("DIコンテナからサービス取得開始");
     const container = DIContainer.getInstance();
     const mealService = container.mealPlanService;
+    logger.info("MealPlanService取得完了");
 
     // 今日の食事予定を取得
+    logger.info("MealPlanService取得完了、今日の食事予定を取得中");
     const { lunch, dinner } = await mealService.getOrCreateTodayMealPlans();
+    logger.info("今日の食事予定取得完了", {
+      lunchId: lunch.id,
+      dinnerId: dinner.id,
+      lunchType: lunch.mealType,
+      dinnerType: dinner.mealType,
+    });
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
     // Flexメッセージを作成して送信
+    logger.info("Flexメッセージ作成開始");
     const flexMessage = createMealPlanFlexMessage(today, lunch, dinner);
+    logger.info("Flexメッセージ作成完了", {
+      altText: flexMessage.altText,
+      hasContents: !!flexMessage.contents,
+    });
 
     await replyFlexMessage(
       replyToken,
@@ -202,7 +225,11 @@ const handleTodayMenu = async (
       flexMessage.altText,
     );
   } catch (error) {
-    logger.error("今日の予定表示エラー:", error);
+    logger.error("今日の予定表示エラー:", {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      errorType: error?.constructor?.name || typeof error,
+    });
     await replyTextMessage(replyToken, MESSAGES.ERRORS.PROCESSING_ERROR);
   }
 };
@@ -244,7 +271,11 @@ const handleTomorrowMenu = async (
       flexMessage.altText,
     );
   } catch (error) {
-    logger.error("明日の予定表示エラー:", error);
+    logger.error("明日の予定表示エラー:", {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      errorType: error?.constructor?.name || typeof error,
+    });
     await replyTextMessage(replyToken, MESSAGES.ERRORS.PROCESSING_ERROR);
   }
 };
@@ -267,7 +298,11 @@ const handleThisWeekMenu = async (
     const lineId = userName === "Alice" ? ALICE_LINE_ID : BOB_LINE_ID;
     await send7DayCalendarMessage(lineId, replyToken, today);
   } catch (error) {
-    logger.error("今週の予定表示エラー:", error);
+    logger.error("今週の予定表示エラー:", {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      errorType: error?.constructor?.name || typeof error,
+    });
     // Flexメッセージが失敗した場合は、シンプルなテキストメッセージで対応
     try {
       await replyTextMessage(
@@ -275,7 +310,10 @@ const handleThisWeekMenu = async (
         "今週の予定機能で一時的な問題が発生しています。しばらく後にお試しください。\n\n代わりに「今日の予定」「明日の予定」「今後の予定」をお試しください。",
       );
     } catch (fallbackError) {
-      logger.error("フォールバックメッセージ送信エラー:", fallbackError);
+      logger.error("フォールバックメッセージ送信エラー:", {
+        error: fallbackError instanceof Error ? fallbackError.message : String(fallbackError),
+        stack: fallbackError instanceof Error ? fallbackError.stack : undefined,
+      });
     }
   }
 };
@@ -298,7 +336,11 @@ const handleFutureMenu = async (
     const lineId = userName === "Alice" ? ALICE_LINE_ID : BOB_LINE_ID;
     await sendCalendarMessage(lineId, replyToken, today);
   } catch (error) {
-    logger.error("今後の予定表示エラー:", error);
+    logger.error("今後の予定表示エラー:", {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      errorType: error?.constructor?.name || typeof error,
+    });
     await replyTextMessage(replyToken, MESSAGES.ERRORS.PROCESSING_ERROR);
   }
 };
