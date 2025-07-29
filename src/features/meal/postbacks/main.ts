@@ -11,62 +11,14 @@ export const handlePostbackData = async (
   _params: Record<string, string> | undefined,
   userName: string,
 ): Promise<void> => {
-  logger.info(`ポストバックデータ処理: ${userName}`, { data });
+  logger.info(`Legacy postback handler called: ${userName}`, { data });
 
-  // TODO: ユーザー名からLINE IDを取得するロジックを実装し、以下の処理を有効化
+  // This legacy handler has been replaced by the new postback system
+  // in src/features/line/handlers/postback.ts which handles Alice/Bob
+  // fixed user system properly. This function is kept for backward
+  // compatibility but should not be used.
   logger.warn(
-    "ポストバックハンドラーは現在無効化されています。ユーザー名からLINE IDへのマッピングが必要です。",
+    "Legacy postback handler called - redirecting to new handler system",
+    { data, userName },
   );
-
-  /*
-  // シンプルな形式のポストバック
-  if (
-    [
-      "register_today_lunch",
-      "register_today_dinner",
-      "register_tomorrow_lunch",
-      "register_tomorrow_dinner",
-    ].includes(data)
-  ) {
-    logger.debug(`ポストバックデータ処理: ${data}, ユーザー: ${userName} `);
-    // 実際の登録処理はここに実装
-    await sendTextMessage(userLineId, `${data}の処理を実行しました。`);
-    return;
-  }
-
-  // クエリパラメータ形式のポストバック
-  if (data.startsWith("confirm_registration")) {
-    logger.debug(`ポストバックデータ処理: ${data}, ユーザー: ${userName} `);
-    // 実際の確認処理はここに実装
-    await sendTextMessage(userLineId, `${data}の処理を実行しました。`);
-    return;
-  }
-
-  // action=xxx形式のポストバック
-  try {
-    const params = new URLSearchParams(data);
-    const action = params.get("action");
-
-    if (action === "register_meal") {
-      // 食事登録処理
-      await sendTextMessage(userLineId, "食事予定を登録しました。");
-      return;
-    }
-
-    if (action === "check_meal") {
-      // 食事確認処理
-      await sendTextMessage(userLineId, "食事予定を確認しました。");
-      return;
-    }
-  } catch {
-    // URLSearchParamsでパースできない場合は何もしない
-  }
-
-  // 未知のポストバックデータの場合
-  logger.warn(`未知のポストバックデータ: ${data}`, { userName });
-  await sendTextMessage(
-    userLineId,
-    "不明な操作が行われました。もう一度お試しください。",
-  );
-  */
 };

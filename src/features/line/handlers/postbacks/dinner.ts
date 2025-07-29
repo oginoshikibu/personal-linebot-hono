@@ -6,15 +6,15 @@ import {
 } from "../../../../domain/entities/MealPlan";
 import { parseDate } from "../../../../utils/date";
 import { getUserName } from "../../../../utils/user";
-import { replyFlexMessage, replyTextMessage } from "../../client";
 import type { MealPlanService } from "../../../meal/services/meal";
+import { replyFlexMessage, replyTextMessage } from "../../client";
 
 export const handleDinnerPostback = async (
   event: PostbackEvent,
   mealService: MealPlanService,
 ): Promise<void> => {
   console.log(`[DinnerPostback] 処理開始: ${event.postback.data}`);
-  
+
   const data = new URLSearchParams(event.postback.data);
   const action = data.get("action");
   const dateStr = data.get("date");
@@ -38,11 +38,15 @@ export const handleDinnerPostback = async (
   console.log(`[DinnerPostback] ユーザー情報: ${person}, action: ${action}`);
 
   switch (action) {
-    case "edit_meal":
-      console.log(`[DinnerPostback] 編集画面表示処理`);
+    case "edit_meal": {
+      console.log("[DinnerPostback] 編集画面表示処理");
       // 編集画面を表示
-      const mealPlan = await mealService.getOrCreateMealPlan(date, MealType.DINNER, PreparationRole.BOB);
-      
+      const mealPlan = await mealService.getOrCreateMealPlan(
+        date,
+        MealType.DINNER,
+        PreparationRole.BOB,
+      );
+
       // 編集用のFlexeメッセージを作成（簡単な実装）
       const editMessage = {
         type: "flex" as const,
@@ -92,14 +96,15 @@ export const handleDinnerPostback = async (
           },
         },
       };
-      
+
       await replyFlexMessage(
         event.replyToken,
         editMessage.contents,
         editMessage.altText,
       );
-      console.log(`[DinnerPostback] 編集メッセージ送信完了`);
+      console.log("[DinnerPostback] 編集メッセージ送信完了");
       break;
+    }
     case "select_role_alice":
       await mealService.getOrCreateMealPlan(
         date,
@@ -115,7 +120,7 @@ export const handleDinnerPostback = async (
       );
       break;
     case "participate":
-      console.log(`[DinnerPostback] 参加状態更新: 参加する`);
+      console.log("[DinnerPostback] 参加状態更新: 参加する");
       await mealService.updateParticipation(
         date,
         MealType.DINNER,
@@ -128,7 +133,7 @@ export const handleDinnerPostback = async (
       );
       break;
     case "not_participate":
-      console.log(`[DinnerPostback] 参加状態更新: 参加しない`);
+      console.log("[DinnerPostback] 参加状態更新: 参加しない");
       await mealService.updateParticipation(
         date,
         MealType.DINNER,
@@ -141,7 +146,7 @@ export const handleDinnerPostback = async (
       );
       break;
     case "quit_preparation":
-      console.log(`[DinnerPostback] 準備担当が辞退`);
+      console.log("[DinnerPostback] 準備担当が辞退");
       await mealService.preparerQuits(date, MealType.DINNER);
       await replyTextMessage(
         event.replyToken,

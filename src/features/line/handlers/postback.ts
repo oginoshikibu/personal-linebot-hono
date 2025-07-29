@@ -21,8 +21,10 @@ export const handlePostbackEvent = async (
   logger.info(`ポストバックイベント処理開始: ${userId}`, {
     data: event.postback.data,
   });
-  
-  console.log(`[PostbackHandler] ポストバックデータ詳細: ${event.postback.data}`);
+
+  console.log(
+    `[PostbackHandler] ポストバックデータ詳細: ${event.postback.data}`,
+  );
 
   try {
     const container = DIContainer.getInstance();
@@ -52,8 +54,8 @@ export const handlePostbackEvent = async (
     const data = event.postback.data;
     const params = new URLSearchParams(data);
     const action = params.get("action");
-    
-    console.log(`[PostbackHandler] パラメータ解析結果:`, {
+
+    console.log("[PostbackHandler] パラメータ解析結果:", {
       action,
       allParams: Object.fromEntries(params.entries()),
     });
@@ -65,7 +67,9 @@ export const handlePostbackEvent = async (
       case "undecided":
       case "quit_preparation": {
         const mealType = params.get("mealType");
-        console.log(`[PostbackHandler] 食事アクション処理: ${action}, mealType: ${mealType}`);
+        console.log(
+          `[PostbackHandler] 食事アクション処理: ${action}, mealType: ${mealType}`,
+        );
         if (mealType === "LUNCH") {
           await handleLunchPostback(event, mealService);
         } else {

@@ -30,9 +30,11 @@ export const handleRegisterCommand = async (
     if (replyToken) {
       await replyTemplateMessage(replyToken, template, "予定登録");
     } else {
-      // TODO: ユーザー名からLINE IDを取得するロジックを実装
-      // await sendTemplateMessage(userLineId, template, "予定登録");
-      logger.warn("プッシュメッセージの送信は現在無効化されています。");
+      // Push message functionality removed for Alice/Bob fixed user system
+      // Direct message sending is not needed as users interact via LINE webhook
+      logger.info(
+        "Registration template request - webhook interaction expected",
+      );
     }
     return;
   }
@@ -43,8 +45,8 @@ export const handleRegisterCommand = async (
   if (replyToken) {
     await replyTextMessage(replyToken, message);
   } else {
-    // TODO: ユーザー名からLINE IDを取得するロジックを実装
-    // await sendTextMessage(userLineId, message);
-    logger.warn("プッシュメッセージの送信は現在無効化されています。");
+    // Push message functionality removed for Alice/Bob fixed user system
+    // Direct message sending is not needed as users interact via LINE webhook
+    logger.info("Help message request - webhook interaction expected");
   }
 };

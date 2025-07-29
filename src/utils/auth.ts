@@ -40,8 +40,16 @@ export const verifyLineSignature = (
 export const isAllowedLineId = async (lineId: string): Promise<boolean> => {
   try {
     // Alice/Bobの固定LINE ID（環境変数から取得）
-    const ALICE_LINE_ID = process.env.ALICE_LINE_ID || "alice_line_id";
-    const BOB_LINE_ID = process.env.BOB_LINE_ID || "bob_line_id";
+    const ALICE_LINE_ID = process.env.ALICE_LINE_ID;
+    const BOB_LINE_ID = process.env.BOB_LINE_ID;
+
+    // 環境変数が設定されていない場合はエラー
+    if (!ALICE_LINE_ID || !BOB_LINE_ID) {
+      logger.error(
+        "ALICE_LINE_ID or BOB_LINE_ID environment variables are not set",
+      );
+      return false;
+    }
 
     const allowedLineIds = [ALICE_LINE_ID, BOB_LINE_ID];
 

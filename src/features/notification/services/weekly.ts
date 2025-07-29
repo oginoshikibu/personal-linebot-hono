@@ -1,3 +1,4 @@
+import { config } from "../../../config";
 import { logger } from "../../../lib/logger";
 import { send7DayCalendarMessage } from "../../meal/services/calendar";
 
@@ -9,8 +10,8 @@ export const sendWeeklyPlanReminder = async (): Promise<void> => {
     logger.info("週間予定入力リマインダーの送信を開始します");
 
     // Alice/Bobの固定LINE ID（環境変数から取得）
-    const ALICE_LINE_ID = process.env.ALICE_LINE_ID || "alice_line_id";
-    const BOB_LINE_ID = process.env.BOB_LINE_ID || "bob_line_id";
+    const ALICE_LINE_ID = config.line.users.alice;
+    const BOB_LINE_ID = config.line.users.bob;
 
     const users = [
       { lineId: ALICE_LINE_ID, name: "Alice" },

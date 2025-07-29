@@ -1,3 +1,4 @@
+import { config } from "../../../config";
 import { DIContainer } from "../../../di/container";
 import { logger } from "../../../lib/logger";
 import { formatDateJP } from "../../../utils/date";
@@ -7,8 +8,8 @@ import { generateMorningNotification } from "../templates/mealPlan";
 import { logNotification } from "./log";
 
 // Alice/Bobの固定LINE ID（環境変数から取得）
-const ALICE_LINE_ID = process.env.ALICE_LINE_ID || "alice_line_id";
-const BOB_LINE_ID = process.env.BOB_LINE_ID || "bob_line_id";
+const ALICE_LINE_ID = config.line.users.alice;
+const BOB_LINE_ID = config.line.users.bob;
 
 /**
  * 朝の通知を送信

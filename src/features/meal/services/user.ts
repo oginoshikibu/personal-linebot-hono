@@ -10,25 +10,29 @@ import { logger } from "../../../lib/logger";
  * @param lineId LINE ID
  * @returns ユーザー情報（存在しない場合はnull）
  */
-export const getUserByLineId = async (lineId: string): Promise<null> => {
+export const getUserByLineId = async (lineId: string): Promise<never> => {
   // Legacy function - User model no longer exists
   logger.warn(
     `getUserByLineId called with ${lineId} but User model has been removed`,
   );
-  return null;
+  throw new Error(
+    "Fetching user by LINE ID is no longer supported. Using fixed Alice/Bob system.",
+  );
 };
 
 /**
  * 全ユーザーを取得 (Legacy - currently disabled)
  * @returns ユーザーの配列
  */
-export const getAllUsers = async (): Promise<[]> => {
+export const getAllUsers = async (): Promise<never> => {
   // Legacy function - User model no longer exists
   // In the new system, we have fixed Alice/Bob users
   logger.warn(
     "getAllUsers called but User model has been removed. Using fixed Alice/Bob system.",
   );
-  return [];
+  throw new Error(
+    "Fetching all users is no longer supported. Using fixed Alice/Bob system.",
+  );
 };
 
 /**

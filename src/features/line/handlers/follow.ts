@@ -1,4 +1,5 @@
 import type { WebhookEvent } from "@line/bot-sdk";
+import { config } from "../../../config";
 import { logger } from "../../../lib/logger";
 import { isAllowedLineId } from "../../../utils/auth";
 import { sendTextMessage } from "../client";
@@ -33,8 +34,8 @@ export const handleFollowEvent = async (event: WebhookEvent): Promise<void> => {
     }
 
     // Alice/Bobの場合はユーザー名を取得
-    const ALICE_LINE_ID = process.env.ALICE_LINE_ID || "alice_line_id";
-    const BOB_LINE_ID = process.env.BOB_LINE_ID || "bob_line_id";
+    const ALICE_LINE_ID = config.line.users.alice;
+    const BOB_LINE_ID = config.line.users.bob;
 
     const userName =
       userId === ALICE_LINE_ID
