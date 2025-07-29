@@ -21,7 +21,7 @@ export class PrismaMealPlanRepository implements MealPlanRepository {
       const endOfDay = new Date(date);
       endOfDay.setHours(23, 59, 59, 999);
 
-      console.log(`[PrismaMealPlanRepository] findByDateAndType開始:`, {
+      console.log("[PrismaMealPlanRepository] findByDateAndType開始:", {
         mealType,
         startOfDay: startOfDay.toISOString(),
         endOfDay: endOfDay.toISOString(),
@@ -37,11 +37,13 @@ export class PrismaMealPlanRepository implements MealPlanRepository {
         },
       });
 
-      console.log(`[PrismaMealPlanRepository] findByDateAndType結果: ${plan ? `見つかった(${plan.id})` : '見つからない'}`);
+      console.log(
+        `[PrismaMealPlanRepository] findByDateAndType結果: ${plan ? `見つかった(${plan.id})` : "見つからない"}`,
+      );
 
       return plan ? this.toDomain(plan) : null;
     } catch (error) {
-      console.error(`[PrismaMealPlanRepository] findByDateAndTypeエラー:`, {
+      console.error("[PrismaMealPlanRepository] findByDateAndTypeエラー:", {
         mealType,
         date: date.toISOString(),
         error: error instanceof Error ? error.message : String(error),
@@ -53,10 +55,12 @@ export class PrismaMealPlanRepository implements MealPlanRepository {
 
   async save(plan: MealPlan): Promise<MealPlan> {
     try {
-      console.log(`[PrismaMealPlanRepository] save開始: ${plan.id}, ${plan.mealType}`);
-      
+      console.log(
+        `[PrismaMealPlanRepository] save開始: ${plan.id}, ${plan.mealType}`,
+      );
+
       const data = this.toPersistence(plan);
-      console.log(`[PrismaMealPlanRepository] 永続化データ変換完了`);
+      console.log("[PrismaMealPlanRepository] 永続化データ変換完了");
 
       const saved = await this.prisma.mealPlan.upsert({
         where: {
@@ -73,7 +77,7 @@ export class PrismaMealPlanRepository implements MealPlanRepository {
 
       return this.toDomain(saved);
     } catch (error) {
-      console.error(`[PrismaMealPlanRepository] saveエラー:`, {
+      console.error("[PrismaMealPlanRepository] saveエラー:", {
         planId: plan.id,
         mealType: plan.mealType,
         date: plan.date.toISOString(),

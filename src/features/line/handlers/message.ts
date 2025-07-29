@@ -1,7 +1,7 @@
 import type { TextEventMessage, WebhookEvent } from "@line/bot-sdk";
 import { COMMAND_PREFIX, MESSAGES } from "../../../constants";
 import { DIContainer } from "../../../di/container";
-import { MealType } from "../../../domain/entities/MealPlan";
+import { MealType, PreparationRole } from "../../../domain/entities/MealPlan";
 import { logger } from "../../../lib/logger";
 import {
   handleCalendarCommand,
@@ -260,6 +260,7 @@ const handleTomorrowMenu = async (
     const dinner = await mealService.getOrCreateMealPlan(
       tomorrow,
       MealType.DINNER,
+      PreparationRole.BOB,
     );
 
     // Flexメッセージを作成して送信
@@ -311,7 +312,10 @@ const handleThisWeekMenu = async (
       );
     } catch (fallbackError) {
       logger.error("フォールバックメッセージ送信エラー:", {
-        error: fallbackError instanceof Error ? fallbackError.message : String(fallbackError),
+        error:
+          fallbackError instanceof Error
+            ? fallbackError.message
+            : String(fallbackError),
         stack: fallbackError instanceof Error ? fallbackError.stack : undefined,
       });
     }

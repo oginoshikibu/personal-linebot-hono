@@ -1,5 +1,8 @@
 import { DIContainer } from "../../../../di/container";
-import { MealType } from "../../../../domain/entities/MealPlan";
+import {
+  MealType,
+  PreparationRole,
+} from "../../../../domain/entities/MealPlan";
 import { logger } from "../../../../lib/logger";
 import { parseDate } from "../../../../utils/date";
 import { replyFlexMessage, replyTextMessage } from "../../client";
@@ -35,7 +38,11 @@ export const handleDateSelection = async (
 
     // 選択日の昼食と夕食の予定を取得
     const lunch = await mealService.getOrCreateMealPlan(date, MealType.LUNCH);
-    const dinner = await mealService.getOrCreateMealPlan(date, MealType.DINNER);
+    const dinner = await mealService.getOrCreateMealPlan(
+      date,
+      MealType.DINNER,
+      PreparationRole.BOB,
+    );
 
     // Flexメッセージを作成して送信
     const flexMessage = createMealPlanFlexMessage(date, lunch, dinner);
