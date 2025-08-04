@@ -6,6 +6,7 @@ import {
   formatDate,
   formatDateJP,
   formatTime,
+  toLocalISOString,
 } from "../../../src/utils/date";
 
 describe("日付ユーティリティ関数", () => {
@@ -156,6 +157,57 @@ describe("日付ユーティリティ関数", () => {
       const result = formatTime(date);
       
       expect(result).toBe("09:05");
+    });
+  });
+
+  describe("toLocalISOString関数", () => {
+    it("JST環境でタイムゾーンを考慮したISO文字列を返すこと", () => {
+      // JST (GMT+9) 環境でのテスト
+      const date = new Date(2023, 9, 15, 0, 0, 0, 0); // 2023-10-15 00:00:00 JST
+      const result = toLocalISOString(date);
+      
+      // JST 00:00:00 がローカル時刻として正しく変換されること
+      expect(result).toMatch(/^2023-10-15T00:00:00\.000Z$/);
+    });
+
+    it("午前中の時刻でタイムゾーンを考慮したISO文字列を返すこと", () => {
+      const date = new Date(2023, 9, 15, 9, 30, 45, 123); // 2023-10-15 09:30:45.123 JST
+      const result = toLocalISOString(date);
+      
+      expect(result).toMatch(/^2023-10-15T09:30:45\.123Z$/);
+    });
+
+    it("夜の時刻でタイムゾーンを考慮したISO文字列を返すこと", () => {
+      const date = new Date(2023, 9, 15, 23, 59, 59, 999); // 2023-10-15 23:59:59.999 JST
+      const result = toLocalISOString(date);
+      
+      expect(result).toMatch(/^2023-10-15T23:59:59\.999Z$/);
+    });
+
+    it("通常のtoISOString()との違いを確認すること", () => {
+      const date = new Date(2023, 9, 15, 0, 0, 0, 0); // 2023-10-15 00:00:00 JST
+      const normalISO = date.toISOString();
+      const localISO = toLocalISOString(date);
+      
+      // 通常のtoISOString()はUTCに変換される（JST-9時間）
+      expect(normalISO).toMatch(/^2023-10-14T15:00:00\.000Z$/);
+      // toLocalISOString()はローカル時刻を維持
+      expect(localISO).toMatch(/^2023-10-15T00:00:00\.000Z$/);
+      
+      // 2つの結果が異なることを確認
+      expect(normalISO).not.toBe(localISO);
+    });
+
+    it("日付のズレが発生しないことを確認", () => {
+      // 問題が発生していた00:00:00のケースをテスト
+      const startOfDay = new Date(2023, 9, 15);
+      startOfDay.setHours(0, 0, 0, 0);
+      
+      const localISO = toLocalISOString(startOfDay);
+      const dateFromISO = localISO.split('T')[0];
+      
+      // 日付部分が変わらないことを確認
+      expect(dateFromISO).toBe('2023-10-15');
     });
   });
 }); 
