@@ -9,7 +9,7 @@ interface DinnerEditButton {
     label: string;
     data: string;
   };
-  style: "primary" | "secondary";
+  style?: "primary" | "secondary";
 }
 
 /**
