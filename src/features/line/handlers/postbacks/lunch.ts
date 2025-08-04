@@ -1,113 +1,156 @@
-import type { User } from "@prisma/client";
-import { MealType } from "@prisma/client";
-import { logger } from "../../../../lib/logger";
-import { parseDate } from "../../../../utils/date";
-import { formatDateText } from "../../../../utils/formatter";
+import type { PostbackEvent } from "@line/bot-sdk";
 import {
-  getOrCreateMealPlan,
-  updateMealParticipation,
-  updateMealPreparation,
-} from "../../../meal/services/meal";
-import { replyTemplateMessage, replyTextMessage } from "../../client";
-import { createDinnerOptionsTemplate } from "../../messages/templates";
+  MealType,
+  ParticipationStatus,
+} from "../../../../domain/entities/MealPlan";
+import { parseDate } from "../../../../utils/date";
+import { getUserName } from "../../../../utils/user";
+import type { MealPlanService } from "../../../meal/services/meal";
+import { replyFlexMessage, replyTextMessage } from "../../client";
 
-/**
- * 昼食の予定質問のポストバックを処理
- * @param data ポストバックデータ
- * @param user ユーザー
- * @param replyToken 応答トークン
- */
 export const handleLunchPostback = async (
-  data: string,
-  user: User,
-  replyToken: string,
+  event: PostbackEvent,
+  mealService: MealPlanService,
 ): Promise<void> => {
-  try {
-    logger.info(`昼食ポストバック処理: ${data}`, { userId: user.lineId });
+  console.log(`[LunchPostback] 処理開始: ${event.postback.data}`);
 
-    // URLSearchParamsを使用してデータをパース
-    const params = new URLSearchParams(data);
-    const dateStr = params.get("date");
+  const data = new URLSearchParams(event.postback.data);
+  const action = data.get("action");
+  const dateStr = data.get("date");
 
-    if (!dateStr) {
-      logger.warn("日付が指定されていません", { data });
-      await replyTextMessage(
-        replyToken,
-        "日付が指定されていません。もう一度お試しください。",
-      );
-      return;
-    }
+  console.log(`[LunchPostback] パラメータ: action=${action}, date=${dateStr}`);
 
-    const date = parseDate(dateStr);
-    if (!date) {
-      logger.warn("無効な日付形式です", { dateStr });
-      await replyTextMessage(
-        replyToken,
-        "無効な日付形式です。もう一度お試しください。",
-      );
-      return;
-    }
-
-    // 昼食の予定を保存
-    const action = data.substring("action=".length).split("&")[0];
-    const attendance = action.replace("lunch_", "");
-
-    // 昼食の食事予定を取得または作成
-    const mealPlan = await getOrCreateMealPlan(date, MealType.LUNCH);
-
-    // 参加状況を更新
-    const isAttending = attendance === "attend" || attendance === "cook";
-    await updateMealParticipation(mealPlan.id, user.id, isAttending);
-
-    // 調理担当の場合は準備方法を更新
-    if (attendance === "cook") {
-      await updateMealPreparation(mealPlan.id, "COOK_BY_SELF", user.id);
-    } else if (attendance === "attend") {
-      await updateMealPreparation(mealPlan.id, "BUY_TOGETHER", undefined);
-    } else if (attendance === "absent") {
-      await updateMealPreparation(mealPlan.id, "INDIVIDUAL", undefined);
-    }
-
-    logger.info(`昼食の予定を保存: ${dateStr}, ${attendance}`, {
-      userId: user.lineId,
-      mealPlanId: mealPlan.id,
-    });
-
-    // 昼食の予定を保存した旨のメッセージを送信
-    const dateText = formatDateText(date);
-
-    // 夕食の予定質問を表示（昼食の予定も含めて返信）
-    const dinnerTemplate = createDinnerOptionsTemplate(dateStr);
-    await replyTemplateMessage(
-      replyToken,
-      dinnerTemplate,
-      `${dateText}の昼食: ${getAttendanceText(attendance)} - 夕食の予定を選択してください`,
-    );
-  } catch (error) {
-    logger.error("昼食ポストバック処理エラー", error);
-    await replyTextMessage(
-      replyToken,
-      "処理中にエラーが発生しました。もう一度お試しください。",
-    );
+  if (!dateStr) {
+    throw new Error("日付が指定されていません");
   }
-};
 
-/**
- * 参加状態のテキストを取得
- * @param attendance 参加状態
- * @returns 参加状態のテキスト
- */
-const getAttendanceText = (attendance: string): string => {
-  switch (attendance) {
-    case "attend":
-      return "参加";
-    case "absent":
-      return "不参加";
-    case "cook":
-      return "自分が作る";
+  const date = parseDate(dateStr);
+  if (!date) {
+    throw new Error("日付の解析に失敗しました");
+  }
+  const userId = event.source.userId;
+  if (!userId) {
+    throw new Error("ユーザーIDが取得できません");
+  }
+  const person = await getUserName(userId);
+
+  console.log(`[LunchPostbook] ユーザー情報: ${person}, action: ${action}`);
+
+  switch (action) {
+    case "edit_meal": {
+      console.log("[LunchPostback] 編集画面表示処理");
+      // 編集画面を表示
+      const mealPlan = await mealService.getOrCreateMealPlan(
+        date,
+        MealType.LUNCH,
+      );
+
+      // 編集用のFlexメッセージを作成（簡単な実装）
+      const editMessage = {
+        type: "flex" as const,
+        altText: `${dateStr} ランチの編集`,
+        contents: {
+          type: "bubble" as const,
+          header: {
+            type: "box" as const,
+            layout: "vertical" as const,
+            contents: [
+              {
+                type: "text" as const,
+                text: `${dateStr} ランチの編集`,
+                weight: "bold" as const,
+                size: "lg" as const,
+              },
+            ],
+          },
+          body: {
+            type: "box" as const,
+            layout: "vertical" as const,
+            contents: [
+              {
+                type: "text" as const,
+                text: `現在の状態:\nAlice: ${mealPlan.aliceParticipation}\nBob: ${mealPlan.bobParticipation}\n準備担当: ${mealPlan.preparationRole}`,
+                wrap: true,
+              },
+              {
+                type: "button" as const,
+                action: {
+                  type: "postback" as const,
+                  label: "参加する",
+                  data: `action=participate&date=${dateStr}&mealType=LUNCH`,
+                },
+                style: "primary" as const,
+              },
+              {
+                type: "button" as const,
+                action: {
+                  type: "postback" as const,
+                  label: "参加しない",
+                  data: `action=not_participate&date=${dateStr}&mealType=LUNCH`,
+                },
+                style: "secondary" as const,
+              },
+            ],
+          },
+        },
+      };
+
+      await replyFlexMessage(
+        event.replyToken,
+        editMessage.contents,
+        editMessage.altText,
+      );
+      console.log("[LunchPostback] 編集メッセージ送信完了");
+      break;
+    }
+    case "participate":
+      console.log("[LunchPostback] 参加状態更新: 参加する");
+      await mealService.updateParticipation(
+        date,
+        MealType.LUNCH,
+        person,
+        ParticipationStatus.WILL_PARTICIPATE,
+      );
+      await replyTextMessage(
+        event.replyToken,
+        `${dateStr} ランチへの参加状態を「参加する」に変更しました。`,
+      );
+      break;
+    case "not_participate":
+      console.log("[LunchPostback] 参加状態更新: 参加しない");
+      await mealService.updateParticipation(
+        date,
+        MealType.LUNCH,
+        person,
+        ParticipationStatus.WILL_NOT_PARTICIPATE,
+      );
+      await replyTextMessage(
+        event.replyToken,
+        `${dateStr} ランチへの参加状態を「参加しない」に変更しました。`,
+      );
+      break;
     case "undecided":
-      return "未定";
-    default:
-      return "不明";
+      console.log("[LunchPostback] 参加状態更新: 未定");
+      if (person === "Bob") {
+        await mealService.updateParticipation(
+          date,
+          MealType.LUNCH,
+          person,
+          ParticipationStatus.UNDECIDED,
+        );
+        await replyTextMessage(
+          event.replyToken,
+          `${dateStr} ランチへの参加状態を「未定」に変更しました。`,
+        );
+      }
+      break;
+    case "quit_preparation":
+      console.log("[LunchPostback] 準備担当が辞退");
+      await mealService.preparerQuits(date, MealType.LUNCH);
+      await replyTextMessage(
+        event.replyToken,
+        `${dateStr} ランチの準備担当を辞退しました。`,
+      );
+      break;
   }
 };

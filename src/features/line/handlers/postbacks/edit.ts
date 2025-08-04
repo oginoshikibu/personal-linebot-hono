@@ -1,4 +1,3 @@
-import type { User } from "@prisma/client";
 import { logger } from "../../../../lib/logger";
 import { parseDate } from "../../../../utils/date";
 import { replyTemplateMessage, replyTextMessage } from "../../client";
@@ -7,16 +6,16 @@ import { createLunchOptionsTemplate } from "../../messages/templates";
 /**
  * 編集ポストバックを処理
  * @param data ポストバックデータ
- * @param user ユーザー
+ * @param userName ユーザー名
  * @param replyToken 応答トークン
  */
 export const handleEditPostback = async (
   data: string,
-  user: User,
+  userName: string,
   replyToken: string,
 ): Promise<void> => {
   try {
-    logger.info(`編集ポストバック処理: ${data}`, { userId: user.lineId });
+    logger.info(`編集ポストバック処理: ${data}`, { userName });
 
     // URLSearchParamsを使用してデータをパース
     const params = new URLSearchParams(data);

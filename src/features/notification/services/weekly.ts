@@ -1,6 +1,6 @@
+import { config } from "../../../config";
 import { logger } from "../../../lib/logger";
 import { send7DayCalendarMessage } from "../../meal/services/calendar";
-import { getAllUsers } from "../../meal/services/user";
 
 /**
  * 週間予定入力リマインダーを送信
@@ -9,8 +9,14 @@ export const sendWeeklyPlanReminder = async (): Promise<void> => {
   try {
     logger.info("週間予定入力リマインダーの送信を開始します");
 
-    // 全ユーザーを取得
-    const users = await getAllUsers();
+    // Alice/Bobの固定LINE ID（環境変数から取得）
+    const ALICE_LINE_ID = config.line.users.alice;
+    const BOB_LINE_ID = config.line.users.bob;
+
+    const users = [
+      { lineId: ALICE_LINE_ID, name: "Alice" },
+      { lineId: BOB_LINE_ID, name: "Bob" },
+    ];
 
     // 来週の月曜日を開始日として設定
     const nextMonday = getNextMonday();

@@ -1,12 +1,15 @@
+import { config } from "../../../config";
+import { DIContainer } from "../../../di/container";
 import { logger } from "../../../lib/logger";
 import { formatDateJP } from "../../../utils/date";
 import { AppError } from "../../../utils/error";
-import { sendFlexMessage } from "../../line/client";
-import { createMealPlanFlexMessage } from "../../line/messages/flex";
-import { getOrCreateTodayMealPlans } from "../../meal/services/meal";
-import { getAllUsers } from "../../meal/services/user";
-import { prepareMealPlanData } from "../templates/mealPlan";
+import { sendTextMessage } from "../../line/client";
+import { generateMorningNotification } from "../templates/mealPlan";
 import { logNotification } from "./log";
+
+// Alice/Bobの固定LINE ID（環境変数から取得）
+const ALICE_LINE_ID = config.line.users.alice;
+const BOB_LINE_ID = config.line.users.bob;
 
 /**
  * 朝の通知を送信
@@ -15,49 +18,26 @@ export const sendMorningNotification = async (): Promise<void> => {
   try {
     logger.info("朝の通知を送信します...");
 
+    // DIコンテナからサービスを取得
+    const container = DIContainer.getInstance();
+    const mealService = container.mealPlanService;
+
     // 当日の食事予定を取得または作成
-    const { lunch, dinner } = await getOrCreateTodayMealPlans();
+    const { lunch, dinner } = await mealService.getOrCreateTodayMealPlans();
 
-    // 全ユーザーを取得
-    const users = await getAllUsers();
+    // 通知メッセージを生成
+    const message = generateMorningNotification(lunch, dinner);
 
-    // 食事予定データを準備
-    const lunchData = prepareMealPlanData(
-      {
-        ...lunch,
-        participations: [],
-        cooker: null,
-      },
-      users,
-    );
-    const dinnerData = prepareMealPlanData(
-      {
-        ...dinner,
-        participations: [],
-        cooker: null,
-      },
-      users,
-    );
+    // Alice/Bobに通知を送信
+    const users = [
+      { lineId: ALICE_LINE_ID, name: "Alice" },
+      { lineId: BOB_LINE_ID, name: "Bob" },
+    ];
 
-    // 日付を日本語形式で取得
-    const today = formatDateJP();
-
-    // Flexメッセージを作成
-    const flexMessage = createMealPlanFlexMessage(
-      `【本日の食事予定】${today}`,
-      lunchData,
-      dinnerData,
-    );
-
-    // 全ユーザーにFlexメッセージを送信
     let successCount = 0;
     for (const user of users) {
       try {
-        await sendFlexMessage(
-          user.lineId,
-          flexMessage,
-          `本日の食事予定（${today}）`,
-        );
+        await sendTextMessage(user.lineId, message);
         successCount++;
       } catch (error) {
         logger.error(`ユーザーへの朝の通知送信エラー: ${user.name}`, error);
@@ -65,7 +45,12 @@ export const sendMorningNotification = async (): Promise<void> => {
     }
 
     // 通知ログを記録
-    await logNotification("morning", `本日の食事予定通知（${today}）`);
+    const today = formatDateJP();
+    await logNotification(
+      "MORNING_REMINDER",
+      `本日の食事予定通知（${today}）`,
+      "ALL",
+    );
 
     logger.info(
       `朝の通知を送信しました: ${today}, 成功: ${successCount}/${users.length}`,

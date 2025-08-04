@@ -1,12 +1,5 @@
-import type { MealParticipation, MealPlan, User } from "@prisma/client";
+// 新しいドメインモデルでは、これらの型は不要になりました
+// MealPlanエンティティがすべての情報を内包しています
 
-// MealPlanの拡張型
-export type MealPlanWithRelations = MealPlan & {
-  participations: MealParticipationWithUser[];
-  cooker?: User | null;
-};
-
-// MealParticipationの拡張型
-export type MealParticipationWithUser = MealParticipation & {
-  user: User;
-};
+// 必要に応じて、ここに新しい型定義を追加できます
+export type {};

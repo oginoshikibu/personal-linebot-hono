@@ -12,19 +12,7 @@ export {
   createCalendarFlexMessage,
   sendCalendarMessage,
 } from "./services/calendar";
-export {
-  getMealPlan,
-  getOrCreateMealPlan,
-  getOrCreateNextDayMealPlans,
-  getOrCreateTodayMealPlans,
-  updateMealParticipation,
-  updateMealPreparation,
-} from "./services/meal";
-// ユーザーサービス
-export {
-  createUser,
-  deleteUser,
-  getAllUsers,
-  getUserByLineId,
-  updateUser,
-} from "./services/user";
+// 新しいドメインモデルサービス
+export { MealPlanService } from "./services/meal";
+// 新しいドメインモデルでは、Alice/Bobは固定ユーザーとして扱うため
+// ユーザーサービスは不要
