@@ -11,7 +11,15 @@ import { replyFlexMessage, replyTextMessage } from "../../client";
 import { createDinnerEditFlexMessage } from "../../messages/dinner-edit";
 
 /**
- * 編集画面表示処理
+ * Handles displaying the edit screen for a dinner meal plan.
+ *
+ * @param event - The LINE postback event triggering the edit action.
+ * @param mealService - Service for retrieving or creating meal plans.
+ * @param date - The date of the meal to edit.
+ * @param dateStr - The string representation of the meal date (for display).
+ * @param person - The person ("Alice" or "Bob") for whom the edit UI is being shown.
+ *   This determines which user's context is used in the UI flow (e.g., whose role or preferences are displayed).
+ * @returns A promise that resolves when the edit message has been sent.
  */
 const handleEditMeal = async (
   event: PostbackEvent,

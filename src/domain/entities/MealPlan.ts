@@ -136,6 +136,17 @@ export class MealPlan {
     return Result.success();
   }
 
+  /**
+   * Changes the meal preparation role to the specified new preparer.
+   *
+   * This method enforces business rules:
+   * - The preparation role for lunch cannot be changed; attempting to do so will fail.
+   * - The preparation role cannot be set to `NONE` using this method; use `preparerQuits()` instead.
+   * - When the preparation role is changed, the new preparer's participation status is automatically set to `WILL_PARTICIPATE`.
+   *
+   * @param {PreparationRole} newPreparer - The new preparer role to assign. Must be either `ALICE` or `BOB`.
+   * @returns {Result<void>} A Result indicating success, or failure with a message if the change is not allowed.
+   */
   changePreparationRole(newPreparer: PreparationRole): Result<void> {
     if (this.mealType === MealType.LUNCH) {
       return Result.failure("Lunch preparation role cannot be changed.");

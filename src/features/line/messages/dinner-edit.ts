@@ -17,7 +17,28 @@ interface DinnerEditButton {
  * @param dateStr 日付文字列
  * @param mealPlan 食事プラン
  * @param person ユーザー名
- * @returns Flexメッセージの内容
+ * @returns {{
+ *   type: "flex",
+ *   altText: string,
+ *   contents: {
+ *     type: "bubble",
+ *     header: {
+ *       type: "box",
+ *       layout: "vertical",
+ *       contents: Array<{ type: "text", text: string, weight: string, size: string }>
+ *     },
+ *     body: {
+ *       type: "box",
+ *       layout: "vertical",
+ *       contents: Array<{ type: "text", text: string, wrap: boolean } | DinnerEditButton>
+ *     }
+ *   }
+ * }}
+ * - type: Always "flex"
+ * - altText: Flexメッセージの代替テキスト
+ * - contents: FlexBubbleオブジェクト。typeは"bubble"で、headerとbodyが設定されます。
+ *   - header: タイトルテキストを含むボックス
+ *   - body: 現在の状態テキストと編集用ボタンの配列
  */
 export const createDinnerEditFlexMessage = (
   dateStr: string,
