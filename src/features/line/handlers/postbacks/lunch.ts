@@ -3,7 +3,9 @@ import {
   MealType,
   ParticipationStatus,
 } from "../../../../domain/entities/MealPlan";
+import { logger } from "../../../../lib/logger";
 import { parseDate } from "../../../../utils/date";
+import { AppError } from "../../../../utils/error";
 import { getUserName } from "../../../../utils/user";
 import type { MealPlanService } from "../../../meal/services/meal";
 import { replyFlexMessage, replyTextMessage } from "../../client";
@@ -12,33 +14,34 @@ export const handleLunchPostback = async (
   event: PostbackEvent,
   mealService: MealPlanService,
 ): Promise<void> => {
-  console.log(`[LunchPostback] 処理開始: ${event.postback.data}`);
+  try {
+    logger.info(`[LunchPostback] 処理開始: ${event.postback.data}`);
 
-  const data = new URLSearchParams(event.postback.data);
-  const action = data.get("action");
-  const dateStr = data.get("date");
+    const data = new URLSearchParams(event.postback.data);
+    const action = data.get("action");
+    const dateStr = data.get("date");
 
-  console.log(`[LunchPostback] パラメータ: action=${action}, date=${dateStr}`);
+    logger.debug(`[LunchPostback] パラメータ: action=${action}, date=${dateStr}`);
 
-  if (!dateStr) {
-    throw new Error("日付が指定されていません");
-  }
+    if (!dateStr) {
+      throw new AppError("日付が指定されていません", 400);
+    }
 
-  const date = parseDate(dateStr);
-  if (!date) {
-    throw new Error("日付の解析に失敗しました");
-  }
-  const userId = event.source.userId;
-  if (!userId) {
-    throw new Error("ユーザーIDが取得できません");
-  }
-  const person = await getUserName(userId);
+    const date = parseDate(dateStr);
+    if (!date) {
+      throw new AppError("日付の解析に失敗しました", 400);
+    }
+    const userId = event.source.userId;
+    if (!userId) {
+      throw new AppError("ユーザーIDが取得できません", 400);
+    }
+    const person = await getUserName(userId);
 
-  console.log(`[LunchPostbook] ユーザー情報: ${person}, action: ${action}`);
+    logger.debug(`[LunchPostbook] ユーザー情報: ${person}, action: ${action}`);
 
   switch (action) {
     case "edit_meal": {
-      console.log("[LunchPostback] 編集画面表示処理");
+      logger.debug("[LunchPostback] 編集画面表示処理");
       // 編集画面を表示
       const mealPlan = await mealService.getOrCreateMealPlan(
         date,
@@ -100,11 +103,11 @@ export const handleLunchPostback = async (
         editMessage.contents,
         editMessage.altText,
       );
-      console.log("[LunchPostback] 編集メッセージ送信完了");
+      logger.debug("[LunchPostback] 編集メッセージ送信完了");
       break;
     }
     case "participate":
-      console.log("[LunchPostback] 参加状態更新: 参加する");
+      logger.debug("[LunchPostback] 参加状態更新: 参加する");
       await mealService.updateParticipation(
         date,
         MealType.LUNCH,
@@ -117,7 +120,7 @@ export const handleLunchPostback = async (
       );
       break;
     case "not_participate":
-      console.log("[LunchPostback] 参加状態更新: 参加しない");
+      logger.debug("[LunchPostback] 参加状態更新: 参加しない");
       await mealService.updateParticipation(
         date,
         MealType.LUNCH,
@@ -130,7 +133,7 @@ export const handleLunchPostback = async (
       );
       break;
     case "undecided":
-      console.log("[LunchPostback] 参加状態更新: 未定");
+      logger.debug("[LunchPostback] 参加状態更新: 未定");
       if (person === "Bob") {
         await mealService.updateParticipation(
           date,
@@ -145,12 +148,38 @@ export const handleLunchPostback = async (
       }
       break;
     case "quit_preparation":
-      console.log("[LunchPostback] 準備担当が辞退");
+      logger.debug("[LunchPostback] 準備担当が辞退");
       await mealService.preparerQuits(date, MealType.LUNCH);
       await replyTextMessage(
         event.replyToken,
         `${dateStr} ランチの準備担当を辞退しました。`,
       );
       break;
+    default:
+      throw new AppError(`未知のアクション: ${action}`, 400);
+  }
+  } catch (error) {
+    logger.error("[LunchPostback] エラーが発生しました", {
+      postbackData: event.postback.data,
+      userId: event.source.userId,
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+
+    try {
+      await replyTextMessage(
+        event.replyToken,
+        "ランチの設定処理中にエラーが発生しました。もう一度お試しください。",
+      );
+    } catch (replyError) {
+      logger.error("[LunchPostback] 応答メッセージ送信エラー", {
+        error: replyError instanceof Error ? replyError.message : String(replyError),
+      });
+    }
+
+    if (error instanceof AppError) {
+      throw error;
+    }
+    throw new AppError("ランチの設定処理に失敗しました", 500);
   }
 };

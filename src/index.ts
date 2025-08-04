@@ -5,7 +5,7 @@ import { logger as honoLogger } from "hono/logger";
 import { config } from "./config";
 import { initializeLineNotification } from "./features/line/client";
 import { setupCronJobs } from "./features/notification/cron";
-import { globalErrorHandler } from "./lib/errors";
+import { globalErrorHandler } from "./utils/error";
 import { logger } from "./lib/logger";
 import { setupRoutes } from "./routes";
 

@@ -31,7 +31,7 @@ export const handleRegisterCommand = async (
     if (replyToken) {
       await replyTemplateMessage(replyToken, template, "予定登録");
     } else {
-      // Push message functionality removed for Alice/Bob fixed user system
+      // Push message functionality removed for @alice/@bob fixed user system
       // Direct message sending is not needed as users interact via LINE webhook
       logger.info(
         "Registration template request - webhook interaction expected",
@@ -46,7 +46,7 @@ export const handleRegisterCommand = async (
   if (replyToken) {
     await replyTextMessage(replyToken, message);
   } else {
-    // Push message functionality removed for Alice/Bob fixed user system
+    // Push message functionality removed for @alice/@bob fixed user system
     // Direct message sending is not needed as users interact via LINE webhook
     logger.info("Help message request - webhook interaction expected");
   }

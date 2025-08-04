@@ -39,6 +39,21 @@ const envSchema = z.object({
     .min(0)
     .max(59)
     .default(0),
+  
+  // 週間リマインダー設定
+  WEEKLY_REMINDER_HOUR: z.coerce.number().int().min(0).max(23).default(21),
+  WEEKLY_REMINDER_MINUTE: z.coerce.number().int().min(0).max(59).default(0),
+  WEEKLY_REMINDER_DAY: z.coerce.number().int().min(0).max(6).default(0), // 0 = 日曜日
+  
+  // ファイルパス設定
+  ASSETS_DIR: z.string().default("assets"),
+  TEMP_DIR: z.string().default("temp"),
+  RICHMENU_IMAGE_PATH: z.string().default("assets/images/richmenu.png"),
+  
+  // リッチメニューUI設定
+  RICHMENU_SUBTEXT_VERTICAL_OFFSET: z.coerce.number().default(30),
+  RICHMENU_SUBTEXT_VERTICAL_SPACING: z.coerce.number().default(60),
+  RICHMENU_BORDER_PADDING: z.coerce.number().default(2),
 });
 
 // 環境変数のバリデーション
@@ -70,6 +85,23 @@ export const config = {
     evening: {
       hour: env.EVENING_NOTIFICATION_HOUR,
       minute: env.EVENING_NOTIFICATION_MINUTE,
+    },
+    weekly: {
+      hour: env.WEEKLY_REMINDER_HOUR,
+      minute: env.WEEKLY_REMINDER_MINUTE,
+      day: env.WEEKLY_REMINDER_DAY,
+    },
+  },
+  paths: {
+    assets: env.ASSETS_DIR,
+    temp: env.TEMP_DIR,
+    richMenuImage: env.RICHMENU_IMAGE_PATH,
+  },
+  richMenu: {
+    ui: {
+      subtextVerticalOffset: env.RICHMENU_SUBTEXT_VERTICAL_OFFSET,
+      subtextVerticalSpacing: env.RICHMENU_SUBTEXT_VERTICAL_SPACING,
+      borderPadding: env.RICHMENU_BORDER_PADDING,
     },
   },
 };

@@ -1,9 +1,9 @@
 import type { FlexMessage } from "@line/bot-sdk";
+import type { MealPlan } from "../../../domain/entities/MealPlan";
 import {
-  type MealPlan,
-  ParticipationStatus,
-  PreparationRole,
-} from "../../../domain/entities/MealPlan";
+  formatParticipationStatus,
+  formatPreparationRoleForDisplay,
+} from "../../../utils/mealPlanFormatters";
 import { formatDate } from "../../../utils/date";
 
 export const createMealPlanFlexMessage = (
@@ -44,7 +44,7 @@ export const createMealPlanFlexMessage = (
               },
               {
                 type: "text",
-                text: `Alice: ${getParticipationText(lunch.aliceParticipation)}\nBob: ${getParticipationText(lunch.bobParticipation)}\n準備: ${getPreparationText(lunch.preparationRole)}`,
+                text: `Alice: ${formatParticipationStatus(lunch.aliceParticipation)}\nBob: ${formatParticipationStatus(lunch.bobParticipation)}\n準備: ${formatPreparationRoleForDisplay(lunch.preparationRole)}`,
                 size: "sm",
                 wrap: true,
               },
@@ -62,7 +62,7 @@ export const createMealPlanFlexMessage = (
               },
               {
                 type: "text",
-                text: `Alice: ${getParticipationText(dinner.aliceParticipation)}\nBob: ${getParticipationText(dinner.bobParticipation)}\n準備: ${getPreparationText(dinner.preparationRole)}`,
+                text: `Alice: ${formatParticipationStatus(dinner.aliceParticipation)}\nBob: ${formatParticipationStatus(dinner.bobParticipation)}\n準備: ${formatPreparationRoleForDisplay(dinner.preparationRole)}`,
                 size: "sm",
                 wrap: true,
               },
@@ -100,24 +100,3 @@ export const createMealPlanFlexMessage = (
   };
 };
 
-function getParticipationText(status: ParticipationStatus): string {
-  switch (status) {
-    case ParticipationStatus.WILL_PARTICIPATE:
-      return "参加";
-    case ParticipationStatus.WILL_NOT_PARTICIPATE:
-      return "不参加";
-    case ParticipationStatus.UNDECIDED:
-      return "未定";
-  }
-}
-
-function getPreparationText(role: PreparationRole): string {
-  switch (role) {
-    case PreparationRole.ALICE:
-      return "Aliceが作る";
-    case PreparationRole.BOB:
-      return "Bobが作る";
-    case PreparationRole.NONE:
-      return "なし";
-  }
-}

@@ -1,6 +1,6 @@
 import type { TextEventMessage, WebhookEvent } from "@line/bot-sdk";
-import { config } from "../../../config";
 import { COMMAND_PREFIX, MESSAGES } from "../../../constants";
+import { getUserByLineId, type UserInfo } from "../../../constants/users";
 import { DIContainer } from "../../../di/container";
 import { MealType, PreparationRole } from "../../../domain/entities/MealPlan";
 import { logger } from "../../../lib/logger";
@@ -16,10 +16,6 @@ import {
 } from "../../meal/services/calendar";
 import { replyFlexMessage, replyTextMessage } from "../client";
 import { createMealPlanFlexMessage } from "../messages/flex";
-
-// Alice/Bobの固定LINE ID（環境変数から取得）
-const ALICE_LINE_ID = config.line.users.alice;
-const BOB_LINE_ID = config.line.users.bob;
 
 /**
  * メッセージイベントを処理
@@ -40,8 +36,11 @@ export const handleMessageEvent = async (
   });
 
   try {
-    // Alice/Bobの固定ユーザーのみ処理
-    if (userId !== ALICE_LINE_ID && userId !== BOB_LINE_ID) {
+    // 登録ユーザーのみ処理
+    let user: UserInfo;
+    try {
+      user = getUserByLineId(userId);
+    } catch {
       logger.warn(`未登録ユーザーからのメッセージ: ${userId}`);
       await replyTextMessage(
         event.replyToken,
@@ -50,7 +49,7 @@ export const handleMessageEvent = async (
       return;
     }
 
-    const userName = userId === ALICE_LINE_ID ? "Alice" : "Bob";
+    const userName = user.name;
     logger.debug(`ユーザー情報: ${userName} (${userId})`);
 
     // メッセージタイプに応じて処理
@@ -62,7 +61,7 @@ export const handleMessageEvent = async (
             textMessage.text.substring(0, 20) +
             (textMessage.text.length > 20 ? "..." : ""),
         });
-        await handleTextMessage(textMessage, userName, event.replyToken);
+        await handleTextMessage(textMessage, user, event.replyToken);
         logger.info(`テキストメッセージ処理完了: ${userName}`);
         break;
       }
@@ -100,12 +99,12 @@ export const handleMessageEvent = async (
 /**
  * テキストメッセージを処理
  * @param message テキストメッセージイベント
- * @param userName ユーザー名（AliceまたはBob）
+ * @param userName ユーザー名（@aliceまたは@bob）
  * @param replyToken 応答トークン
  */
 export const handleTextMessage = async (
   message: TextEventMessage,
-  userName: string,
+  user: UserInfo,
   replyToken: string,
 ): Promise<void> => {
   const text = message.text.trim();
@@ -119,19 +118,19 @@ export const handleTextMessage = async (
       switch (action.toLowerCase()) {
         case "register":
         case "登録":
-          await handleRegisterCommand(args, userName, replyToken);
+          await handleRegisterCommand(args, user.name, replyToken);
           break;
         case "check":
         case "確認":
-          await handleCheckCommand(args, userName, replyToken);
+          await handleCheckCommand(args, user.name, replyToken);
           break;
         case "calendar":
         case "カレンダー":
-          await handleCalendarCommand([], userName, replyToken);
+          await handleCalendarCommand([], user.name, replyToken);
           break;
         case "help":
         case "ヘルプ":
-          await handleHelpCommand([], userName, replyToken);
+          await handleHelpCommand([], user.name, replyToken);
           break;
         default:
           await replyTextMessage(
@@ -156,16 +155,16 @@ export const handleTextMessage = async (
   try {
     switch (text) {
       case "今日の予定":
-        await handleTodayMenu(userName, replyToken);
+        await handleTodayMenu(user.name, replyToken);
         break;
       case "明日の予定":
-        await handleTomorrowMenu(userName, replyToken);
+        await handleTomorrowMenu(user.name, replyToken);
         break;
       case "今週の予定":
-        await handleThisWeekMenu(userName, replyToken);
+        await handleThisWeekMenu(user, replyToken);
         break;
       case "今後の予定":
-        await handleFutureMenu(userName, replyToken);
+        await handleFutureMenu(user, replyToken);
         break;
       default:
         await replyTextMessage(
@@ -284,11 +283,11 @@ const handleTomorrowMenu = async (
 
 /**
  * 今週の予定メニューを処理
- * @param userName ユーザー名
+ * @param user ユーザー情報
  * @param replyToken 応答トークン
  */
 const handleThisWeekMenu = async (
-  userName: string,
+  user: UserInfo,
   replyToken: string,
 ): Promise<void> => {
   try {
@@ -297,7 +296,7 @@ const handleThisWeekMenu = async (
     today.setHours(0, 0, 0, 0);
 
     // 7日間カレンダーを送信（返信メッセージとして）
-    const lineId = userName === "Alice" ? ALICE_LINE_ID : BOB_LINE_ID;
+    const lineId = user.lineId;
     await send7DayCalendarMessage(lineId, replyToken, today);
   } catch (error) {
     logger.error("今週の予定表示エラー:", {
@@ -325,11 +324,11 @@ const handleThisWeekMenu = async (
 
 /**
  * 今後の予定メニューを処理
- * @param userName ユーザー名
+ * @param user ユーザー情報
  * @param replyToken 応答トークン
  */
 const handleFutureMenu = async (
-  userName: string,
+  user: UserInfo,
   replyToken: string,
 ): Promise<void> => {
   try {
@@ -338,7 +337,7 @@ const handleFutureMenu = async (
     today.setHours(0, 0, 0, 0);
 
     // 月間カレンダーを送信（返信メッセージとして）
-    const lineId = userName === "Alice" ? ALICE_LINE_ID : BOB_LINE_ID;
+    const lineId = user.lineId;
     await sendCalendarMessage(lineId, replyToken, today);
   } catch (error) {
     logger.error("今後の予定表示エラー:", {

@@ -8,6 +8,7 @@ import {
 import type { MealPlanRepository } from "../../../domain/repositories/MealPlanRepository";
 import { Result } from "../../../domain/types/Result";
 import { toLocalISOString } from "../../../utils/date";
+import { logger } from "../../../lib/logger";
 
 export class MealPlanService {
   constructor(
@@ -38,7 +39,7 @@ export class MealPlanService {
 
       return { lunch, dinner };
     } catch (error) {
-      console.error("[MealPlanService] getOrCreateTodayMealPlansエラー:", {
+      logger.error("[MealPlanService] getOrCreateTodayMealPlansエラー", {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
       });
@@ -82,7 +83,7 @@ export class MealPlanService {
             this.idGenerator,
           );
           if (result.isFailure) {
-            console.error(
+            logger.error(
               `[MealPlanService] ディナープラン作成エラー: ${result.error}`,
             );
             throw new Error(result.error);
@@ -98,7 +99,7 @@ export class MealPlanService {
 
       return plan;
     } catch (error) {
-      console.error("[MealPlanService] getOrCreateMealPlanエラー:", {
+      logger.error("[MealPlanService] getOrCreateMealPlanエラー", {
         mealType,
         date: toLocalISOString(date),
         preparationRole,

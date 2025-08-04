@@ -104,8 +104,8 @@ const CANVAS_CONSTANTS = {
   SUBTEXT_FONT: '32px "Noto Sans CJK JP", "Hiragino Sans", sans-serif',
 
   // 垂直配置
-  SUBTEXT_VERTICAL_OFFSET: 30,
-  SUBTEXT_VERTICAL_SPACING: 60,
+  SUBTEXT_VERTICAL_OFFSET: config.richMenu.ui.subtextVerticalOffset,
+  SUBTEXT_VERTICAL_SPACING: config.richMenu.ui.subtextVerticalSpacing,
 
   // アクセントインジケーター
   ACCENT_INDICATOR_OFFSET_X: 10,
@@ -119,7 +119,7 @@ const CANVAS_CONSTANTS = {
 
   // ボーダー
   BORDER_WIDTH: 2,
-  BORDER_PADDING: 2,
+  BORDER_PADDING: config.richMenu.ui.borderPadding,
 } as const;
 
 /**
@@ -164,7 +164,7 @@ const getDefaultRichMenuProperties = () => {
  */
 const loadExistingRichMenuImage = (): Buffer => {
   try {
-    const imagePath = path.resolve(process.cwd(), "assets/images/richmenu.png");
+    const imagePath = path.resolve(process.cwd(), config.paths.richMenuImage);
 
     if (fs.existsSync(imagePath)) {
       logger.info("既存のリッチメニュー画像を読み込みました");
@@ -377,7 +377,7 @@ const saveRichMenuImageToTemp = (
   filename = `richmenu-${Date.now()}.png`,
 ): string => {
   try {
-    const tempDir = path.resolve(process.cwd(), "temp");
+    const tempDir = path.resolve(process.cwd(), config.paths.temp);
 
     // tempディレクトリが存在しない場合は作成
     if (!fs.existsSync(tempDir)) {

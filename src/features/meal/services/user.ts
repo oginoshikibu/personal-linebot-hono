@@ -2,7 +2,7 @@ import { logger } from "../../../lib/logger";
 
 // TODO: User model has been removed from Prisma schema
 // This file contains legacy user management functions that are no longer used
-// in the new Alice/Bob fixed user system. These functions should be replaced
+// in the new @alice/@bob fixed user system. These functions should be replaced
 // with appropriate username-to-LINE-ID mapping logic when needed.
 
 /**
@@ -16,7 +16,7 @@ export const getUserByLineId = async (lineId: string): Promise<never> => {
     `getUserByLineId called with ${lineId} but User model has been removed`,
   );
   throw new Error(
-    "Fetching user by LINE ID is no longer supported. Using fixed Alice/Bob system.",
+    "Fetching user by LINE ID is no longer supported. Using fixed @alice/@bob system.",
   );
 };
 
@@ -28,10 +28,10 @@ export const getAllUsers = async (): Promise<never> => {
   // Legacy function - User model no longer exists
   // In the new system, we have fixed Alice/Bob users
   logger.warn(
-    "getAllUsers called but User model has been removed. Using fixed Alice/Bob system.",
+    "getAllUsers called but User model has been removed. Using fixed @alice/@bob system.",
   );
   throw new Error(
-    "Fetching all users is no longer supported. Using fixed Alice/Bob system.",
+    "Fetching all users is no longer supported. Using fixed @alice/@bob system.",
   );
 };
 
@@ -50,7 +50,7 @@ export const createUser = async (
     `createUser called with ${lineId}, ${name} but User model has been removed`,
   );
   throw new Error(
-    "User creation is no longer supported. Using fixed Alice/Bob system.",
+    "User creation is no longer supported. Using fixed @alice/@bob system.",
   );
 };
 
@@ -68,7 +68,7 @@ export const updateUser = async (
   // Legacy function - User model no longer exists
   logger.warn(`updateUser called with ${id} but User model has been removed`);
   throw new Error(
-    "User update is no longer supported. Using fixed Alice/Bob system.",
+    "User update is no longer supported. Using fixed @alice/@bob system.",
   );
 };
 
@@ -81,6 +81,6 @@ export const deleteUser = async (id: string): Promise<never> => {
   // Legacy function - User model no longer exists
   logger.warn(`deleteUser called with ${id} but User model has been removed`);
   throw new Error(
-    "User deletion is no longer supported. Using fixed Alice/Bob system.",
+    "User deletion is no longer supported. Using fixed @alice/@bob system.",
   );
 };
