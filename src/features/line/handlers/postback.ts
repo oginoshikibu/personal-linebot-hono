@@ -65,7 +65,8 @@ export const handlePostbackEvent = async (
       case "participate":
       case "not_participate":
       case "undecided":
-      case "quit_preparation": {
+      case "quit_preparation":
+      case "take_preparation": {
         const mealType = params.get("mealType");
         console.log(
           `[PostbackHandler] 食事アクション処理: ${action}, mealType: ${mealType}`,

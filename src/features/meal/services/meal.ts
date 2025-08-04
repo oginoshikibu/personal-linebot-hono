@@ -149,4 +149,23 @@ export class MealPlanService {
     const savedPlan = await this.repository.save(plan);
     return Result.success(savedPlan);
   }
+
+  async changePreparationRole(
+    date: Date,
+    mealType: MealType,
+    newPreparer: PreparationRole,
+  ): Promise<Result<MealPlan>> {
+    const plan = await this.repository.findByDateAndType(date, mealType);
+    if (!plan) {
+      return Result.failure("Meal plan not found.");
+    }
+
+    const result = plan.changePreparationRole(newPreparer);
+    if (result.isFailure) {
+      return Result.failure(result.error);
+    }
+
+    const savedPlan = await this.repository.save(plan);
+    return Result.success(savedPlan);
+  }
 }

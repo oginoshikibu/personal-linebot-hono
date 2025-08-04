@@ -136,6 +136,31 @@ export class MealPlan {
     return Result.success();
   }
 
+  changePreparationRole(newPreparer: PreparationRole): Result<void> {
+    if (this.mealType === MealType.LUNCH) {
+      return Result.failure("Lunch preparation role cannot be changed.");
+    }
+
+    if (newPreparer === PreparationRole.NONE) {
+      return Result.failure(
+        "Cannot set preparation role to NONE. Use preparerQuits() instead.",
+      );
+    }
+
+    this._preparationRole = newPreparer;
+
+    // 新しい準備者の参加状況を確実に「参加する」に設定
+    if (newPreparer === PreparationRole.ALICE) {
+      this._aliceParticipation = ParticipationStatus.WILL_PARTICIPATE;
+    } else {
+      this._bobParticipation = ParticipationStatus.WILL_PARTICIPATE;
+    }
+
+    this.updateCurrentState();
+    this._updatedAt = new Date();
+    return Result.success();
+  }
+
   private updateCurrentState(): void {
     if (this.mealType === MealType.LUNCH) {
       if (this._preparationRole === PreparationRole.BOB) {
