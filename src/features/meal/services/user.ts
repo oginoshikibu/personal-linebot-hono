@@ -9,11 +9,12 @@ import { logger } from "../../../lib/logger";
  * LINE IDからユーザーを取得 (Legacy - currently disabled)
  * @param lineId LINE ID
  * @returns ユーザー情報（存在しない場合はnull）
+ * @deprecated Use getUserByLineId from constants/users instead
  */
-export const getUserByLineId = async (lineId: string): Promise<never> => {
+export const legacyGetUserByLineId = async (lineId: string): Promise<never> => {
   // Legacy function - User model no longer exists
   logger.warn(
-    `getUserByLineId called with ${lineId} but User model has been removed`,
+    `legacyGetUserByLineId called with ${lineId} but User model has been removed`,
   );
   throw new Error(
     "Fetching user by LINE ID is no longer supported. Using fixed @alice/@bob system.",

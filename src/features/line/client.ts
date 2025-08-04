@@ -10,7 +10,7 @@ import {
 import { config } from "../../config";
 import { ALL_USERS } from "../../constants/users";
 import { logger } from "../../lib/logger";
-import type { TextV2Message } from "../../types/line";
+import type { LinePushMessage, TextV2Message } from "../../types/line";
 import { isAllowedLineId } from "../../utils/auth";
 import { AppError } from "../../utils/error";
 
@@ -89,9 +89,8 @@ export class LineClientService {
         throw new AppError(`未承認のLINE ID: ${to}`, 403);
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions
-      // @ts-expect-error: LINE SDK doesn't support textV2 type yet
-      return await this.client.pushMessage(to, textV2Message);
+      // LINE SDK doesn't officially support textV2 type yet - using unknown->any for runtime compatibility
+      return await this.client.pushMessage(to, textV2Message as unknown as any);
     } catch (error) {
       logger.error(`メンション付きメッセージ送信エラー: ${to}`, error);
       throw new AppError(
@@ -228,9 +227,11 @@ export class LineClientService {
     textV2Message: TextV2Message,
   ): Promise<MessageAPIResponseBase> {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions
-      // @ts-expect-error: LINE SDK doesn't support textV2 type yet
-      return await this.client.replyMessage(replyToken, textV2Message);
+      // LINE SDK doesn't support textV2 type yet - using unknown->any for runtime compatibility
+      return await this.client.replyMessage(
+        replyToken,
+        textV2Message as unknown as any,
+      );
     } catch (error) {
       logger.error(
         `メンション付き応答メッセージ送信エラー: ${replyToken}`,

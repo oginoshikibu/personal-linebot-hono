@@ -8,6 +8,9 @@ import type { UserInfo } from "../types/line";
 // Re-export UserInfo for convenience
 export type { UserInfo };
 
+// ユーザーキーの型定義
+export type UserKey = "ALICE" | "BOB";
+
 // ユーザー情報の定義
 export const USERS = {
   ALICE: {
@@ -20,7 +23,7 @@ export const USERS = {
     lineId: config.line.users.bob,
     placeholder: "bob" as const,
   },
-} as const satisfies Record<string, UserInfo>;
+} as const satisfies Record<UserKey, UserInfo>;
 
 // ユーザー名の型定義
 export type UserName = (typeof USERS)[keyof typeof USERS]["name"];

@@ -34,7 +34,7 @@ vi.mock("../../../src/di/container", () => ({
 // 必要な型をimport
 import { MealPlan, MealType, PreparationRole, ParticipationStatus } from "../../../src/domain/entities/MealPlan";
 import { handleTextMessage } from "../../../src/features/line/handlers/message";
-import type { UserInfo } from "../../../src/constants/users";
+import type { UserInfo } from "../../../src/types/line";
 
 // モック
 vi.mock("../../../src/features/line/client", () => ({
