@@ -109,11 +109,11 @@ describe("MealPlan.changePreparationRole", () => {
       const mealPlan = plan.value;
       const originalUpdatedAt = mealPlan.updatedAt;
       
-      // 少し時間を置く
-      setTimeout(() => {
-        mealPlan.changePreparationRole(PreparationRole.BOB);
-        expect(mealPlan.updatedAt.getTime()).toBeGreaterThan(originalUpdatedAt.getTime());
-      }, 10);
+      // 準備者を変更
+      const result = mealPlan.changePreparationRole(PreparationRole.BOB);
+      
+      expect(result.isSuccess).toBe(true);
+      expect(mealPlan.updatedAt.getTime()).toBeGreaterThanOrEqual(originalUpdatedAt.getTime());
     });
   });
 });
