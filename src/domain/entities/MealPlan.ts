@@ -161,7 +161,7 @@ export class MealPlan {
     this._preparationRole = newPreparer;
 
     // 新しい準備者の参加状況を確実に「参加する」に設定
-    this._setParticipationStatus(newPreparer, ParticipationStatus.WILL_PARTICIPATE);
+    this._setPreparerParticipationStatus(newPreparer, ParticipationStatus.WILL_PARTICIPATE);
 
     this.updateCurrentState();
     this._updatedAt = new Date();
@@ -170,10 +170,10 @@ export class MealPlan {
 
   /**
    * 指定した準備者の参加ステータスを設定する
-   * @param preparer 準備者
+   * @param preparer 準備者（ALICEまたはBOBのみ対応）
    * @param status 参加ステータス
    */
-  private _setParticipationStatus(preparer: PreparationRole, status: ParticipationStatus): void {
+  private _setPreparerParticipationStatus(preparer: PreparationRole, status: ParticipationStatus): void {
     if (preparer === PreparationRole.ALICE) {
       this._aliceParticipation = status;
     } else if (preparer === PreparationRole.BOB) {

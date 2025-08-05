@@ -2,9 +2,6 @@ import type { FlexBubble } from "@line/bot-sdk";
 import type { MealPlan } from "../../../domain/entities/MealPlan";
 import { shouldShowTakePreparationButton } from "../../../utils/meal-preparation";
 
-const USER_ALICE = "Alice";
-const USER_BOB = "Bob";
-
 interface DinnerEditButton {
   type: "button";
   action: {
@@ -52,7 +49,7 @@ export const createDinnerEditFlexMessage = (
         contents: [
           {
             type: "text",
-            text: `現在の状態:\n${USER_ALICE}: ${mealPlan.aliceParticipation}\n${USER_BOB}: ${mealPlan.bobParticipation}\n準備担当: ${mealPlan.preparationRole}`,
+            text: `現在の状態:\nAlice: ${mealPlan.aliceParticipation}\nBob: ${mealPlan.bobParticipation}\n準備担当: ${mealPlan.preparationRole}`,
             wrap: true,
           },
           ...buttons,
