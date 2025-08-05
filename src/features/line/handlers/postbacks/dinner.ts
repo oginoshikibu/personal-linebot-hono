@@ -124,15 +124,24 @@ export const handleDinnerPostback = async (
       console.log("[DinnerPostback] 準備担当を奪う");
       const newPreparer =
         person === "Alice" ? PreparationRole.ALICE : PreparationRole.BOB;
-      await mealService.changePreparationRole(
+      
+      const result = await mealService.changePreparationRole(
         date,
         MealType.DINNER,
         newPreparer,
       );
-      await replyTextMessage(
-        event.replyToken,
-        `${dateStr} ディナーの準備担当を引き受けました。`,
-      );
+      
+      if (result.isSuccess) {
+        await replyTextMessage(
+          event.replyToken,
+          `${dateStr} ディナーの準備担当を引き受けました。`,
+        );
+      } else {
+        await replyTextMessage(
+          event.replyToken,
+          `準備担当の変更に失敗しました: ${result.error}`,
+        );
+      }
       break;
     }
     case "quit_preparation":
