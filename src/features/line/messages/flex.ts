@@ -4,13 +4,7 @@ import {
   ParticipationStatus,
   PreparationRole,
 } from "../../../domain/entities/MealPlan";
-
-export function formatDateForFlex(date: Date): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
+import { formatDate } from "../../../utils/date";
 
 export const createMealPlanFlexMessage = (
   date: Date,
@@ -19,7 +13,7 @@ export const createMealPlanFlexMessage = (
 ): FlexMessage => {
   return {
     type: "flex",
-    altText: `${formatDateForFlex(date)}の食事予定`,
+    altText: `${formatDate(date)}の食事予定`,
     contents: {
       type: "bubble",
       header: {
@@ -28,7 +22,7 @@ export const createMealPlanFlexMessage = (
         contents: [
           {
             type: "text",
-            text: `${formatDateForFlex(date)}の食事予定`,
+            text: `${formatDate(date)}の食事予定`,
             weight: "bold",
             size: "lg",
           },
@@ -85,7 +79,7 @@ export const createMealPlanFlexMessage = (
             action: {
               type: "postback",
               label: "昼食を編集",
-              data: `action=edit_meal&date=${formatDateForFlex(date)}&mealType=LUNCH`,
+              data: `action=edit_meal&date=${formatDate(date)}&mealType=LUNCH`,
             },
             style: "secondary",
             flex: 1,
@@ -95,7 +89,7 @@ export const createMealPlanFlexMessage = (
             action: {
               type: "postback",
               label: "夕食を編集",
-              data: `action=edit_meal&date=${formatDateForFlex(date)}&mealType=DINNER`,
+              data: `action=edit_meal&date=${formatDate(date)}&mealType=DINNER`,
             },
             style: "secondary",
             flex: 1,
@@ -105,7 +99,6 @@ export const createMealPlanFlexMessage = (
     },
   };
 };
-
 
 function getParticipationText(status: ParticipationStatus): string {
   switch (status) {
