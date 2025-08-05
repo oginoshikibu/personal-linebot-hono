@@ -2,6 +2,7 @@ import {
   Client,
   type FlexContainer,
   type FlexMessage,
+  type Message,
   type MessageAPIResponseBase,
   type TemplateContent,
   type TemplateMessage,
@@ -10,7 +11,7 @@ import {
 import { config } from "../../config";
 import { ALL_USERS } from "../../constants/users";
 import { logger } from "../../lib/logger";
-import type { LinePushMessage, TextV2Message } from "../../types/line";
+import type { TextV2Message } from "../../types/line";
 import { isAllowedLineId } from "../../utils/auth";
 import { AppError } from "../../utils/error";
 
@@ -89,8 +90,13 @@ export class LineClientService {
         throw new AppError(`未承認のLINE ID: ${to}`, 403);
       }
 
-      // LINE SDK doesn't officially support textV2 type yet - using unknown->any for runtime compatibility
-      return await this.client.pushMessage(to, textV2Message as unknown as any);
+      // LINE SDK doesn't officially support textV2 type yet - need runtime compatibility
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      return await this.client.pushMessage(
+        to,
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        textV2Message as unknown as Message,
+      );
     } catch (error) {
       logger.error(`メンション付きメッセージ送信エラー: ${to}`, error);
       throw new AppError(
@@ -227,10 +233,12 @@ export class LineClientService {
     textV2Message: TextV2Message,
   ): Promise<MessageAPIResponseBase> {
     try {
-      // LINE SDK doesn't support textV2 type yet - using unknown->any for runtime compatibility
+      // LINE SDK doesn't support textV2 type yet - need runtime compatibility
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       return await this.client.replyMessage(
         replyToken,
-        textV2Message as unknown as any,
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        textV2Message as unknown as Message,
       );
     } catch (error) {
       logger.error(

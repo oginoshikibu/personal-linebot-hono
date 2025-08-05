@@ -39,17 +39,17 @@ const envSchema = z.object({
     .min(0)
     .max(59)
     .default(0),
-  
+
   // 週間リマインダー設定
   WEEKLY_REMINDER_HOUR: z.coerce.number().int().min(0).max(23).default(21),
   WEEKLY_REMINDER_MINUTE: z.coerce.number().int().min(0).max(59).default(0),
   WEEKLY_REMINDER_DAY: z.coerce.number().int().min(0).max(6).default(0), // 0 = 日曜日
-  
+
   // ファイルパス設定
   ASSETS_DIR: z.string().default("assets"),
   TEMP_DIR: z.string().default("temp"),
   RICHMENU_IMAGE_PATH: z.string().default("assets/images/richmenu.png"),
-  
+
   // リッチメニューUI設定
   RICHMENU_SUBTEXT_VERTICAL_OFFSET: z.coerce.number().default(30),
   RICHMENU_SUBTEXT_VERTICAL_SPACING: z.coerce.number().default(60),

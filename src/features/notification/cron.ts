@@ -60,7 +60,9 @@ export const setupCronJobs = (): void => {
     logger.info(
       `夜の通知: 毎日 ${config.notification.evening.hour}:${config.notification.evening.minute}`,
     );
-    const dayName = ["日", "月", "火", "水", "木", "金", "土"][config.notification.weekly.day];
+    const dayName = ["日", "月", "火", "水", "木", "金", "土"][
+      config.notification.weekly.day
+    ];
     logger.info(
       `週間予定入力リマインダー: ${dayName}曜日 ${config.notification.weekly.hour}:${String(config.notification.weekly.minute).padStart(2, "0")}`,
     );
