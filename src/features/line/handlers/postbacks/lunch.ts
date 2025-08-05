@@ -158,7 +158,15 @@ export const handleLunchPostback = async (
         );
         break;
       default:
-        throw new AppError(`未知のアクション: ${action}`, 400);
+        logger.warn(`[LunchPostback] 未知のアクションを受信: ${action}`, {
+          postbackData: event.postback.data,
+          userId: event.source.userId,
+        });
+        await replyTextMessage(
+          event.replyToken,
+          "申し訳ありませんが、その操作は認識できませんでした。もう一度お試しください。",
+        );
+        break;
     }
   } catch (error) {
     logger.error("[LunchPostback] エラーが発生しました", {

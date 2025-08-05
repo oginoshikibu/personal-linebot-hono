@@ -90,11 +90,9 @@ export class LineClientService {
         throw new AppError(`未承認のLINE ID: ${to}`, 403);
       }
 
-      // LINE SDK doesn't officially support textV2 type yet - need runtime compatibility
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      // LINE SDK doesn't officially support textV2 type yet - use type assertion for runtime compatibility
       return await this.client.pushMessage(
         to,
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         textV2Message as unknown as Message,
       );
     } catch (error) {
@@ -233,11 +231,9 @@ export class LineClientService {
     textV2Message: TextV2Message,
   ): Promise<MessageAPIResponseBase> {
     try {
-      // LINE SDK doesn't support textV2 type yet - need runtime compatibility
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      // LINE SDK doesn't support textV2 type yet - use type assertion for runtime compatibility
       return await this.client.replyMessage(
         replyToken,
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         textV2Message as unknown as Message,
       );
     } catch (error) {

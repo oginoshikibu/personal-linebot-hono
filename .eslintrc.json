@@ -24,7 +24,8 @@
     "@typescript-eslint/consistent-type-assertions": [
       "error",
       {
-        "assertionStyle": "never"
+        "assertionStyle": "as",
+        "objectLiteralTypeAssertions": "never"
       }
     ],
     "@typescript-eslint/no-unnecessary-boolean-literal-compare": "error",

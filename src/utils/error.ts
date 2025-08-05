@@ -113,7 +113,10 @@ export const honoAsyncHandler = <T extends Context>(
         statusCode,
         errorCode,
       });
-      return c.json({ success: false, message }, statusCode);
+      return c.json(
+        { success: false, message, statusCode, errorCode },
+        statusCode,
+      );
     }
   };
 };
