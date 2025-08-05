@@ -1,10 +1,10 @@
 import type { FlexMessage } from "@line/bot-sdk";
 import type { MealPlan } from "../../../domain/entities/MealPlan";
+import { formatDate } from "../../../utils/date";
 import {
   formatParticipationStatus,
   formatPreparationRoleForDisplay,
 } from "../../../utils/mealPlanFormatters";
-import { formatDate } from "../../../utils/date";
 
 export const createMealPlanFlexMessage = (
   date: Date,
@@ -99,4 +99,3 @@ export const createMealPlanFlexMessage = (
     },
   };
 };
-

@@ -7,8 +7,8 @@ import {
 } from "../../../domain/entities/MealPlan";
 import type { MealPlanRepository } from "../../../domain/repositories/MealPlanRepository";
 import { Result } from "../../../domain/types/Result";
-import { toLocalISOString } from "../../../utils/date";
 import { logger } from "../../../lib/logger";
+import { toLocalISOString } from "../../../utils/date";
 
 export class MealPlanService {
   constructor(
