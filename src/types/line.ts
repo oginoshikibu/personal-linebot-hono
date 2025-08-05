@@ -2,7 +2,7 @@
  * LINE Messaging API関連の型定義
  */
 
-import type { TextMessage } from "@line/bot-sdk";
+import type { TextMessage, Message } from "@line/bot-sdk";
 
 // TextV2メッセージの型定義
 export interface TextV2Message {
@@ -13,6 +13,9 @@ export interface TextV2Message {
 
 // LINE SDK用の拡張メッセージ型（textV2をサポート）
 export type LinePushMessage = TextMessage | TextV2Message;
+
+// LINE SDKのMessage型を拡張してTextV2Messageをサポート
+export type ExtendedMessage = Message | TextV2Message;
 
 // メンション置換情報の型定義
 export interface MentionSubstitution {

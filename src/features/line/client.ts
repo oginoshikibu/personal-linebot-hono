@@ -2,7 +2,6 @@ import {
   Client,
   type FlexContainer,
   type FlexMessage,
-  type Message,
   type MessageAPIResponseBase,
   type TemplateContent,
   type TemplateMessage,
@@ -96,10 +95,11 @@ export class LineClientService {
         throw new AppError("Invalid TextV2Message structure", 400);
       }
 
-      // LINE SDK doesn't officially support textV2 type yet - use type assertion for runtime compatibility
+      // LINE SDK doesn't officially support textV2 type yet
+      // Type assertion to unknown then Message for runtime compatibility while maintaining type documentation
       return await this.client.pushMessage(
         to,
-        textV2Message as unknown as Message,
+        textV2Message as unknown as import("@line/bot-sdk").Message,
       );
     } catch (error) {
       logger.error(`メンション付きメッセージ送信エラー: ${to}`, error);
@@ -242,10 +242,15 @@ export class LineClientService {
         throw new AppError("Invalid TextV2Message structure", 400);
       }
 
-      // LINE SDK doesn't support textV2 type yet - use type assertion for runtime compatibility
+      // Validate textV2Message structure before sending
+      if (!isTextV2Message(textV2Message)) {
+        throw new AppError("Invalid TextV2Message structure", 400);
+      }
+
+      // Type assertion to unknown then Message for runtime compatibility while maintaining type documentation
       return await this.client.replyMessage(
         replyToken,
-        textV2Message as unknown as Message,
+        textV2Message as unknown as import("@line/bot-sdk").Message,
       );
     } catch (error) {
       logger.error(

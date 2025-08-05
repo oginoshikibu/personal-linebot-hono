@@ -6,6 +6,11 @@ import type {
   ParticipationStatus,
   PreparationRole,
 } from "../domain/entities/MealPlan";
+import { USERS } from "../constants/users";
+
+// メンション用プレースホルダー定数
+const PLACEHOLDER_ALICE = `{${USERS.ALICE.placeholder}}`;
+const PLACEHOLDER_BOB = `{${USERS.BOB.placeholder}}`;
 
 /**
  * 参加状況を日本語テキストに変換
@@ -31,9 +36,9 @@ export const formatParticipationStatus = (
 export const formatPreparationRole = (role: PreparationRole): string => {
   switch (role) {
     case "ALICE":
-      return "{alice}が作る";
+      return `${PLACEHOLDER_ALICE}が作る`;
     case "BOB":
-      return "{bob}が作る";
+      return `${PLACEHOLDER_BOB}が作る`;
     case "NONE":
       return "なし";
     default:
@@ -49,9 +54,9 @@ export const formatPreparationRoleForDisplay = (
 ): string => {
   switch (role) {
     case "ALICE":
-      return "Aliceが作る";
+      return `${USERS.ALICE.name}が作る`;
     case "BOB":
-      return "Bobが作る";
+      return `${USERS.BOB.name}が作る`;
     case "NONE":
       return "なし";
     default:
