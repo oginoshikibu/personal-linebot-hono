@@ -1,19 +1,12 @@
 import { describe, it, expect } from "vitest";
+import { formatDateForFlex } from "../../../../../src/features/line/messages/flex";
 
-// テスト用にformatDate関数を抽出してテスト
 describe("Flexメッセージの日付フォーマット", () => {
-  // src/features/line/messages/flex.ts の formatDate 関数をテスト用に複製
-  function formatDate(date: Date): string {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
-  }
 
-  describe("formatDate関数（修正版）", () => {
+  describe("formatDateForFlex関数", () => {
     it("JST時刻でも日付が正しくフォーマットされること", () => {
       const date = new Date(2023, 9, 15, 0, 0, 0, 0); // 2023-10-15 00:00:00 JST
-      const result = formatDate(date);
+      const result = formatDateForFlex(date);
       
       expect(result).toBe("2023-10-15");
     });
@@ -21,7 +14,7 @@ describe("Flexメッセージの日付フォーマット", () => {
     it("深夜0時でも日付がズレないこと", () => {
       const date = new Date(2023, 9, 15);
       date.setHours(0, 0, 0, 0); // 2023-10-15 00:00:00 JST
-      const result = formatDate(date);
+      const result = formatDateForFlex(date);
       
       expect(result).toBe("2023-10-15");
     });
@@ -29,14 +22,14 @@ describe("Flexメッセージの日付フォーマット", () => {
     it("23時59分でも日付が正しいこと", () => {
       const date = new Date(2023, 9, 15);
       date.setHours(23, 59, 59, 999); // 2023-10-15 23:59:59.999 JST
-      const result = formatDate(date);
+      const result = formatDateForFlex(date);
       
       expect(result).toBe("2023-10-15");
     });
 
     it("月と日が1桁の場合、0埋めされること", () => {
       const date = new Date(2023, 0, 5); // 2023-01-05
-      const result = formatDate(date);
+      const result = formatDateForFlex(date);
       
       expect(result).toBe("2023-01-05");
     });
@@ -47,7 +40,7 @@ describe("Flexメッセージの日付フォーマット", () => {
       date.setHours(0, 0, 0, 0); // JST 00:00:00
       
       // 新しい方法（修正版）
-      const newMethod = formatDate(date);
+      const newMethod = formatDateForFlex(date);
       
       // 古い方法（問題のあった方法）
       const oldMethod = date.toISOString().split("T")[0];
@@ -69,7 +62,7 @@ describe("Flexメッセージの日付フォーマット", () => {
       ];
 
       dates.forEach((date, index) => {
-        const result = formatDate(date);
+        const result = formatDateForFlex(date);
         expect(result).toBe("2023-10-15");
       });
     });
