@@ -21,7 +21,7 @@ export const formatParticipationStatus = (
     case "UNDECIDED":
       return "未定";
     default:
-      return "不明";
+      throw new Error(`Unknown ParticipationStatus: ${status}`);
   }
 };
 
@@ -37,7 +37,7 @@ export const formatPreparationRole = (role: PreparationRole): string => {
     case "NONE":
       return "なし";
     default:
-      return "不明";
+      throw new Error(`Unknown PreparationRole: ${role}`);
   }
 };
 
@@ -55,6 +55,6 @@ export const formatPreparationRoleForDisplay = (
     case "NONE":
       return "なし";
     default:
-      return "不明";
+      throw new Error(`Unknown PreparationRole: ${role}`);
   }
 };

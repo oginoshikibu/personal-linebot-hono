@@ -12,6 +12,7 @@ import { config } from "../../config";
 import { ALL_USERS } from "../../constants/users";
 import { logger } from "../../lib/logger";
 import type { TextV2Message } from "../../types/line";
+import { isTextV2Message } from "../../types/line";
 import { isAllowedLineId } from "../../utils/auth";
 import { AppError } from "../../utils/error";
 
@@ -88,6 +89,11 @@ export class LineClientService {
       const isAllowed = await isAllowedLineId(to);
       if (!isAllowed) {
         throw new AppError(`未承認のLINE ID: ${to}`, 403);
+      }
+
+      // Validate textV2Message structure before casting
+      if (!isTextV2Message(textV2Message)) {
+        throw new AppError("Invalid TextV2Message structure", 400);
       }
 
       // LINE SDK doesn't officially support textV2 type yet - use type assertion for runtime compatibility
@@ -231,6 +237,11 @@ export class LineClientService {
     textV2Message: TextV2Message,
   ): Promise<MessageAPIResponseBase> {
     try {
+      // Validate textV2Message structure before casting
+      if (!isTextV2Message(textV2Message)) {
+        throw new AppError("Invalid TextV2Message structure", 400);
+      }
+
       // LINE SDK doesn't support textV2 type yet - use type assertion for runtime compatibility
       return await this.client.replyMessage(
         replyToken,

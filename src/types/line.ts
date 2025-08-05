@@ -35,3 +35,18 @@ export interface UserInfo {
   lineId: string;
   placeholder: "alice" | "bob";
 }
+
+// TextV2Message型ガード関数
+export const isTextV2Message = (message: unknown): message is TextV2Message => {
+  if (typeof message !== "object" || message === null) {
+    return false;
+  }
+
+  const msg = message as Record<string, unknown>;
+  return (
+    msg.type === "textV2" &&
+    typeof msg.text === "string" &&
+    typeof msg.substitution === "object" &&
+    msg.substitution !== null
+  );
+};
