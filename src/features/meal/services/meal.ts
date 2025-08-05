@@ -7,6 +7,7 @@ import {
 } from "../../../domain/entities/MealPlan";
 import type { MealPlanRepository } from "../../../domain/repositories/MealPlanRepository";
 import { Result } from "../../../domain/types/Result";
+import { toLocalISOString } from "../../../utils/date";
 
 export class MealPlanService {
   constructor(
@@ -21,7 +22,7 @@ export class MealPlanService {
     try {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      console.log(`[MealPlanService] 今日の日付: ${today.toISOString()}`);
+      console.log(`[MealPlanService] 今日の日付: ${toLocalISOString(today)}`);
 
       console.log("[MealPlanService] ランチプラン取得開始");
       const lunch = await this.getOrCreateMealPlan(today, MealType.LUNCH);
@@ -52,7 +53,7 @@ export class MealPlanService {
   ): Promise<MealPlan> {
     try {
       console.log(
-        `[MealPlanService] getOrCreateMealPlan開始: ${mealType}, ${date.toISOString()}`,
+        `[MealPlanService] getOrCreateMealPlan開始: ${mealType}, ${toLocalISOString(date)}`,
       );
 
       let plan = await this.repository.findByDateAndType(date, mealType);
@@ -99,7 +100,7 @@ export class MealPlanService {
     } catch (error) {
       console.error("[MealPlanService] getOrCreateMealPlanエラー:", {
         mealType,
-        date: date.toISOString(),
+        date: toLocalISOString(date),
         preparationRole,
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,

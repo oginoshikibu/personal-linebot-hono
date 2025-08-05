@@ -120,3 +120,14 @@ export const formatTime = (date: Date = new Date()): string => {
   const minutes = String(date.getMinutes()).padStart(2, "0");
   return `${hours}:${minutes}`;
 };
+
+/**
+ * 日付をタイムゾーンを考慮したISO文字列に変換
+ * @param date 日付
+ * @returns タイムゾーンを考慮したISO文字列（YYYY-MM-DDTHH:mm:ss.sssZ形式）
+ */
+export const toLocalISOString = (date: Date): string => {
+  const offset = date.getTimezoneOffset();
+  const localDate = new Date(date.getTime() - offset * 60 * 1000);
+  return localDate.toISOString();
+};

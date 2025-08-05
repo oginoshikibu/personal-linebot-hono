@@ -1,4 +1,4 @@
-import type { PrismaClient } from "@prisma/client";
+import type { PrismaClient, MealPlan as PrismaMealPlan } from "@prisma/client";
 import {
   MealPlan,
   MealType,
@@ -6,6 +6,7 @@ import {
   PreparationRole,
 } from "../../domain/entities/MealPlan";
 import type { MealPlanRepository } from "../../domain/repositories/MealPlanRepository";
+import { toLocalISOString } from "../../utils/date";
 
 export class PrismaMealPlanRepository implements MealPlanRepository {
   constructor(private readonly prisma: PrismaClient) {}
@@ -23,8 +24,8 @@ export class PrismaMealPlanRepository implements MealPlanRepository {
 
       console.log("[PrismaMealPlanRepository] findByDateAndType開始:", {
         mealType,
-        startOfDay: startOfDay.toISOString(),
-        endOfDay: endOfDay.toISOString(),
+        startOfDay: toLocalISOString(startOfDay),
+        endOfDay: toLocalISOString(endOfDay),
       });
 
       const plan = await this.prisma.mealPlan.findFirst({
@@ -45,7 +46,7 @@ export class PrismaMealPlanRepository implements MealPlanRepository {
     } catch (error) {
       console.error("[PrismaMealPlanRepository] findByDateAndTypeエラー:", {
         mealType,
-        date: date.toISOString(),
+        date: toLocalISOString(date),
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
       });
@@ -80,7 +81,7 @@ export class PrismaMealPlanRepository implements MealPlanRepository {
       console.error("[PrismaMealPlanRepository] saveエラー:", {
         planId: plan.id,
         mealType: plan.mealType,
-        date: plan.date.toISOString(),
+        date: toLocalISOString(plan.date),
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
       });
@@ -99,7 +100,7 @@ export class PrismaMealPlanRepository implements MealPlanRepository {
       orderBy: [{ date: "asc" }, { mealType: "asc" }],
     });
 
-    return plans.map((plan) => this.toDomain(plan));
+    return plans.map((plan: PrismaMealPlan) => this.toDomain(plan));
   }
 
   async findByDateRangeAndType(
@@ -118,20 +119,10 @@ export class PrismaMealPlanRepository implements MealPlanRepository {
       orderBy: { date: "asc" },
     });
 
-    return plans.map((plan) => this.toDomain(plan));
+    return plans.map((plan: PrismaMealPlan) => this.toDomain(plan));
   }
 
-  private toDomain(plan: {
-    id: string;
-    date: Date;
-    mealType: string;
-    preparationRole: string;
-    aliceParticipation: string;
-    bobParticipation: string;
-    currentState: number;
-    createdAt: Date;
-    updatedAt: Date;
-  }): MealPlan {
+  private toDomain(plan: PrismaMealPlan): MealPlan {
     const mealType = this.parseMealType(plan.mealType);
     const preparationRole = this.parsePreparationRole(plan.preparationRole);
     const aliceParticipation = this.parseParticipationStatus(

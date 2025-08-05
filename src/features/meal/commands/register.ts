@@ -1,5 +1,6 @@
 import { MESSAGES } from "../../../constants";
 import { logger } from "../../../lib/logger";
+import { formatDate } from "../../../utils/date";
 import { replyTemplateMessage, replyTextMessage } from "../../line/client";
 import { createRegistrationOptionsTemplate } from "../../line/messages/templates";
 
@@ -19,7 +20,7 @@ export const handleRegisterCommand = async (
   // 引数がない場合は登録オプションを表示
   if (args.length === 0) {
     const today = new Date();
-    const dateStr = today.toISOString().split("T")[0];
+    const dateStr = formatDate(today);
     const template = createRegistrationOptionsTemplate(
       "今日",
       "昼食",

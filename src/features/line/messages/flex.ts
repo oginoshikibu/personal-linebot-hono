@@ -4,6 +4,7 @@ import {
   ParticipationStatus,
   PreparationRole,
 } from "../../../domain/entities/MealPlan";
+import { formatDate } from "../../../utils/date";
 
 export const createMealPlanFlexMessage = (
   date: Date,
@@ -98,10 +99,6 @@ export const createMealPlanFlexMessage = (
     },
   };
 };
-
-function formatDate(date: Date): string {
-  return date.toISOString().split("T")[0];
-}
 
 function getParticipationText(status: ParticipationStatus): string {
   switch (status) {
