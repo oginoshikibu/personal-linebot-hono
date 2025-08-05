@@ -136,6 +136,51 @@ export class MealPlan {
     return Result.success();
   }
 
+  /**
+   * Changes the meal preparation role to the specified new preparer.
+   *
+   * This method enforces business rules:
+   * - The preparation role for lunch cannot be changed; attempting to do so will fail.
+   * - The preparation role cannot be set to `NONE` using this method; use `preparerQuits()` instead.
+   * - When the preparation role is changed, the new preparer's participation status is automatically set to `WILL_PARTICIPATE`.
+   *
+   * @param {PreparationRole} newPreparer - The new preparer role to assign. Must be either `ALICE` or `BOB`.
+   * @returns {Result<void>} A Result indicating success, or failure with a message if the change is not allowed.
+   */
+  changePreparationRole(newPreparer: PreparationRole): Result<void> {
+    if (this.mealType === MealType.LUNCH) {
+      return Result.failure("Lunch preparation role cannot be changed.");
+    }
+
+    if (newPreparer === PreparationRole.NONE) {
+      return Result.failure(
+        "Cannot set preparation role to NONE. Use preparerQuits() instead.",
+      );
+    }
+
+    this._preparationRole = newPreparer;
+
+    // 新しい準備者の参加状況を確実に「参加する」に設定
+    this._setPreparerParticipationStatus(newPreparer, ParticipationStatus.WILL_PARTICIPATE);
+
+    this.updateCurrentState();
+    this._updatedAt = new Date();
+    return Result.success();
+  }
+
+  /**
+   * 指定した準備者の参加ステータスを設定する
+   * @param preparer 準備者（ALICEまたはBOBのみ対応）
+   * @param status 参加ステータス
+   */
+  private _setPreparerParticipationStatus(preparer: PreparationRole, status: ParticipationStatus): void {
+    if (preparer === PreparationRole.ALICE) {
+      this._aliceParticipation = status;
+    } else if (preparer === PreparationRole.BOB) {
+      this._bobParticipation = status;
+    }
+  }
+
   private updateCurrentState(): void {
     if (this.mealType === MealType.LUNCH) {
       if (this._preparationRole === PreparationRole.BOB) {
