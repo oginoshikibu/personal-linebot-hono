@@ -26,7 +26,7 @@ const handleEditMeal = async (
   mealService: MealPlanService,
   date: Date,
   dateStr: string,
-  person: "Alice" | "Bob",
+  person: string,
 ): Promise<void> => {
   // デフォルトの準備者をBobに設定（既存のビジネスロジックに基づく）
   // 新規作成時のみ影響し、既存プランは現在の設定を維持

@@ -1,4 +1,5 @@
 import type { PostbackEvent } from "@line/bot-sdk";
+import { USERS } from "../../../../constants/users";
 import {
   MealType,
   ParticipationStatus,
@@ -74,7 +75,7 @@ export const handleLunchPostback = async (
               contents: [
                 {
                   type: "text" as const,
-                  text: `現在の状態:\nAlice: ${mealPlan.aliceParticipation}\nBob: ${mealPlan.bobParticipation}\n準備担当: ${mealPlan.preparationRole}`,
+                  text: `現在の状態:\n${USERS.ALICE.name}: ${mealPlan.aliceParticipation}\n${USERS.BOB.name}: ${mealPlan.bobParticipation}\n準備担当: ${mealPlan.preparationRole}`,
                   wrap: true,
                 },
                 {

@@ -1,3 +1,4 @@
+import { USERS } from "../constants/users";
 import { PreparationRole } from "../domain/entities/MealPlan";
 
 /**
@@ -7,12 +8,13 @@ import { PreparationRole } from "../domain/entities/MealPlan";
  * @returns 指定されたユーザーが準備者の場合true
  */
 export const isUserPreparer = (
-  person: "Alice" | "Bob",
+  person: string,
   preparationRole: PreparationRole,
 ): boolean => {
   return (
-    (person === "Alice" && preparationRole === PreparationRole.ALICE) ||
-    (person === "Bob" && preparationRole === PreparationRole.BOB)
+    (person === USERS.ALICE.name &&
+      preparationRole === PreparationRole.ALICE) ||
+    (person === USERS.BOB.name && preparationRole === PreparationRole.BOB)
   );
 };
 
@@ -23,7 +25,7 @@ export const isUserPreparer = (
  * @returns ボタンを表示すべき場合true
  */
 export const shouldShowTakePreparationButton = (
-  person: "Alice" | "Bob",
+  person: string,
   preparationRole: PreparationRole,
 ): boolean => {
   return (

@@ -14,12 +14,12 @@ export type UserKey = "ALICE" | "BOB";
 // ユーザー情報の定義
 export const USERS = {
   ALICE: {
-    name: "Alice" as const,
+    name: config.line.userNames.alice,
     lineId: config.line.users.alice,
     placeholder: "alice" as const,
   },
   BOB: {
-    name: "Bob" as const,
+    name: config.line.userNames.bob,
     lineId: config.line.users.bob,
     placeholder: "bob" as const,
   },

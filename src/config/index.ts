@@ -19,6 +19,8 @@ const envSchema = z.object({
     .string()
     .min(1, "ALICE_LINE_ID is required and cannot be empty"),
   BOB_LINE_ID: z.string().min(1, "BOB_LINE_ID is required and cannot be empty"),
+  ALICE_NAME: z.string().default("Alice"),
+  BOB_NAME: z.string().default("Bob"),
 
   // サーバー
   PORT: z.coerce.number().int().positive().default(3000),
@@ -71,6 +73,10 @@ export const config = {
     users: {
       alice: env.ALICE_LINE_ID,
       bob: env.BOB_LINE_ID,
+    },
+    userNames: {
+      alice: env.ALICE_NAME,
+      bob: env.BOB_NAME,
     },
   },
   server: {

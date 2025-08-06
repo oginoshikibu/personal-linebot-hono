@@ -5,6 +5,7 @@ import {
   ParticipationStatus,
   PreparationRole,
 } from "../../../../../src/domain/entities/MealPlan";
+import { USERS } from "../../../../../src/constants/users";
 import { createDinnerEditFlexMessage } from "../../../../../src/features/line/messages/dinner-edit";
 import { CryptoIdGenerator } from "../../../../../src/infrastructure/utils/IdGenerator";
 
@@ -123,7 +124,7 @@ describe("createDinnerEditFlexMessage", () => {
     const statusText = result.contents.body?.contents?.[0];
     expect(statusText).toMatchObject({
       type: "text",
-      text: `現在の状態:\nAlice: ${ParticipationStatus.WILL_PARTICIPATE}\nBob: ${ParticipationStatus.WILL_PARTICIPATE}\n準備担当: ${PreparationRole.ALICE}`,
+      text: `現在の状態:\n${USERS.ALICE.name}: ${ParticipationStatus.WILL_PARTICIPATE}\n${USERS.BOB.name}: ${ParticipationStatus.WILL_PARTICIPATE}\n準備担当: ${PreparationRole.ALICE}`,
       wrap: true,
     });
   });

@@ -1,3 +1,4 @@
+import { USERS } from "../../../constants/users";
 import {
   type IdGenerator,
   MealPlan,
@@ -113,7 +114,7 @@ export class MealPlanService {
   async updateParticipation(
     date: Date,
     mealType: MealType,
-    person: "Alice" | "Bob",
+    person: string,
     status: ParticipationStatus,
   ): Promise<Result<MealPlan>> {
     const plan = await this.repository.findByDateAndType(date, mealType);
@@ -122,7 +123,7 @@ export class MealPlanService {
     }
 
     const result =
-      person === "Alice"
+      person === USERS.ALICE.name
         ? plan.changeAliceParticipation(status)
         : plan.changeBobParticipation(status);
 

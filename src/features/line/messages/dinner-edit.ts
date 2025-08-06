@@ -1,4 +1,5 @@
 import type { FlexBubble } from "@line/bot-sdk";
+import { USERS } from "../../../constants/users";
 import type { MealPlan } from "../../../domain/entities/MealPlan";
 import { shouldShowTakePreparationButton } from "../../../utils/meal-preparation";
 
@@ -22,7 +23,7 @@ interface DinnerEditButton {
 export const createDinnerEditFlexMessage = (
   dateStr: string,
   mealPlan: MealPlan,
-  person: "Alice" | "Bob",
+  person: string,
 ): { type: "flex"; altText: string; contents: FlexBubble } => {
   const buttons = createEditButtons(dateStr, mealPlan, person);
 
@@ -49,7 +50,7 @@ export const createDinnerEditFlexMessage = (
         contents: [
           {
             type: "text",
-            text: `現在の状態:\nAlice: ${mealPlan.aliceParticipation}\nBob: ${mealPlan.bobParticipation}\n準備担当: ${mealPlan.preparationRole}`,
+            text: `現在の状態:\n${USERS.ALICE.name}: ${mealPlan.aliceParticipation}\n${USERS.BOB.name}: ${mealPlan.bobParticipation}\n準備担当: ${mealPlan.preparationRole}`,
             wrap: true,
           },
           ...buttons,
@@ -69,7 +70,7 @@ export const createDinnerEditFlexMessage = (
 const createEditButtons = (
   dateStr: string,
   mealPlan: MealPlan,
-  person: "Alice" | "Bob",
+  person: string,
 ): DinnerEditButton[] => {
   const buttons: DinnerEditButton[] = [
     {

@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach, afterAll } from "vitest";
+import { describe, expect, it, vi, beforeEach } from "vitest";
 
 // Mock config before any imports
 vi.mock("../../../../../src/config", () => ({
@@ -7,6 +7,10 @@ vi.mock("../../../../../src/config", () => ({
       users: {
         alice: "alice_test_id",
         bob: "bob_test_id",
+      },
+      userNames: {
+        alice: "Alice",
+        bob: "Bob",
       },
     },
   },

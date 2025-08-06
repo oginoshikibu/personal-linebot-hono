@@ -13,6 +13,10 @@ vi.mock("../../../src/config", () => ({
         alice: "alice_test_id",
         bob: "bob_test_id",
       },
+      userNames: {
+        alice: "Alice",
+        bob: "Bob",
+      },
     },
   },
 }));
@@ -35,7 +39,6 @@ vi.mock("../../../src/di/container", () => ({
 import { MealPlan, MealType, PreparationRole, ParticipationStatus } from "../../../src/domain/entities/MealPlan";
 import { handleTextMessage } from "../../../src/features/line/handlers/message";
 import { USERS } from "../../../src/constants/users";
-import type { UserInfo } from "../../../src/types/line";
 
 // モック
 vi.mock("../../../src/features/line/client", () => ({

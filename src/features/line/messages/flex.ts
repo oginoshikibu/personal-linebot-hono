@@ -1,4 +1,5 @@
 import type { FlexMessage } from "@line/bot-sdk";
+import { USERS } from "../../../constants/users";
 import type { MealPlan } from "../../../domain/entities/MealPlan";
 import { formatDate } from "../../../utils/date";
 import {
@@ -44,7 +45,7 @@ export const createMealPlanFlexMessage = (
               },
               {
                 type: "text",
-                text: `Alice: ${formatParticipationStatus(lunch.aliceParticipation)}\nBob: ${formatParticipationStatus(lunch.bobParticipation)}\n準備: ${formatPreparationRoleForDisplay(lunch.preparationRole)}`,
+                text: `${USERS.ALICE.name}: ${formatParticipationStatus(lunch.aliceParticipation)}\n${USERS.BOB.name}: ${formatParticipationStatus(lunch.bobParticipation)}\n準備: ${formatPreparationRoleForDisplay(lunch.preparationRole)}`,
                 size: "sm",
                 wrap: true,
               },
@@ -62,7 +63,7 @@ export const createMealPlanFlexMessage = (
               },
               {
                 type: "text",
-                text: `Alice: ${formatParticipationStatus(dinner.aliceParticipation)}\nBob: ${formatParticipationStatus(dinner.bobParticipation)}\n準備: ${formatPreparationRoleForDisplay(dinner.preparationRole)}`,
+                text: `${USERS.ALICE.name}: ${formatParticipationStatus(dinner.aliceParticipation)}\n${USERS.BOB.name}: ${formatParticipationStatus(dinner.bobParticipation)}\n準備: ${formatPreparationRoleForDisplay(dinner.preparationRole)}`,
                 size: "sm",
                 wrap: true,
               },

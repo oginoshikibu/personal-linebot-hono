@@ -34,7 +34,7 @@ export interface MentionInfo {
 
 // ユーザー情報の型定義
 export interface UserInfo {
-  name: "Alice" | "Bob";
+  name: string;
   lineId: string;
   placeholder: "alice" | "bob";
 }

@@ -8,10 +8,6 @@ import type {
   PreparationRole,
 } from "../domain/entities/MealPlan";
 
-// メンション用プレースホルダー定数
-const PLACEHOLDER_ALICE = `{${USERS.ALICE.placeholder}}`;
-const PLACEHOLDER_BOB = `{${USERS.BOB.placeholder}}`;
-
 /**
  * 参加状況を日本語テキストに変換
  */
@@ -31,14 +27,15 @@ export const formatParticipationStatus = (
 };
 
 /**
- * 準備担当を日本語テキストに変換
+ * 準備担当を日本語テキストに変換（メンション用プレースホルダー付き）
+ * textV2メッセージでのメンション機能で使用される
  */
 export const formatPreparationRole = (role: PreparationRole): string => {
   switch (role) {
     case "ALICE":
-      return `${PLACEHOLDER_ALICE}が作る`;
+      return `{${USERS.ALICE.placeholder}}が作る`;
     case "BOB":
-      return `${PLACEHOLDER_BOB}が作る`;
+      return `{${USERS.BOB.placeholder}}が作る`;
     case "NONE":
       return "なし";
     default:
