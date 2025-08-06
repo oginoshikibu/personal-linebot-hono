@@ -1,6 +1,12 @@
+// テスト用のモック環境変数設定（最初に設定）
+process.env.NODE_ENV = "test";
+process.env.ALICE_LINE_ID = "test-alice-id";
+process.env.BOB_LINE_ID = "test-bob-id";
+process.env.ALICE_NAME = "Alice";
+process.env.BOB_NAME = "Bob";
+
 import { afterAll, afterEach, beforeAll } from "vitest";
 import { setupServer } from "msw/node";
-import { rest } from "msw";
 
 // モックサーバーのセットアップ
 export const server = setupServer();
@@ -19,6 +25,3 @@ afterEach(() => {
 afterAll(() => {
   server.close();
 });
-
-// テスト用のモック環境変数設定
-process.env.NODE_ENV = "test"; 

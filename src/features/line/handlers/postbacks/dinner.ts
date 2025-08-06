@@ -26,7 +26,7 @@ const handleEditMeal = async (
   mealService: MealPlanService,
   date: Date,
   dateStr: string,
-  person: "Alice" | "Bob",
+  person: string,
 ): Promise<void> => {
   // デフォルトの準備者をBobに設定（既存のビジネスロジックに基づく）
   // 新規作成時のみ影響し、既存プランは現在の設定を維持
@@ -124,13 +124,13 @@ export const handleDinnerPostback = async (
       console.log("[DinnerPostback] 準備担当を奪う");
       const newPreparer =
         person === "Alice" ? PreparationRole.ALICE : PreparationRole.BOB;
-      
+
       const result = await mealService.changePreparationRole(
         date,
         MealType.DINNER,
         newPreparer,
       );
-      
+
       if (result.isSuccess) {
         await replyTextMessage(
           event.replyToken,

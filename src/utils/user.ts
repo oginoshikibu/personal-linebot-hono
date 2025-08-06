@@ -1,18 +1,10 @@
-import { config } from "../config";
+import { getUserByLineId, type UserName } from "../constants/users";
 
-export const getUserName = async (userId: string): Promise<"Alice" | "Bob"> => {
-  if (userId === config.line.users.alice) {
-    return "Alice";
-  }
-  if (userId === config.line.users.bob) {
-    return "Bob";
-  }
-
-  throw new Error(`Unknown user ID: ${userId}`);
+export const getUserName = async (userId: string): Promise<UserName> => {
+  const user = getUserByLineId(userId);
+  return user.name;
 };
 
-export const getOtherUserName = (
-  currentUser: "Alice" | "Bob",
-): "Alice" | "Bob" => {
+export const getOtherUserName = (currentUser: UserName): UserName => {
   return currentUser === "Alice" ? "Bob" : "Alice";
 };

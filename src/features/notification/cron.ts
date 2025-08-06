@@ -39,16 +39,19 @@ export const setupCronJobs = (): void => {
       },
     );
 
-    // 週間予定入力リマインダー（日曜夜21時に実行）
-    schedule("0 21 * * 0", async () => {
-      logger.info("週間予定入力リマインダーを実行します...");
-      try {
-        await sendWeeklyPlanReminder();
-        logger.info("週間予定入力リマインダーを送信しました");
-      } catch (error) {
-        logger.error("週間予定入力リマインダーの送信に失敗しました", error);
-      }
-    });
+    // 週間予定入力リマインダー
+    schedule(
+      `${config.notification.weekly.minute} ${config.notification.weekly.hour} * * ${config.notification.weekly.day}`,
+      async () => {
+        logger.info("週間予定入力リマインダーを実行します...");
+        try {
+          await sendWeeklyPlanReminder();
+          logger.info("週間予定入力リマインダーを送信しました");
+        } catch (error) {
+          logger.error("週間予定入力リマインダーの送信に失敗しました", error);
+        }
+      },
+    );
 
     logger.info("定期実行タスクを設定しました");
     logger.info(
@@ -57,7 +60,12 @@ export const setupCronJobs = (): void => {
     logger.info(
       `夜の通知: 毎日 ${config.notification.evening.hour}:${config.notification.evening.minute}`,
     );
-    logger.info("週間予定入力リマインダー: 日曜夜21:00");
+    const dayName = ["日", "月", "火", "水", "木", "金", "土"][
+      config.notification.weekly.day
+    ];
+    logger.info(
+      `週間予定入力リマインダー: ${dayName}曜日 ${config.notification.weekly.hour}:${String(config.notification.weekly.minute).padStart(2, "0")}`,
+    );
   } catch (error) {
     logger.error("定期実行タスクの設定に失敗しました", error);
     throw new AppError("定期実行タスクの設定に失敗しました", 500);

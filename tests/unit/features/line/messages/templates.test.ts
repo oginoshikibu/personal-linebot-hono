@@ -1,9 +1,29 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi, beforeEach } from "vitest";
+
+// Mock config before any imports
+vi.mock("../../../../../src/config", () => ({
+  config: {
+    line: {
+      users: {
+        alice: "alice_test_id",
+        bob: "bob_test_id",
+      },
+      userNames: {
+        alice: "Alice",
+        bob: "Bob",
+      },
+    },
+  },
+}));
+
 import { createEditOptionsTemplate } from "../../../../../src/features/line/messages/templates";
 import { MealPlan, MealType, PreparationRole, ParticipationStatus } from "../../../../../src/domain/entities/MealPlan";
-import { generateMorningNotification } from "../../../../../src/features/notification/templates/mealPlan";
+import { createMentionMessage } from "../../../../../src/services/mentionService";
 
 describe("メッセージテンプレート", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
   describe("編集オプションテンプレート", () => {
     it("編集オプションのテンプレートが正しく生成されること", () => {
       const dateText = "今日";
@@ -32,26 +52,37 @@ describe("メッセージテンプレート", () => {
   });
 
   describe("通知テンプレート", () => {
-    it("朝の通知メッセージが正しく生成される", () => {
-      const lunch = new MealPlan(
-        '1', new Date(), MealType.LUNCH, PreparationRole.BOB,
-        ParticipationStatus.WILL_NOT_PARTICIPATE, ParticipationStatus.WILL_PARTICIPATE,
-        2, new Date(), new Date()
-      );
-      
-      const dinner = new MealPlan(
-        '2', new Date(), MealType.DINNER, PreparationRole.ALICE,
-        ParticipationStatus.WILL_PARTICIPATE, ParticipationStatus.WILL_PARTICIPATE,
-        3, new Date(), new Date()
-      );
+    it("メンションメッセージが正しく生成される", () => {
+      const text = `【本日の食事予定】
+◆ 昼食
+{alice}: 不参加
+{bob}: 参加
+準備: {bob}が作る
 
-      const message = generateMorningNotification(lunch, dinner);
+◆ 夕食
+{alice}: 参加
+{bob}: 参加
+準備: {alice}が作る
+
+予定を変更する場合はメニューから「予定変更」を選択してください。`;
       
-      expect(message).toContain('【本日の食事予定】');
-      expect(message).toContain('Alice: 不参加');
-      expect(message).toContain('Bob: 参加');
-      expect(message).toContain('準備: Bobが作る');
-      expect(message).toContain('準備: Aliceが作る');
+      const mentions = [
+        { placeholder: 'alice', userId: 'test-alice-id' },
+        { placeholder: 'bob', userId: 'test-bob-id' }
+      ];
+      
+      const mentionMessage = createMentionMessage(text, mentions);
+      
+      expect(mentionMessage.type).toBe('textV2');
+      expect(mentionMessage.text).toContain('【本日の食事予定】');
+      expect(mentionMessage.text).toContain('{alice}: 不参加');
+      expect(mentionMessage.text).toContain('{bob}: 参加');
+      expect(mentionMessage.text).toContain('準備: {bob}が作る');
+      expect(mentionMessage.text).toContain('準備: {alice}が作る');
+      expect(mentionMessage.substitution).toHaveProperty('alice');
+      expect(mentionMessage.substitution).toHaveProperty('bob');
+      expect(mentionMessage.substitution.alice.mentionee.userId).toBe('test-alice-id');
+      expect(mentionMessage.substitution.bob.mentionee.userId).toBe('test-bob-id');
     });
   });
 }); 

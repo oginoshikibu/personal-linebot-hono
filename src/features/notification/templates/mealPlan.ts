@@ -1,66 +1,53 @@
+import type { MealPlan } from "../../../domain/entities/MealPlan";
 import {
-  type MealPlan,
-  ParticipationStatus,
-  PreparationRole,
-} from "../../../domain/entities/MealPlan";
+  createAllUserMentions,
+  createMentionMessage,
+} from "../../../services/mentionService";
+import type { TextV2Message } from "../../../types/line";
+import {
+  formatParticipationStatus,
+  formatPreparationRole,
+} from "../../../utils/mealPlanFormatters";
 
 export const generateMorningNotification = (
   lunch: MealPlan,
   dinner: MealPlan,
-): string => {
-  return `【本日の食事予定】
+): TextV2Message => {
+  const text = `【本日の食事予定】
 ◆ 昼食
-Alice: ${getParticipationText(lunch.aliceParticipation)}
-Bob: ${getParticipationText(lunch.bobParticipation)}
-準備: ${getPreparationText(lunch.preparationRole)}
+{alice}: ${formatParticipationStatus(lunch.aliceParticipation)}
+{bob}: ${formatParticipationStatus(lunch.bobParticipation)}
+準備: ${formatPreparationRole(lunch.preparationRole)}
 
 ◆ 夕食
-Alice: ${getParticipationText(dinner.aliceParticipation)}
-Bob: ${getParticipationText(dinner.bobParticipation)}
-準備: ${getPreparationText(dinner.preparationRole)}
+{alice}: ${formatParticipationStatus(dinner.aliceParticipation)}
+{bob}: ${formatParticipationStatus(dinner.bobParticipation)}
+準備: ${formatPreparationRole(dinner.preparationRole)}
 
 予定を変更する場合はメニューから「予定変更」を選択してください。`;
+
+  return createMentionMessage(text, createAllUserMentions());
 };
 
 export const generateEveningNotification = (
   lunch: MealPlan,
   dinner: MealPlan,
-): string => {
-  return `【明日の食事予定確認】
+): TextV2Message => {
+  const text = `【明日の食事予定確認】
 ◆ 昼食
-Alice: ${getParticipationText(lunch.aliceParticipation)}
-Bob: ${getParticipationText(lunch.bobParticipation)}
-準備: ${getPreparationText(lunch.preparationRole)}
+{alice}: ${formatParticipationStatus(lunch.aliceParticipation)}
+{bob}: ${formatParticipationStatus(lunch.bobParticipation)}
+準備: ${formatPreparationRole(lunch.preparationRole)}
 
 ◆ 夕食
-Alice: ${getParticipationText(dinner.aliceParticipation)}
-Bob: ${getParticipationText(dinner.bobParticipation)}
-準備: ${getPreparationText(dinner.preparationRole)}
+{alice}: ${formatParticipationStatus(dinner.aliceParticipation)}
+{bob}: ${formatParticipationStatus(dinner.bobParticipation)}
+準備: ${formatPreparationRole(dinner.preparationRole)}
 
 予定を変更する場合はメニューから「予定変更」を選択してください。`;
+
+  return createMentionMessage(text, createAllUserMentions());
 };
-
-function getParticipationText(status: ParticipationStatus): string {
-  switch (status) {
-    case ParticipationStatus.WILL_PARTICIPATE:
-      return "参加";
-    case ParticipationStatus.WILL_NOT_PARTICIPATE:
-      return "不参加";
-    case ParticipationStatus.UNDECIDED:
-      return "未定";
-  }
-}
-
-function getPreparationText(role: PreparationRole): string {
-  switch (role) {
-    case PreparationRole.ALICE:
-      return "Aliceが作る";
-    case PreparationRole.BOB:
-      return "Bobが作る";
-    case PreparationRole.NONE:
-      return "なし";
-  }
-}
 
 export function prepareMealPlanData(mealPlan: MealPlan): {
   participants: string[];
@@ -68,25 +55,12 @@ export function prepareMealPlanData(mealPlan: MealPlan): {
 } {
   const participants: string[] = [];
 
-  if (mealPlan.aliceParticipation === ParticipationStatus.WILL_PARTICIPATE) {
+  if (mealPlan.aliceParticipation === "WILL_PARTICIPATE") {
     participants.push("Alice");
   }
-  if (mealPlan.bobParticipation === ParticipationStatus.WILL_PARTICIPATE) {
+  if (mealPlan.bobParticipation === "WILL_PARTICIPATE") {
     participants.push("Bob");
   }
 
-  let preparationType = "UNDECIDED";
-  switch (mealPlan.preparationRole) {
-    case PreparationRole.ALICE:
-      preparationType = "ALICE";
-      break;
-    case PreparationRole.BOB:
-      preparationType = "BOB";
-      break;
-    case PreparationRole.NONE:
-      preparationType = "NONE";
-      break;
-  }
-
-  return { participants, preparationType };
+  return { participants, preparationType: mealPlan.preparationRole };
 }

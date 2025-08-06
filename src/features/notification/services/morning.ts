@@ -1,15 +1,11 @@
-import { config } from "../../../config";
+import { ALL_USERS } from "../../../constants/users";
 import { DIContainer } from "../../../di/container";
 import { logger } from "../../../lib/logger";
 import { formatDateJP } from "../../../utils/date";
 import { AppError } from "../../../utils/error";
-import { sendTextMessage } from "../../line/client";
+import { sendMentionMessage } from "../../line/client";
 import { generateMorningNotification } from "../templates/mealPlan";
 import { logNotification } from "./log";
-
-// Alice/Bobの固定LINE ID（環境変数から取得）
-const ALICE_LINE_ID = config.line.users.alice;
-const BOB_LINE_ID = config.line.users.bob;
 
 /**
  * 朝の通知を送信
@@ -26,18 +22,13 @@ export const sendMorningNotification = async (): Promise<void> => {
     const { lunch, dinner } = await mealService.getOrCreateTodayMealPlans();
 
     // 通知メッセージを生成
-    const message = generateMorningNotification(lunch, dinner);
+    const mentionMessage = generateMorningNotification(lunch, dinner);
 
-    // Alice/Bobに通知を送信
-    const users = [
-      { lineId: ALICE_LINE_ID, name: "Alice" },
-      { lineId: BOB_LINE_ID, name: "Bob" },
-    ];
-
+    // 全ユーザーに通知を送信
     let successCount = 0;
-    for (const user of users) {
+    for (const user of ALL_USERS) {
       try {
-        await sendTextMessage(user.lineId, message);
+        await sendMentionMessage(user.lineId, mentionMessage);
         successCount++;
       } catch (error) {
         logger.error(`ユーザーへの朝の通知送信エラー: ${user.name}`, error);
@@ -53,7 +44,7 @@ export const sendMorningNotification = async (): Promise<void> => {
     );
 
     logger.info(
-      `朝の通知を送信しました: ${today}, 成功: ${successCount}/${users.length}`,
+      `朝の通知を送信しました: ${today}, 成功: ${successCount}/${ALL_USERS.length}`,
     );
   } catch (error) {
     logger.error("朝の通知の送信に失敗しました", error);

@@ -14,6 +14,8 @@ export const MEAL_TYPE_TEXT = {
   DINNER: "夕食",
 } as const;
 
+// 削除されました - services/mentionService.ts と constants/users.ts に移動
+
 // メッセージテンプレート
 export const MESSAGES = {
   ERRORS: {

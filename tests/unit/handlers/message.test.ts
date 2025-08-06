@@ -13,6 +13,10 @@ vi.mock("../../../src/config", () => ({
         alice: "alice_test_id",
         bob: "bob_test_id",
       },
+      userNames: {
+        alice: "Alice",
+        bob: "Bob",
+      },
     },
   },
 }));
@@ -34,6 +38,7 @@ vi.mock("../../../src/di/container", () => ({
 // 必要な型をimport
 import { MealPlan, MealType, PreparationRole, ParticipationStatus } from "../../../src/domain/entities/MealPlan";
 import { handleTextMessage } from "../../../src/features/line/handlers/message";
+import { USERS } from "../../../src/constants/users";
 
 // モック
 vi.mock("../../../src/features/line/client", () => ({
@@ -101,9 +106,9 @@ describe("メッセージハンドラー", () => {
 
   it("「今日の予定」メッセージを処理できること", async () => {
     const replyFlexMessageMock = vi.spyOn(lineService, "replyFlexMessage");
-    const mockUserName = "Alice";
+    const mockUser = USERS.ALICE;
     const mockReplyToken = "test-reply-token";
-    await handleTextMessage({ type: "text", text: "今日の予定", id: "test-message-id", quoteToken: "test-quote-token" }, mockUserName, mockReplyToken);
+    await handleTextMessage({ type: "text", text: "今日の予定", id: "test-message-id", quoteToken: "test-quote-token" }, mockUser, mockReplyToken);
     expect(replyFlexMessageMock).toHaveBeenCalledWith(
       mockReplyToken,
       expect.anything(),
@@ -113,9 +118,9 @@ describe("メッセージハンドラー", () => {
 
   it("「明日の予定」メッセージを処理できること", async () => {
     const replyFlexMessageMock = vi.spyOn(lineService, "replyFlexMessage");
-    const mockUserName = "Alice";
+    const mockUser = USERS.ALICE;
     const mockReplyToken = "test-reply-token";
-    await handleTextMessage({ type: "text", text: "明日の予定", id: "test-message-id", quoteToken: "test-quote-token" }, mockUserName, mockReplyToken);
+    await handleTextMessage({ type: "text", text: "明日の予定", id: "test-message-id", quoteToken: "test-quote-token" }, mockUser, mockReplyToken);
     expect(replyFlexMessageMock).toHaveBeenCalledWith(
       mockReplyToken,
       expect.anything(),
@@ -125,11 +130,11 @@ describe("メッセージハンドラー", () => {
 
   it("「今週の予定」メッセージを処理できること", async () => {
     const send7DayCalendarMessageMock = vi.spyOn(calendarService, "send7DayCalendarMessage");
-    const mockUserName = "Alice";
+    const mockUser = USERS.ALICE;
     const mockReplyToken = "test-reply-token";
-    await handleTextMessage({ type: "text", text: "今週の予定", id: "test-message-id", quoteToken: "test-quote-token" }, mockUserName, mockReplyToken);
+    await handleTextMessage({ type: "text", text: "今週の予定", id: "test-message-id", quoteToken: "test-quote-token" }, mockUser, mockReplyToken);
     expect(send7DayCalendarMessageMock).toHaveBeenCalledWith(
-      "alice_test_id",
+      USERS.ALICE.lineId,
       mockReplyToken,
       expect.any(Date)
     );
@@ -140,13 +145,13 @@ describe("メッセージハンドラー", () => {
     const sendCalendarMessageMock = vi.spyOn(calendarService, "sendCalendarMessage");
     
     // テスト対象の実行
-    const mockUserName = "Alice";
+    const mockUser = USERS.ALICE;
     const mockReplyToken = "test-reply-token";
-    await handleTextMessage({ type: "text", text: "今後の予定", id: "test-message-id", quoteToken: "test-quote-token" }, mockUserName, mockReplyToken);
+    await handleTextMessage({ type: "text", text: "今後の予定", id: "test-message-id", quoteToken: "test-quote-token" }, mockUser, mockReplyToken);
     
     // 検証 - 月間カレンダーが表示される
     expect(sendCalendarMessageMock).toHaveBeenCalledWith(
-      "alice_test_id",
+      USERS.ALICE.lineId,
       mockReplyToken,
       expect.any(Date)
     );

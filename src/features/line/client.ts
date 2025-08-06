@@ -8,7 +8,10 @@ import {
   type TextMessage,
 } from "@line/bot-sdk";
 import { config } from "../../config";
+import { ALL_USERS } from "../../constants/users";
 import { logger } from "../../lib/logger";
+import type { TextV2Message } from "../../types/line";
+import { isTextV2Message } from "../../types/line";
 import { isAllowedLineId } from "../../utils/auth";
 import { AppError } from "../../utils/error";
 
@@ -68,6 +71,42 @@ export class LineClientService {
     } catch (error) {
       logger.error(`テキストメッセージ送信エラー: ${to}`, error);
       throw new AppError(`メッセージの送信に失敗しました: ${to}`, 500);
+    }
+  }
+
+  /**
+   * メンション付きテキストメッセージを送信
+   * @param to 送信先ユーザーID
+   * @param textV2Message メンションを含むテキストv2メッセージ
+   * @returns 送信結果
+   */
+  async sendMentionMessage(
+    to: string,
+    textV2Message: TextV2Message,
+  ): Promise<MessageAPIResponseBase> {
+    try {
+      const isAllowed = await isAllowedLineId(to);
+      if (!isAllowed) {
+        throw new AppError(`未承認のLINE ID: ${to}`, 403);
+      }
+
+      // Validate textV2Message structure before casting
+      if (!isTextV2Message(textV2Message)) {
+        throw new AppError("Invalid TextV2Message structure", 400);
+      }
+
+      // LINE SDK doesn't officially support textV2 type yet
+      // Type assertion to unknown then Message for runtime compatibility while maintaining type documentation
+      return await this.client.pushMessage(
+        to,
+        textV2Message as unknown as import("@line/bot-sdk").Message,
+      );
+    } catch (error) {
+      logger.error(`メンション付きメッセージ送信エラー: ${to}`, error);
+      throw new AppError(
+        `メンション付きメッセージの送信に失敗しました: ${to}`,
+        500,
+      );
     }
   }
 
@@ -188,6 +227,39 @@ export class LineClientService {
   }
 
   /**
+   * メンション付きテキストメッセージを応答として送信
+   * @param replyToken 応答トークン
+   * @param textV2Message メンションを含むテキストv2メッセージ
+   * @returns 送信結果
+   */
+  async replyMentionMessage(
+    replyToken: string,
+    textV2Message: TextV2Message,
+  ): Promise<MessageAPIResponseBase> {
+    try {
+      // Validate textV2Message structure before casting
+      if (!isTextV2Message(textV2Message)) {
+        throw new AppError("Invalid TextV2Message structure", 400);
+      }
+
+      // Type assertion to unknown then Message for runtime compatibility while maintaining type documentation
+      return await this.client.replyMessage(
+        replyToken,
+        textV2Message as unknown as import("@line/bot-sdk").Message,
+      );
+    } catch (error) {
+      logger.error(
+        `メンション付き応答メッセージ送信エラー: ${replyToken}`,
+        error,
+      );
+      throw new AppError(
+        "メンション付き応答メッセージの送信に失敗しました",
+        500,
+      );
+    }
+  }
+
+  /**
    * 複数のテキストメッセージを応答として送信
    * @param replyToken 応答トークン
    * @param texts メッセージテキストの配列
@@ -278,15 +350,9 @@ export class LineClientService {
       const results: MessageAPIResponseBase[] = [];
       const errors: Error[] = [];
 
-      // Alice/Bobの固定LINE ID（環境変数から取得）
-      const ALICE_LINE_ID = config.line.users.alice;
-      const BOB_LINE_ID = config.line.users.bob;
-
-      const allowedLineIds = [ALICE_LINE_ID, BOB_LINE_ID];
-
-      for (const lineId of allowedLineIds) {
+      for (const user of ALL_USERS) {
         try {
-          const result = await this.sendTextMessage(lineId, text);
+          const result = await this.sendTextMessage(user.lineId, text);
           results.push(result);
         } catch (error) {
           if (error instanceof Error) {
@@ -319,6 +385,12 @@ export const sendTextMessage = (
   text: string,
 ): Promise<MessageAPIResponseBase> => lineService.sendTextMessage(to, text);
 
+export const sendMentionMessage = (
+  to: string,
+  textV2Message: TextV2Message,
+): Promise<MessageAPIResponseBase> =>
+  lineService.sendMentionMessage(to, textV2Message);
+
 export const sendTextMessages = (
   to: string,
   texts: string[],
@@ -348,6 +420,12 @@ export const replyTextMessage = (
   text: string,
 ): Promise<MessageAPIResponseBase> =>
   lineService.replyTextMessage(replyToken, text);
+
+export const replyMentionMessage = (
+  replyToken: string,
+  textV2Message: TextV2Message,
+): Promise<MessageAPIResponseBase> =>
+  lineService.replyMentionMessage(replyToken, textV2Message);
 
 export const replyTextMessages = (
   replyToken: string,

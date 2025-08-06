@@ -6,6 +6,7 @@ import {
   PreparationRole,
 } from "../../domain/entities/MealPlan";
 import type { MealPlanRepository } from "../../domain/repositories/MealPlanRepository";
+import { logger } from "../../lib/logger";
 import { toLocalISOString } from "../../utils/date";
 
 export class PrismaMealPlanRepository implements MealPlanRepository {
@@ -44,7 +45,7 @@ export class PrismaMealPlanRepository implements MealPlanRepository {
 
       return plan ? this.toDomain(plan) : null;
     } catch (error) {
-      console.error("[PrismaMealPlanRepository] findByDateAndTypeエラー:", {
+      logger.error("[PrismaMealPlanRepository] findByDateAndTypeエラー", {
         mealType,
         date: toLocalISOString(date),
         error: error instanceof Error ? error.message : String(error),
@@ -78,7 +79,7 @@ export class PrismaMealPlanRepository implements MealPlanRepository {
 
       return this.toDomain(saved);
     } catch (error) {
-      console.error("[PrismaMealPlanRepository] saveエラー:", {
+      logger.error("[PrismaMealPlanRepository] saveエラー", {
         planId: plan.id,
         mealType: plan.mealType,
         date: toLocalISOString(plan.date),

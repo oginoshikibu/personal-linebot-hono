@@ -1,3 +1,4 @@
+import { USERS } from "../../../constants/users";
 import {
   type IdGenerator,
   MealPlan,
@@ -7,6 +8,7 @@ import {
 } from "../../../domain/entities/MealPlan";
 import type { MealPlanRepository } from "../../../domain/repositories/MealPlanRepository";
 import { Result } from "../../../domain/types/Result";
+import { logger } from "../../../lib/logger";
 import { toLocalISOString } from "../../../utils/date";
 
 export class MealPlanService {
@@ -38,7 +40,7 @@ export class MealPlanService {
 
       return { lunch, dinner };
     } catch (error) {
-      console.error("[MealPlanService] getOrCreateTodayMealPlansエラー:", {
+      logger.error("[MealPlanService] getOrCreateTodayMealPlansエラー", {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
       });
@@ -82,7 +84,7 @@ export class MealPlanService {
             this.idGenerator,
           );
           if (result.isFailure) {
-            console.error(
+            logger.error(
               `[MealPlanService] ディナープラン作成エラー: ${result.error}`,
             );
             throw new Error(result.error);
@@ -98,7 +100,7 @@ export class MealPlanService {
 
       return plan;
     } catch (error) {
-      console.error("[MealPlanService] getOrCreateMealPlanエラー:", {
+      logger.error("[MealPlanService] getOrCreateMealPlanエラー", {
         mealType,
         date: toLocalISOString(date),
         preparationRole,
@@ -112,7 +114,7 @@ export class MealPlanService {
   async updateParticipation(
     date: Date,
     mealType: MealType,
-    person: "Alice" | "Bob",
+    person: string,
     status: ParticipationStatus,
   ): Promise<Result<MealPlan>> {
     const plan = await this.repository.findByDateAndType(date, mealType);
@@ -121,7 +123,7 @@ export class MealPlanService {
     }
 
     const result =
-      person === "Alice"
+      person === USERS.ALICE.name
         ? plan.changeAliceParticipation(status)
         : plan.changeBobParticipation(status);
 
