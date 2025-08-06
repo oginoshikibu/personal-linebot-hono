@@ -242,11 +242,6 @@ export class LineClientService {
         throw new AppError("Invalid TextV2Message structure", 400);
       }
 
-      // Validate textV2Message structure before sending
-      if (!isTextV2Message(textV2Message)) {
-        throw new AppError("Invalid TextV2Message structure", 400);
-      }
-
       // Type assertion to unknown then Message for runtime compatibility while maintaining type documentation
       return await this.client.replyMessage(
         replyToken,
