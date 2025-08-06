@@ -2,11 +2,11 @@
  * 食事計画の表示フォーマット関連のユーティリティ
  */
 
+import { USERS } from "../constants/users";
 import type {
   ParticipationStatus,
   PreparationRole,
 } from "../domain/entities/MealPlan";
-import { USERS } from "../constants/users";
 
 // メンション用プレースホルダー定数
 const PLACEHOLDER_ALICE = `{${USERS.ALICE.placeholder}}`;

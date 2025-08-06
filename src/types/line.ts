@@ -2,7 +2,7 @@
  * LINE Messaging API関連の型定義
  */
 
-import type { TextMessage, Message } from "@line/bot-sdk";
+import type { Message, TextMessage } from "@line/bot-sdk";
 
 // TextV2メッセージの型定義
 export interface TextV2Message {
